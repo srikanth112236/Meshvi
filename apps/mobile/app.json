@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "MESHVI",
+    "slug": "meshvi-mobile",
+    "version": "1.0.0",
+    "scheme": "meshvi",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B1528"
+    },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#F7F8FA",
+      "translucent": false
+    },
+    "androidNavigationBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vedasynk.meshvi",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Meshvi requires camera access to take an executive selfie for corporate identity verification.",
+        "NSPhotoLibraryUsageDescription": "Meshvi requires access to your photo library to select executive avatars and corporate mandate credentials.",
+        "NSPhotoLibraryAddUsageDescription": "Meshvi requires access to save bilateral agreement receipts and verified documents."
+      }
+    },
+    "android": {
+      "package": "com.vedasynk.meshvi",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#0B1528"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Meshvi requires access to your photo library to select executive avatars and corporate mandate documents.",
+          "cameraPermission": "Meshvi requires camera access to take an executive selfie for corporate identity verification."
+        }
+      ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

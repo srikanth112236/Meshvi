@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F1F5F9;
+  --color-text: #0F172A;
+  --color-text-muted: #64748B;
+  --color-border: #E2E8F0;
+  --color-navy: #102A43;
+  --color-navy-hover: #173B5E;
+  --color-primary: #0284C7;
+  --color-primary-hover: #0369A1;
+  --color-primary-soft: #E0F2FE;
+  --color-focus: #38BDF8;
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-danger: #B91C1C;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Geist', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  overflow-x: hidden;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Modern Aesthetic Utilities (Aceternity / 21st.dev inspirations) */
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(16, 42, 67, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 42, 67, 0.04) 1px, transparent 1px);
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(rgba(2, 132, 199, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.glow-pill {
+  position: relative;
+}
+.glow-pill::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #0284C7, #38BDF8, #0284C7);
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(4px);
+}
+
+/* Aceternity Style Background Gradients & Bento Shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #102A43 0%, #0284C7 50%, #102A43 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 6s linear infinite;
+}
+
+.bento-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bento-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(2, 132, 199, 0.4);
+  box-shadow: 0 20px 25px -5px rgba(2, 132, 199, 0.08), 0 8px 10px -6px rgba(2, 132, 199, 0.05);
+}
+
+/* 21st.dev / Aceternity Infinite Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: 200%;
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Moving Spotlight / Radar Pulse */
+@keyframes radar-pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 0.4; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.animate-radar {
+  animation: radar-pulse 4s ease-in-out infinite;
+}
+
+/* Aceternity Background Gradient Beam */
+.gradient-beam-border {
+  position: relative;
+}
+.gradient-beam-border::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(90deg, transparent, #0284C7, #38BDF8, transparent);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0.7;
+}
+
+

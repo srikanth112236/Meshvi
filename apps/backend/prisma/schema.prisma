@@ -1,0 +1,1129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  DEACTIVATED
+}
+
+enum RoleType {
+  USER
+  COMPANY_ADMIN
+  SUPER_ADMIN
+}
+
+enum ProfileVisibility {
+  PUBLIC
+  SIGNED_IN_ONLY
+  PRIVATE
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum CompanyRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  REMOVED
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  WITHDRAWN
+  BLOCKED
+}
+
+enum IntroductionStatus {
+  PENDING_INTERMEDIARY
+  ACCEPTED_BY_INTERMEDIARY
+  REJECTED_BY_INTERMEDIARY
+  SENT_TO_TARGET
+  ACCEPTED_BY_TARGET
+  DECLINED_BY_TARGET
+  EXPIRED
+}
+
+enum ImportJobStatus {
+  UPLOADED
+  VALIDATING
+  PREVIEW_READY
+  IMPORTING
+  COMPLETED
+  COMPLETED_WITH_ERRORS
+  FAILED
+  CANCELLED
+}
+
+// 1. Core User Tables
+model User {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  emailNormalized  String         @unique @map("email_normalized")
+  passwordHash     String?        @map("password_hash")
+  accountStatus    AccountStatus  @default(ACTIVE) @map("account_status")
+  emailVerifiedAt  DateTime?      @map("email_verified_at")
+  googleId           String?        @unique @map("google_id")
+  linkedinId         String?        @unique @map("linkedin_id")
+  avatarUrl          String?        @map("avatar_url")
+  linkedinProfileUrl String?        @map("linkedin_profile_url")
+  authProvider       String         @default("LOCAL") @map("auth_provider") // LOCAL, GOOGLE, LINKEDIN
+  onboardingStep     Int            @default(1) @map("onboarding_step")
+  onboardingCompleted Boolean       @default(false) @map("onboarding_completed")
+  linkedinVerified   Boolean        @default(false) @map("linkedin_verified")
+  workEmailVerified  Boolean        @default(false) @map("work_email_verified")
+  phoneNumber        String?        @map("phone_number")
+  phoneVerified      Boolean        @default(false) @map("phone_verified")
+  lastLoginAt        DateTime?      @map("last_login_at")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  deletedAt          DateTime?      @map("deleted_at")
+
+  roles            UserRole[]
+  profile          ProfessionalProfile?
+  memberships      CompanyMembership[]
+  sentConnections  Connection[]            @relation("RequesterUser")
+  sentIntros       IntroductionRequest[]   @relation("RequesterIntros")
+  mediatedIntros   IntroductionRequest[]   @relation("IntermediaryIntros")
+  createdConvs     Conversation[]          @relation("CreatedConversations")
+  participations   ConversationParticipant[]
+  sentMessages     Message[]               @relation("SentMessages")
+  auditLogs        AuditLog[]
+  aiUsageEvents    AiUsageEvent[]
+  searchIntents    SearchIntent[]
+  savedSearches    SavedSearch[]
+  notifications    Notification[]
+  createdOpportunities OpportunityProfile[]
+  sentOpportunityRequests OpportunityRequest[] @relation("SenderUser")
+  receivedOpportunityRequests OpportunityRequest[] @relation("RecipientUser")
+  opportunityEvents OpportunityEvent[]
+  companyOnboardingDraft CompanyOnboardingDraft?
+
+  @@map("users")
+}
+
+model CompanyOnboardingDraft {
+  id          String   @id @default(uuid())
+  userId      String   @unique @map("user_id")
+  step        Int      @default(1)
+  data        Json     @map("data")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("company_onboarding_drafts")
+}
+
+model UserRole {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  role       RoleType  @default(USER)
+  scopeType  String?   @map("scope_type")
+  scopeId    String?   @map("scope_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, role])
+  @@map("user_roles")
+}
+
+// 2. Professional Profiles & Experience
+model ProfessionalProfile {
+  id                 String             @id @default(uuid())
+  userId             String?            @unique @map("user_id")
+  displayName        String             @map("display_name")
+  headline           String?
+  summary            String?
+  avatarUrl          String?            @map("avatar_url")
+  linkedinUrl        String?            @map("linkedin_url")
+  currentCompanyId   String?            @map("current_company_id")
+  currentTitle       String?            @map("current_title")
+  function           String?
+  seniority          String?
+  industry           String?
+  city               String?
+  countryCode        String?            @map("country_code")
+  visibility         ProfileVisibility  @default(SIGNED_IN_ONLY)
+  isActive           Boolean            @default(true) @map("is_active")
+  connectionAvailability String         @default("OPEN") @map("connection_availability") // OPEN, SELECTIVE, STEALTH
+  proposalAccepting  Boolean            @default(true) @map("proposal_accepting")
+  verificationStatus VerificationStatus @default(UNVERIFIED) @map("verification_status")
+  lastVerifiedAt     DateTime?          @map("last_verified_at")
+  isLinkedInVerified Boolean            @default(false) @map("is_linkedin_verified")
+  isWorkEmailVerified Boolean           @default(false) @map("is_work_email_verified")
+  isRoleConfirmed    Boolean            @default(false) @map("is_role_confirmed")
+  phoneNumber        String?            @map("phone_number")
+  roleConfirmedBy    String?            @map("role_confirmed_by")
+  roleConfirmedAt    DateTime?          @map("role_confirmed_at")
+  completenessScore  Int                @default(20) @map("completeness_score")
+  isSeedData         Boolean            @default(false) @map("is_seed_data")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  user               User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company            Company?           @relation(fields: [currentCompanyId], references: [id])
+  experiences        ProfessionalExperience[]
+  expertise          ProfessionalExpertise[]
+  intents            ProfessionalIntent[]
+  receivedConnections Connection[]      @relation("RecipientProfile")
+  delegatedConnections Connection[]     @relation("DelegatedConnections")
+  targetIntros       IntroductionRequest[] @relation("TargetProfileIntros")
+  searchMatches      SearchMatch[]
+  corporateMandates  CorporateMandate[]
+  opportunityBids    OpportunityBid[]
+  readiness          PartnershipReadiness?
+  reputationScore    ReputationScore?
+  opportunityProfiles OpportunityProfile[]
+
+  @@index([displayName])
+  @@index([function, industry, countryCode])
+  @@map("professional_profiles")
+}
+
+model ProfessionalExperience {
+  id                    String              @id @default(uuid())
+  professionalProfileId String              @map("professional_profile_id")
+  companyName           String              @map("company_name")
+  title                 String
+  function              String?
+  startDate             DateTime?           @map("start_date")
+  endDate               DateTime?           @map("end_date")
+  isCurrent             Boolean             @default(false) @map("is_current")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+
+  profile               ProfessionalProfile @relation(fields: [professionalProfileId], references: [id], onDelete: Cascade)
+
+  @@map("professional_experiences")
+}
+
+model ProfessionalExpertise {
+  id                    String              @id @default(uuid())
+  professionalProfileId String              @map("professional_profile_id")
+  term                  String
+  normalizedTerm        String              @map("normalized_term")
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  profile               ProfessionalProfile @relation(fields: [professionalProfileId], references: [id], onDelete: Cascade)
+
+  @@index([normalizedTerm])
+  @@map("professional_expertise")
+}
+
+model ProfessionalIntent {
+  id                    String              @id @default(uuid())
+  professionalProfileId String              @map("professional_profile_id")
+  intentType            String              @map("intent_type") // e.g. "OFFERING" or "LOOKING_FOR"
+  description           String
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  profile               ProfessionalProfile @relation(fields: [professionalProfileId], references: [id], onDelete: Cascade)
+
+  @@map("professional_intents")
+}
+
+// 3. Companies & Memberships
+model Company {
+  id                  String             @id @default(uuid())
+  name                String
+  normalizedName      String             @map("normalized_name")
+  legalName           String?            @map("legal_name")
+  domain              String?            @unique
+  websiteUrl          String?            @map("website_url")
+  description         String?
+  companyType         String?            @map("company_type")
+  industry            String?
+  subIndustry         String?            @map("sub_industry")
+  headquartersCity    String?            @map("headquarters_city")
+  headquartersCountry String?            @map("headquarters_country")
+  isActive            Boolean            @default(true) @map("is_active")
+  intakeStatus        String             @default("OPEN") @map("intake_status") // OPEN, RFP_ONLY, CLOSED
+  verificationStatus  VerificationStatus @default(UNVERIFIED) @map("verification_status")
+  dnsTxtToken         String?            @map("dns_txt_token")
+  verifiedAt          DateTime?          @map("verified_at")
+  autoReplyEnabled    Boolean            @default(false) @map("auto_reply_enabled")
+  autoReplySlaHours   Int                @default(24) @map("auto_reply_sla_hours")
+  autoReplyTemplate   String?            @map("auto_reply_template")
+  isSeedData          Boolean            @default(false) @map("is_seed_data")
+  mergedIntoCompanyId String?            @map("merged_into_company_id")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  profiles            ProfessionalProfile[]
+  memberships         CompanyMembership[]
+  claims              CompanyClaimRequest[]
+  invitations         CompanyInvitation[]
+  verifiedDomains     CompanyDomain[]
+  parentRelations     CompanyRelationship[]  @relation("ParentCompany")
+  subsidiaryRelations CompanyRelationship[]  @relation("SubsidiaryCompany")
+  routingRules        DepartmentRoutingRule[]
+  corporateMandates   CorporateMandate[]
+  reverseOpportunities ReverseOpportunity[]
+  readiness           PartnershipReadiness?
+  triggerSignals      TriggerSignal[]
+  opportunityProfiles OpportunityProfile[]
+
+  @@index([name])
+  @@index([normalizedName])
+  @@index([industry, headquartersCountry])
+  @@map("companies")
+}
+
+model CompanyDomain {
+  id                 String             @id @default(uuid())
+  companyId          String             @map("company_id")
+  domain             String             @unique
+  isPrimary          Boolean            @default(false) @map("is_primary")
+  verificationStatus VerificationStatus @default(PENDING) @map("verification_status")
+  dnsTxtToken        String?            @map("dns_txt_token")
+  verifiedAt         DateTime?          @map("verified_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+
+  company            Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("company_domains")
+}
+
+model CompanyRelationship {
+  id               String    @id @default(uuid())
+  parentCompanyId  String    @map("parent_company_id")
+  subsidiaryId     String    @map("subsidiary_id")
+  relationshipType String    @default("SUBSIDIARY") @map("relationship_type") // SUBSIDIARY, DIVISION, REGIONAL_HQ, HOLDING
+  confidenceScore  Float     @default(1.0) @map("confidence_score")
+  source           String    @default("ADMIN_VERIFIED") // ADMIN_VERIFIED, REGULATORY_FILING, USER_DECLARED
+  effectiveDate    DateTime? @map("effective_date")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  parentCompany    Company   @relation("ParentCompany", fields: [parentCompanyId], references: [id], onDelete: Cascade)
+  subsidiary       Company   @relation("SubsidiaryCompany", fields: [subsidiaryId], references: [id], onDelete: Cascade)
+
+  @@unique([parentCompanyId, subsidiaryId])
+  @@map("company_relationships")
+}
+
+model DepartmentRoutingRule {
+  id               String   @id @default(uuid())
+  companyId        String   @map("company_id")
+  department       String   // e.g. "Sales", "Engineering", "Procurement", "Executive"
+  categoryTag      String?  @map("category_tag") // e.g. "RFP", "PARTNERSHIP", "VENDOR"
+  priority         Int      @default(0)
+  targetUserId     String?  @map("target_user_id") // Optional direct lead assignee
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, department])
+  @@map("department_routing_rules")
+}
+
+model CompanyMembership {
+  id               String           @id @default(uuid())
+  companyId        String           @map("company_id")
+  userId           String           @map("user_id")
+  department       String?          // e.g. "Executive", "Engineering", "Sales", "Operations"
+  companyRole      CompanyRole      @default(MEMBER) @map("company_role")
+  membershipStatus MembershipStatus @default(ACTIVE) @map("membership_status")
+  maxOpenBridges   Int              @default(15) @map("max_open_bridges")
+  joinedAt         DateTime         @default(now()) @map("joined_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  company          Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@map("company_memberships")
+}
+
+model CompanyClaimRequest {
+  id                 String             @id @default(uuid())
+  companyId          String             @map("company_id")
+  requestedByUserId  String             @map("requested_by_user_id")
+  verificationMethod String             @map("verification_method") // DOMAIN_EMAIL, DOCUMENT, MANUAL
+  evidenceReference  String?            @map("evidence_reference")
+  status             VerificationStatus @default(PENDING)
+  reviewedByUserId   String?            @map("reviewed_by_user_id")
+  reviewedAt         DateTime?          @map("reviewed_at")
+  reviewNotes        String?            @map("review_notes")
+  createdAt          DateTime           @default(now()) @map("created_at")
+
+  company            Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_claim_requests")
+}
+
+model CompanyInvitation {
+  id               String           @id @default(uuid())
+  companyId        String           @map("company_id")
+  invitedEmail     String           @map("invited_email")
+  invitedByUserId  String           @map("invited_by_user_id")
+  tokenHash        String           @unique @map("token_hash")
+  status           MembershipStatus @default(PENDING)
+  expiresAt        DateTime         @map("expires_at")
+  acceptedByUserId String?          @map("accepted_by_user_id")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  company          Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_invitations")
+}
+
+// 4. Data Provenance & Controlled Imports
+model DataSource {
+  id             String          @id @default(uuid())
+  name           String
+  sourceType     String          @map("source_type") // FIRST_PARTY, CSV_IMPORT, LICENSED_PROVIDER
+  providerKey    String          @map("provider_key")
+  status         String          @default("ACTIVE")
+  permittedUsage String          @map("permitted_usage")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  importJobs     DataImportJob[]
+
+  @@map("data_sources")
+}
+
+model DataImportJob {
+  id                 String          @id @default(uuid())
+  dataSourceId       String          @map("data_source_id")
+  initiatedByUserId  String          @map("initiated_by_user_id")
+  importType         String          @map("import_type") // COMPANIES, PROFESSIONALS
+  fileName           String          @map("file_name")
+  status             ImportJobStatus @default(UPLOADED)
+  totalRows          Int             @default(0) @map("total_rows")
+  validRows          Int             @default(0) @map("valid_rows")
+  invalidRows        Int             @default(0) @map("invalid_rows")
+  importedRows       Int             @default(0) @map("imported_rows")
+  failedRows         Int             @default(0) @map("failed_rows")
+  startedAt          DateTime?       @map("started_at")
+  completedAt        DateTime?       @map("completed_at")
+  createdAt          DateTime        @default(now()) @map("created_at")
+
+  dataSource         DataSource      @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  errors             DataImportError[]
+
+  @@map("data_import_jobs")
+}
+
+model DataImportError {
+  id              String        @id @default(uuid())
+  importJobId     String        @map("import_job_id")
+  rowNumber       Int           @map("row_number")
+  fieldName       String?       @map("field_name")
+  errorCode       String        @map("error_code")
+  safeMessage     String        @map("safe_message")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  importJob       DataImportJob @relation(fields: [importJobId], references: [id], onDelete: Cascade)
+
+  @@map("data_import_errors")
+}
+
+// 5. Search, Intent & AI Usage
+model SearchIntent {
+  id                   String         @id @default(uuid())
+  userId               String         @map("user_id")
+  rawQuery             String         @map("raw_query")
+  normalizedIntentJson String         @map("normalized_intent_json")
+  provider             String
+  modelName            String         @map("model_name")
+  createdAt            DateTime       @default(now()) @map("created_at")
+
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs                 SearchRun[]
+
+  @@map("search_intents")
+}
+
+model SearchRun {
+  id             String         @id @default(uuid())
+  searchIntentId String         @map("search_intent_id")
+  filtersJson    String         @map("filters_json")
+  candidateCount Int            @default(0) @map("candidate_count")
+  returnedCount  Int            @default(0) @map("returned_count")
+  rankingVersion String         @map("ranking_version")
+  durationMs     Int            @map("duration_ms")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  intent         SearchIntent   @relation(fields: [searchIntentId], references: [id], onDelete: Cascade)
+  matches        SearchMatch[]
+
+  @@map("search_runs")
+}
+
+model SearchMatch {
+  id                    String              @id @default(uuid())
+  searchRunId           String              @map("search_run_id")
+  professionalProfileId String              @map("professional_profile_id")
+  rankPosition          Int                 @map("rank_position")
+  score                 Float
+  reasonCodes           String              @map("reason_codes") // JSON array of codes
+  explanation           String
+  freshnessStatus       String              @map("freshness_status")
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  run                   SearchRun           @relation(fields: [searchRunId], references: [id], onDelete: Cascade)
+  profile               ProfessionalProfile @relation(fields: [professionalProfileId], references: [id], onDelete: Cascade)
+
+  @@map("search_matches")
+}
+
+model SavedSearch {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  name           String
+  query          String?
+  filtersJson    String    @map("filters_json")
+  alertFrequency String    @default("DAILY") @map("alert_frequency") // INSTANT, DAILY, WEEKLY, OFF
+  lastAlertSentAt DateTime? @map("last_alert_sent_at")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_searches")
+}
+
+model AiUsageEvent {
+  id             String         @id @default(uuid())
+  userId         String?        @map("user_id")
+  taskType       String         @map("task_type")
+  providerName   String         @map("provider_name")
+  modelName      String         @map("model_name")
+  inputTokens    Int            @default(0) @map("input_tokens")
+  outputTokens   Int            @default(0) @map("output_tokens")
+  estimatedCost  Float          @default(0) @map("estimated_cost")
+  latencyMs      Int            @default(0) @map("latency_ms")
+  status         String         @default("SUCCESS")
+  errorCode      String?        @map("error_code")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("ai_usage_events")
+}
+
+// 6. Connections & Introductions State Machine
+model Connection {
+  id                 String           @id @default(uuid())
+  requesterUserId    String           @map("requester_user_id")
+  recipientProfileId String           @map("recipient_profile_id")
+  status             ConnectionStatus @default(PENDING)
+  businessReason     String           @map("business_reason")
+  delegatedToProfileId String?        @map("delegated_to_profile_id")
+  delegatedFromUserId  String?        @map("delegated_from_user_id")
+  delegationNote       String?        @map("delegation_note")
+  followUpDate         DateTime?      @map("follow_up_date")
+  declineReasonCode    String?        @map("decline_reason_code")
+  declineNote          String?        @map("decline_note")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  respondedAt        DateTime?        @map("responded_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  requester          User             @relation("RequesterUser", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  recipientProfile   ProfessionalProfile @relation("RecipientProfile", fields: [recipientProfileId], references: [id], onDelete: Cascade)
+  delegatedToProfile ProfessionalProfile? @relation("DelegatedConnections", fields: [delegatedToProfileId], references: [id])
+
+  @@unique([requesterUserId, recipientProfileId])
+  @@map("connections")
+}
+
+model IntroductionRequest {
+  id                  String             @id @default(uuid())
+  requesterUserId     String             @map("requester_user_id")
+  targetProfileId     String             @map("target_profile_id")
+  intermediaryUserId  String             @map("intermediary_user_id")
+  businessReason      String             @map("business_reason")
+  status              IntroductionStatus @default(PENDING_INTERMEDIARY)
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  requester           User               @relation("RequesterIntros", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  targetProfile       ProfessionalProfile @relation("TargetProfileIntros", fields: [targetProfileId], references: [id], onDelete: Cascade)
+  intermediary        User               @relation("IntermediaryIntros", fields: [intermediaryUserId], references: [id], onDelete: Cascade)
+
+  @@map("introduction_requests")
+}
+
+// 7. Conversations & Messages
+model Conversation {
+  id              String                    @id @default(uuid())
+  conversationType String                   @default("DIRECT") @map("conversation_type")
+  createdByUserId String                    @map("created_by_user_id")
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @updatedAt @map("updated_at")
+
+  creator         User                      @relation("CreatedConversations", fields: [createdByUserId], references: [id])
+  participants    ConversationParticipant[]
+  messages        Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String       @map("conversation_id")
+  userId         String       @map("user_id")
+  joinedAt       DateTime     @default(now()) @map("joined_at")
+  lastReadAt     DateTime?    @map("last_read_at")
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id                  String       @id @default(uuid())
+  conversationId      String       @map("conversation_id")
+  senderUserId        String       @map("sender_user_id")
+  body                String
+  messageType         String       @default("TEXT") @map("message_type") // TEXT, PROPOSAL, MEETING_INVITE
+  attachmentUrl       String?      @map("attachment_url")
+  attachmentName      String?      @map("attachment_name")
+  meetingPayloadJson  String?      @map("meeting_payload_json")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  editedAt            DateTime?    @map("edited_at")
+  deletedAt           DateTime?    @map("deleted_at")
+
+  conversation        Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender              User         @relation("SentMessages", fields: [senderUserId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+// 8. Audit Logs & Email Outbox
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id")
+  metadata   String?  // JSON formatted payload
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([action, resource])
+  @@map("audit_logs")
+}
+
+model EmailOutbox {
+  id           String    @id @default(uuid())
+  toAddress    String    @map("to_address")
+  subject      String
+  htmlBody     String    @map("html_body")
+  templateKey  String?   @map("template_key")
+  status       String    @default("PENDING") // PENDING, SENT, FAILED
+  attempts     Int       @default(0)
+  lastError    String?   @map("last_error")
+  sentAt       DateTime? @map("sent_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([status])
+  @@map("email_outbox")
+}
+
+// 9. Real-Time Notification System
+enum NotificationType {
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  CONNECTION_DECLINED
+  OPPORTUNITY_DELEGATED
+  FOLLOWUP_REMINDER
+  INTRO_REQUEST
+  INTRO_ACCEPTED
+  COMPANY_INVITE
+  SYSTEM_ALERT
+  DEAL_ROOM_CREATED
+  OUTCOME_REQUESTED
+  TRIGGER_SIGNAL
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String           @map("user_id")
+  actorId     String?          @map("actor_id")
+  actorName   String?          @map("actor_name")
+  type        NotificationType @default(CONNECTION_REQUEST)
+  title       String
+  body        String
+  actionUrl   String?          @map("action_url")
+  metadata    String?          // JSON formatted payload
+  read        Boolean          @default(false)
+  readAt      DateTime?        @map("read_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ==============================================================================
+// 10. Flagship Differentiator Models
+// ==============================================================================
+
+// Differentiator #3: Corporate Mandate Registry
+model CorporateMandate {
+  id                   String    @id @default(uuid())
+  companyId            String    @map("company_id")
+  authorizedProfileId  String    @map("authorized_profile_id")
+  categoryScope        String    @map("category_scope") // e.g. "SUPPLIER_PROCUREMENT", "DISTRIBUTION", "JOINT_VENTURE"
+  geographicScope      String    @map("geographic_scope") // e.g. "SOUTHEAST_ASIA", "MALAYSIA", "GLOBAL"
+  maxBudgetLimit       Float?    @map("max_budget_limit") // e.g. 500000.00
+  currency             String    @default("USD")
+  validUntil           DateTime? @map("valid_until")
+  isRevoked            Boolean   @default(false) @map("is_revoked")
+  attestedByUserId     String    @map("attested_by_user_id")
+  attestedAt           DateTime  @default(now()) @map("attested_at")
+
+  company              Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  authorizedProfile    ProfessionalProfile @relation(fields: [authorizedProfileId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, categoryScope])
+  @@map("corporate_mandates")
+}
+
+// Differentiator #4: Reverse Discovery Marketplace (Tender / Sourcing Brief)
+model ReverseOpportunity {
+  id               String    @id @default(uuid())
+  companyId        String    @map("company_id")
+  creatorUserId    String    @map("creator_user_id")
+  title            String    // e.g. "Seeking Premium Beverage Brands for Regional Lounges"
+  opportunityType  String    @map("opportunity_type") // DISTRIBUTOR_SEARCH, SUPPLIER_SOURCING, JOINT_VENTURE
+  targetGeography  String    @map("target_geography") // e.g. "MY", "SG", "ASEAN"
+  budgetBand       String    @map("budget_band") // e.g. "$100k - $500k"
+  requirementsDoc  String    @map("requirements_doc")
+  deadline         DateTime?
+  status           String    @default("ACTIVE") // ACTIVE, EVALUATING, CLOSED
+  isPublic         Boolean   @default(true) @map("is_public")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  company          Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bids             OpportunityBid[]
+
+  @@map("reverse_opportunities")
+}
+
+// Bid Submissions for Reverse Opportunities
+model OpportunityBid {
+  id                    String    @id @default(uuid())
+  reverseOpportunityId  String    @map("reverse_opportunity_id")
+  bidderProfileId       String    @map("bidder_profile_id")
+  proposalSummary       String    @map("proposal_summary")
+  pricingEstimate       Float?    @map("pricing_estimate")
+  requiresMnda          Boolean   @default(false) @map("requires_mnda")
+  status                String    @default("PENDING") // PENDING, SHORTLISTED, ACCEPTED, DECLINED
+  reviewedAt            DateTime? @map("reviewed_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  reverseOpportunity    ReverseOpportunity  @relation(fields: [reverseOpportunityId], references: [id], onDelete: Cascade)
+  bidderProfile         ProfessionalProfile @relation(fields: [bidderProfileId], references: [id], onDelete: Cascade)
+
+  @@map("opportunity_bids")
+}
+
+// Differentiator #5: Evidence-Backed Attribution Ledger
+model AttributionEvent {
+  id               String    @id @default(uuid())
+  dealReferenceId  String    @map("deal_reference_id") // connectionId or opportunityBidId
+  companyId        String?   @map("company_id")
+  eventType        String    @map("event_type") // DISCOVERY, MANDATE_HANDOVER, NDA_EXECUTED, MEETING_COMPLETED, DEAL_WON
+  actorUserId      String    @map("actor_user_id")
+  contributorRole  String    @map("contributor_role") // DISCOVERER, INTERMEDIARY, PROPOSAL_LEAD, EXECUTIVE_SPONSOR
+  evidencePayload  String?   @map("evidence_payload") // JSON data: .ics UID, RFP doc hash, audit notes
+  confidenceScore  Float     @default(1.0) @map("confidence_score")
+  dealValue        Float?    @map("deal_value")
+  recordedAt       DateTime  @default(now()) @map("recorded_at")
+
+  @@index([dealReferenceId])
+  @@map("attribution_events")
+}
+
+// ==============================================================================
+// 11. Next-Gen Feature Models (F1–F5)
+// ==============================================================================
+
+// --- F1: Partnership Readiness Signal ---
+enum ReadinessStatus {
+  OPEN
+  SELECTIVE
+  STEALTH
+  PAUSED
+}
+
+model PartnershipReadiness {
+  id                  String          @id @default(uuid())
+  profileId           String?         @unique @map("profile_id")
+  companyId           String?         @unique @map("company_id")
+  status              ReadinessStatus @default(OPEN)
+  activeSectors       String?         @map("active_sectors")    // JSON array of sector tags
+  activeGeographies   String?         @map("active_geographies") // JSON array of geo codes
+  partnershipTypes    String?         @map("partnership_types")  // JSON array: DISTRIBUTION, SUPPLIER, JOINT_VENTURE, etc.
+  notLookingFor       String?         @map("not_looking_for")   // JSON array of exclusions
+  openMessage         String?         @map("open_message")      // Short public-facing welcome note
+  lastRespondedAt     DateTime?       @map("last_responded_at")
+  refreshedAt         DateTime        @default(now()) @map("refreshed_at")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  profile             ProfessionalProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  company             Company?             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("partnership_readiness")
+}
+
+// --- F3: "Why Now" Trigger Intelligence ---
+enum TriggerType {
+  NEWS
+  HIRING_SIGNAL
+  USER_DECLARED
+  FUNDING_EVENT
+  PRODUCT_LAUNCH
+  EXPANSION_SIGNAL
+}
+
+model TriggerSignal {
+  id             String      @id @default(uuid())
+  companyId      String      @map("company_id")
+  triggerType    TriggerType @default(NEWS)
+  headline       String
+  body           String?
+  sourceUrl      String?     @map("source_url")
+  relevanceScore Float       @default(0.5) @map("relevance_score")
+  isVerified     Boolean     @default(false) @map("is_verified")
+  expiresAt      DateTime?   @map("expires_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  company        Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, triggerType])
+  @@index([expiresAt])
+  @@map("trigger_signals")
+}
+
+// --- F4: Setu Deal Room ---
+enum DealRoomStatus {
+  ACTIVE
+  PAUSED
+  CLOSED_WON
+  CLOSED_NOT_FIT
+  PARKED
+}
+
+enum DealOutcomeType {
+  EXPLORATORY_CALL
+  DEMO_COMPLETED
+  MOU_SIGNED
+  DEAL_CLOSED
+  NOT_A_FIT
+  PARKED
+}
+
+model DealRoom {
+  id                 String          @id @default(uuid())
+  connectionId       String          @unique @map("connection_id")
+  initiatorUserId    String          @map("initiator_user_id")
+  partnerUserId      String          @map("partner_user_id")
+  title              String
+  initiatorGoal      String?         @map("initiator_goal")
+  partnerGoal        String?         @map("partner_goal")
+  status             DealRoomStatus  @default(ACTIVE)
+  ndaRequired        Boolean         @default(false) @map("nda_required")
+  closedAt           DateTime?       @map("closed_at")
+  closedOutcome      DealOutcomeType? @map("closed_outcome")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  milestones         DealRoomMilestone[]
+  documents          DealRoomDocument[]
+  outcome            PartnershipOutcome?
+
+  @@index([initiatorUserId])
+  @@index([partnerUserId])
+  @@map("deal_rooms")
+}
+
+model DealRoomMilestone {
+  id           String    @id @default(uuid())
+  dealRoomId   String    @map("deal_room_id")
+  title        String
+  description  String?
+  dueDate      DateTime? @map("due_date")
+  isCompleted  Boolean   @default(false) @map("is_completed")
+  completedAt  DateTime? @map("completed_at")
+  assignedTo   String?   @map("assigned_to") // userId
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  dealRoom     DealRoom  @relation(fields: [dealRoomId], references: [id], onDelete: Cascade)
+
+  @@index([dealRoomId])
+  @@map("deal_room_milestones")
+}
+
+model DealRoomDocument {
+  id            String    @id @default(uuid())
+  dealRoomId    String    @map("deal_room_id")
+  uploadedByUserId String @map("uploaded_by_user_id")
+  name          String
+  fileUrl       String    @map("file_url")
+  fileType      String?   @map("file_type")
+  sizeBytes     Int?      @map("size_bytes")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  dealRoom      DealRoom  @relation(fields: [dealRoomId], references: [id], onDelete: Cascade)
+
+  @@index([dealRoomId])
+  @@map("deal_room_documents")
+}
+
+// --- F5: Outcome-Based Reputation Engine ---
+model PartnershipOutcome {
+  id                    String          @id @default(uuid())
+  dealRoomId            String          @unique @map("deal_room_id")
+  outcomeType           DealOutcomeType @map("outcome_type")
+  partnershipCategory   String?         @map("partnership_category") // DISTRIBUTION, SUPPLIER, JOINT_VENTURE, etc.
+  geographyTag          String?         @map("geography_tag")
+  dealValue             Float?          @map("deal_value")
+  initiatorRating       Int?            @map("initiator_rating")    // 1-5
+  partnerRating         Int?            @map("partner_rating")      // 1-5
+  initiatorFeedback     String?         @map("initiator_feedback")
+  partnerFeedback       String?         @map("partner_feedback")
+  initiatorSubmittedAt  DateTime?       @map("initiator_submitted_at")
+  partnerSubmittedAt    DateTime?       @map("partner_submitted_at")
+  isDisputed            Boolean         @default(false) @map("is_disputed")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  dealRoom              DealRoom        @relation(fields: [dealRoomId], references: [id], onDelete: Cascade)
+
+  @@map("partnership_outcomes")
+}
+
+model ReputationScore {
+  id                     String    @id @default(uuid())
+  profileId              String    @unique @map("profile_id")
+  totalDeals             Int       @default(0) @map("total_deals")
+  closedWonCount         Int       @default(0) @map("closed_won_count")
+  averageRatingReceived  Float     @default(0) @map("average_rating_received")
+  responsivenessScore    Float     @default(0) @map("responsiveness_score")
+  topCategories          String?   @map("top_categories")   // JSON array
+  topGeographies         String?   @map("top_geographies")  // JSON array
+  lastComputedAt         DateTime  @default(now()) @map("last_computed_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  profile                ProfessionalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("reputation_scores")
+}
+
+// ==========================================
+// GAP 1: MUTUAL OPPORTUNITY MATCHING MODELS
+// ==========================================
+
+enum OpportunityOwnerType {
+  COMPANY
+  PROFESSIONAL
+}
+
+enum OpportunityStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum OpportunityVisibility {
+  DISCOVERABLE
+  PRIVATE
+}
+
+enum OpportunityMatchLevel {
+  MUTUAL_INTENT
+  POTENTIAL_FIT
+  NOT_ELIGIBLE
+}
+
+enum OpportunityRequestStatus {
+  PENDING
+  CLARIFICATION_REQUESTED
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+model OpportunityProfile {
+  id               String                 @id @default(uuid())
+  ownerType        OpportunityOwnerType   @default(PROFESSIONAL) @map("owner_type")
+  companyId        String?                @map("company_id")
+  profileId        String?                @map("profile_id")
+  createdById      String                 @map("created_by_id")
+  title            String
+  summary          String?
+  status           OpportunityStatus      @default(DRAFT)
+  visibility       OpportunityVisibility  @default(DISCOVERABLE)
+  approvalMode     String                 @default("MANUAL") @map("approval_mode")
+  targetIndustries String?                @map("target_industries")   // JSON array
+  targetMarkets    String?                @map("target_markets")      // JSON array
+  partnerTypes     String?                @map("partner_types")       // JSON array
+  startsAt         DateTime?              @map("starts_at")
+  expiresAt        DateTime?              @map("expires_at")
+  publishedAt      DateTime?              @map("published_at")
+  pausedAt         DateTime?              @map("paused_at")
+  archivedAt       DateTime?              @map("archived_at")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  company          Company?               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  profile          ProfessionalProfile?   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdBy        User                   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  requirements     OpportunityRequirement[]
+  offers           OpportunityOffer[]
+
+  sourceMatches    OpportunityMatch[]     @relation("SourceOpportunity")
+  targetMatches    OpportunityMatch[]     @relation("TargetOpportunity")
+
+  sentRequests     OpportunityRequest[]   @relation("SenderOpportunity")
+  receivedRequests OpportunityRequest[]   @relation("RecipientOpportunity")
+
+  events           OpportunityEvent[]
+
+  @@index([ownerType, status, visibility])
+  @@index([companyId])
+  @@index([profileId])
+  @@map("opportunity_profiles")
+}
+
+model OpportunityRequirement {
+  id                    String              @id @default(uuid())
+  opportunityProfileId  String              @map("opportunity_profile_id")
+  businessObjective     String              @map("business_objective") // e.g. "distribution_partnership", "contract_manufacturing"
+  partnerType           String?             @map("partner_type")       // e.g. "airport_concessionaire", "regional_distributor"
+  industries            String?             // JSON array e.g. ["beverages", "hospitality"]
+  geographies           String?             // JSON array e.g. ["MY", "SG", "TH"]
+  description           String?
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  opportunityProfile    OpportunityProfile  @relation(fields: [opportunityProfileId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityProfileId])
+  @@map("opportunity_requirements")
+}
+
+model OpportunityOffer {
+  id                    String              @id @default(uuid())
+  opportunityProfileId  String              @map("opportunity_profile_id")
+  capability            String              // e.g. "hospitality_distribution", "organic_beverage_supply"
+  productsServices      String?             @map("products_services") // description/tags
+  marketAccess          String?             @map("market_access")     // e.g. "Changi T3 & T4 Lounges"
+  geographies           String?             // JSON array e.g. ["MY", "SG", "TH"]
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  opportunityProfile    OpportunityProfile  @relation(fields: [opportunityProfileId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityProfileId])
+  @@map("opportunity_offers")
+}
+
+model OpportunityMatch {
+  id                    String                @id @default(uuid())
+  sourceOpportunityId   String                @map("source_opportunity_id")
+  targetOpportunityId   String                @map("target_opportunity_id")
+  matchLevel            OpportunityMatchLevel @default(POTENTIAL_FIT) @map("match_level")
+  score                 Float                 @default(0)
+  evidenceJson          String                @map("evidence_json") // JSON with overlap details
+  whyMatches            String                @map("why_matches")   // Human readable explanation
+  status                String                @default("ACTIVE")
+  lastEvaluatedAt       DateTime              @default(now()) @map("last_evaluated_at")
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+
+  sourceOpportunity     OpportunityProfile    @relation("SourceOpportunity", fields: [sourceOpportunityId], references: [id], onDelete: Cascade)
+  targetOpportunity     OpportunityProfile    @relation("TargetOpportunity", fields: [targetOpportunityId], references: [id], onDelete: Cascade)
+
+  requests              OpportunityRequest[]
+
+  @@unique([sourceOpportunityId, targetOpportunityId])
+  @@index([sourceOpportunityId, matchLevel])
+  @@index([targetOpportunityId, matchLevel])
+  @@map("opportunity_matches")
+}
+
+model OpportunityRequest {
+  id                    String                    @id @default(uuid())
+  opportunityMatchId    String?                   @map("opportunity_match_id")
+  senderOpportunityId   String                    @map("sender_opportunity_id")
+  recipientOpportunityId String                   @map("recipient_opportunity_id")
+  senderUserId          String                    @map("sender_user_id")
+  recipientUserId       String                    @map("recipient_user_id")
+  message               String
+  status                OpportunityRequestStatus  @default(PENDING)
+  clarificationQuestion String?                   @map("clarification_question")
+  clarificationAnswer   String?                   @map("clarification_answer")
+  decisionReason        String?                   @map("decision_reason")
+  connectionId          String?                   @map("connection_id")
+  dealRoomId            String?                   @map("deal_room_id")
+  respondedAt           DateTime?                 @map("responded_at")
+  createdAt             DateTime                  @default(now()) @map("created_at")
+  updatedAt             DateTime                  @updatedAt @map("updated_at")
+
+  match                 OpportunityMatch?         @relation(fields: [opportunityMatchId], references: [id], onDelete: SetNull)
+  senderOpportunity     OpportunityProfile        @relation("SenderOpportunity", fields: [senderOpportunityId], references: [id], onDelete: Cascade)
+  recipientOpportunity   OpportunityProfile        @relation("RecipientOpportunity", fields: [recipientOpportunityId], references: [id], onDelete: Cascade)
+  senderUser            User                      @relation("SenderUser", fields: [senderUserId], references: [id], onDelete: Cascade)
+  recipientUser          User                      @relation("RecipientUser", fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@index([recipientUserId, status])
+  @@index([senderUserId, status])
+  @@map("opportunity_requests")
+}
+
+model OpportunityEvent {
+  id                    String              @id @default(uuid())
+  opportunityProfileId  String              @map("opportunity_profile_id")
+  userId                String              @map("user_id")
+  eventType             String              @map("event_type") // CREATED, PUBLISHED, PAUSED, ARCHIVED, REQUEST_SENT, REQUEST_ACCEPTED, etc.
+  detailsJson           String?             @map("details_json")
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  opportunityProfile    OpportunityProfile  @relation(fields: [opportunityProfileId], references: [id], onDelete: Cascade)
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityProfileId, eventType])
+  @@map("opportunity_events")
+}

@@ -1,0 +1,129 @@
+name: Production CI/CD Pipeline - Azure Auto-Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # Required for Azure Workload Identity Federation (OIDC)
+
+jobs:
+  # ============================================================================
+  # STEP 1: Test, Lint & Verify Workspaces
+  # ============================================================================
+  verify:
+    name: Test & Lint Codebase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: |
+          cd apps/backend
+          npx prisma generate
+
+      - name: Verify Backend Build
+        run: npm run build --workspace=@setu/backend
+
+      - name: Verify Frontend Build
+        env:
+          VITE_API_URL: https://api.projectsetu.org/api/v1
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+        run: npm run build --workspace=@setu/frontend
+
+  # ============================================================================
+  # STEP 2: Build & Deploy Backend (Azure Container Apps)
+  # ============================================================================
+  deploy-backend:
+    name: Deploy Backend to Azure
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Log in to Azure using Workload Identity Federation (OIDC) or Service Principal
+      - name: Log in to Azure (Workload Identity / OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Azure Container Registry (ACR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
+          username: ${{ secrets.AZURE_ACR_USERNAME }}
+          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+      - name: Build and Push Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          push: true
+          tags: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:${{ github.sha }},${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:latest
+          cache-from: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:buildcache
+          cache-to: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:buildcache,mode=max
+
+      - name: Run Prisma Database Migrations
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          npm ci
+          cd apps/backend
+          npx prisma db push --skip-generate
+
+      - name: Deploy Backend Container to Azure Container Apps
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          imageToDeploy: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:${{ github.sha }}
+          containerAppName: ${{ secrets.AZURE_BACKEND_APP_NAME || 'setu-backend-api' }}
+          resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP || 'rg-projectsetu-prod' }}
+
+  # ============================================================================
+  # STEP 3: Build & Deploy Frontend (Azure Static Web Apps)
+  # ============================================================================
+  deploy-frontend:
+    name: Deploy Frontend (projectsetu.org)
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/"
+          app_build_command: "npm run build --workspace=@setu/frontend"
+          output_location: "apps/frontend/dist"
+        env:
+          VITE_API_URL: https://api.projectsetu.org/api/v1
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}

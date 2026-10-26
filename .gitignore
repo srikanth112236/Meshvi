@@ -1,0 +1,50 @@
+# Node.js
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.npm/
+*.tsbuildinfo
+
+# Environment variables & secrets
+.env
+**/.env
+.env.local
+**/.env.local
+.env.*.local
+**/.env.*.local
+!.env.example
+!**/.env.example
+
+# Logs
+logs/
+*.log
+**/*.log
+npm-debug.log*
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Prisma
+apps/backend/prisma/*.db
+apps/backend/prisma/*.db-journal
+
+# Expo & Mobile
+.expo/
+**/.expo/
+android/
+ios/
+
+# Uploads & Temporary files
+uploads/
+**/uploads/
+scratch/
