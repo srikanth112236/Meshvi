@@ -1,0 +1,55 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://192.168.1.6:3500/api/v1",
+        "EXPO_PUBLIC_BACKEND_IP": "192.168.1.6",
+        "EXPO_PUBLIC_BACKEND_PORT": "3500"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://meshvi.onrender.com/api/v1",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_REDIRECT_URI": "https://meshvi-1.onrender.com/auth/google/callback"
+      }
+    },
+    "production-apk": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://meshvi.onrender.com/api/v1",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_REDIRECT_URI": "https://meshvi-1.onrender.com/auth/google/callback"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://meshvi.onrender.com/api/v1",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_REDIRECT_URI": "https://meshvi-1.onrender.com/auth/google/callback"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

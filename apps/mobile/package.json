@@ -8,6 +8,7 @@
     "expo": "~58.0.19",
     "expo-asset": "~58.0.18",
     "expo-constants": "~58.0.13",
+    "expo-dev-client": "~58.0.15",
     "expo-font": "~58.0.10",
     "expo-image-picker": "~58.0.10",
     "expo-linear-gradient": "^58.0.3",
@@ -25,7 +26,11 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:dev:android": "eas build --profile development --platform android",
+    "build:preview:android": "eas build --profile preview --platform android",
+    "build:apk:android": "eas build --profile production-apk --platform android",
+    "build:prod:android": "eas build --profile production --platform android"
   },
   "private": true
 }

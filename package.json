@@ -15,7 +15,11 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "test:flow": "ts-node --project apps/backend/tsconfig.json scripts/test-connections-flow.ts",
-    "lint": "npm run lint --workspaces"
+    "lint": "npm run lint --workspaces",
+    "mobile:build:dev": "npm run build:dev:android --workspace=@setu/mobile",
+    "mobile:build:preview": "npm run build:preview:android --workspace=@setu/mobile",
+    "mobile:build:apk": "npm run build:apk:android --workspace=@setu/mobile",
+    "mobile:build:prod": "npm run build:prod:android --workspace=@setu/mobile"
   },
   "devDependencies": {
     "@prisma/client": "^5.22.0",
