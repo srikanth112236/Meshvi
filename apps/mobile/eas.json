@@ -27,6 +27,17 @@
         "EXPO_PUBLIC_GOOGLE_REDIRECT_URI": "https://meshvi-1.onrender.com/auth/google/callback"
       }
     },
+    "apk": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://meshvi.onrender.com/api/v1",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_REDIRECT_URI": "https://meshvi-1.onrender.com/auth/google/callback"
+      }
+    },
     "production-apk": {
       "distribution": "internal",
       "android": {
