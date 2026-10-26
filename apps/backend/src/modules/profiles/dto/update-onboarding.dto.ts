@@ -142,6 +142,11 @@ export class UpdateOnboardingDto {
   @IsOptional()
   phoneNumber?: string;
 
+  @ApiPropertyOptional({ example: '+91 98765 43210' })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
   // Step 3: Experience & Expertise
   @ApiPropertyOptional({ type: [ExperienceItemDto] })
   @IsArray()

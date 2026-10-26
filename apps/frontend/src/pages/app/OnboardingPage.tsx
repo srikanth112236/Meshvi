@@ -12,7 +12,6 @@ import {
   Save,
   ShieldCheck,
   Building,
-  Sparkles,
   Camera,
   Upload,
   Image as ImageIcon,
@@ -24,8 +23,6 @@ import {
   ShieldAlert,
   ChevronDown,
   Search,
-  Calendar,
-  Lock,
   Edit2,
   X,
   MapPin,
@@ -76,20 +73,6 @@ const SUGGESTED_HEADLINES = [
   'VP of Global Corporate Development & Cross-Border M&A',
   'Director of Strategic Sourcing & Enterprise Procurement',
   'Chief Technology Officer & Enterprise Architecture Lead',
-];
-
-const SUGGESTED_SEEKING = [
-  'Enterprise retail channel distribution partners across APAC & GCC.',
-  'Tier-1 SOC-2 compliant cloud infrastructure & AI integration providers.',
-  'B2B co-marketing & co-selling alliances with zero direct product conflict.',
-  'Cross-border trade finance & institutional liquidity partners.',
-];
-
-const SUGGESTED_OFFERING = [
-  'Direct access to 450+ verified enterprise buyer accounts across regions.',
-  'Proprietary supply chain orchestration and routing API architecture.',
-  'Bilateral corporate venture capital & growth equity deployment rails.',
-  'High-touch enterprise software sales integration & channel co-selling.',
 ];
 
 const POPULAR_FIREWALL_PRESETS = [
@@ -219,6 +202,10 @@ export const OnboardingPage: React.FC = () => {
   const [selectedProtocols, setSelectedProtocols] = useState<Array<'DEAL_ROOM' | 'SCHEDULED_CALL'>>([
     'DEAL_ROOM',
   ]);
+
+  // Inline Review Accordion States (Intent & Firewall hidden from wizard, editable in review)
+  const [showEditIntent, setShowEditIntent] = useState(false);
+  const [showEditFirewall, setShowEditFirewall] = useState(false);
 
   // Step 5: 5-Second Provisioning Animation
   const [isProvisioning, setIsProvisioning] = useState(false);
@@ -487,7 +474,7 @@ export const OnboardingPage: React.FC = () => {
     };
 
     try {
-      const res = await fetch('/api/v1/profiles/me/onboarding', {
+      let res = await fetch('/api/v1/profiles/me/onboarding', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -496,9 +483,25 @@ export const OnboardingPage: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      let data = await res.json();
+
+      // Graceful backward-compatible retry if server instance hasn't updated its DTO whitelist yet
+      if (!res.ok && data.error && JSON.stringify(data.error).includes('phoneNumber should not exist')) {
+        const fallbackPayload = { ...payload };
+        delete (fallbackPayload as any).phoneNumber;
+        res = await fetch('/api/v1/profiles/me/onboarding', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(fallbackPayload),
+        });
+        data = await res.json();
+      }
+
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || data.error || 'Failed to save onboarding data.');
+        throw new Error(data.error?.message || (Array.isArray(data.error) ? data.error.join(', ') : data.error) || 'Failed to save onboarding data.');
       }
 
       await refreshUser();
@@ -572,7 +575,7 @@ export const OnboardingPage: React.FC = () => {
       }
     }
     await saveProgress(false);
-    setStep((prev) => Math.min(prev + 1, 5));
+    setStep((prev) => Math.min(prev + 1, 3));
   };
 
   const handleBack = () => {
@@ -582,9 +585,7 @@ export const OnboardingPage: React.FC = () => {
   const stepsList = [
     { num: 1, label: 'Identity' },
     { num: 2, label: 'Affiliation & Scope' },
-    { num: 3, label: 'Intent' },
-    { num: 4, label: 'Firewall' },
-    { num: 5, label: 'Review & Launch' },
+    { num: 3, label: 'Review & Launch' },
   ];
 
   // -------------------------------------------------------------
@@ -714,7 +715,7 @@ export const OnboardingPage: React.FC = () => {
               </span>
             </div>
             <p className="text-[10px] text-text-muted leading-tight mt-0.5">
-              Verified Intent Infrastructure &bull; Step {step} of 5
+              Verified Intent Infrastructure &bull; Step {step} of 3
             </p>
           </div>
         </div>
@@ -1338,299 +1339,9 @@ export const OnboardingPage: React.FC = () => {
           )}
 
           {/* ======================================================== */}
-          {/* STEP 3: COMMERCIAL INTENT (Compact & Balanced Spacing)   */}
+          {/* STEP 3: REVIEW PAGE (BEST ENGAGING EXECUTIVE DOSSIER)   */}
           {/* ======================================================== */}
           {step === 3 && (
-            <div className="flex flex-col justify-between space-y-3 animate-fade-in h-full">
-              {/* Header */}
-              <div className="flex items-center justify-between pb-1.5 border-b border-border/80 shrink-0">
-                <div className="flex items-center space-x-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary-soft text-primary flex items-center justify-center font-bold">
-                    <Target className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-black text-navy leading-tight">Commercial Business Intent</h2>
-                    <p className="text-[11px] text-text-muted leading-tight">Define your bilateral mandate to calibrate MESHVI's AI Synergy Radar.</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-primary bg-primary-soft px-2.5 py-0.5 rounded-full border border-primary/20">
-                  Step 3 of 5 &bull; Bilateral Intent Vectors
-                </span>
-              </div>
-
-              {/* Grid: Card 1 (Seeking) & Card 2 (Offering) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 overflow-hidden">
-                {/* Card 1: What are you seeking */}
-                <div className="p-3 bg-surface-muted/30 border border-border rounded-xl flex flex-col justify-between space-y-2">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-navy flex items-center space-x-1.5">
-                        <Search className="w-3.5 h-3.5 text-primary" />
-                        <span>Seeking Mandate (Demand) *</span>
-                      </label>
-                      <span className="text-[10px] text-text-muted">Auto-fill preset below</span>
-                    </div>
-                    <textarea
-                      rows={3}
-                      required
-                      value={lookingFor}
-                      onChange={(e) => setLookingFor(e.target.value)}
-                      placeholder="e.g. Enterprise retail channel distribution partners across APAC..."
-                      className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs text-navy focus:ring-1 focus:ring-primary focus:outline-none resize-none leading-relaxed"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-text-muted block mb-1">Quick Presets:</span>
-                    <div className="flex flex-col space-y-1">
-                      {SUGGESTED_SEEKING.map((s, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setLookingFor(s)}
-                          className="text-left text-[10px] px-2.5 py-1 bg-surface hover:bg-primary-soft hover:text-primary text-text-muted rounded-lg border border-border/80 transition-colors cursor-pointer truncate"
-                          title={s}
-                        >
-                          + {s}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 2: What you offer */}
-                <div className="p-3 bg-surface-muted/30 border border-border rounded-xl flex flex-col justify-between space-y-2">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-navy flex items-center space-x-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span>Value Proposition (Supply) *</span>
-                      </label>
-                      <span className="text-[10px] text-text-muted">Auto-fill preset below</span>
-                    </div>
-                    <textarea
-                      rows={3}
-                      required
-                      value={offering}
-                      onChange={(e) => setOffering(e.target.value)}
-                      placeholder="e.g. Direct access to 450+ verified enterprise buyer accounts..."
-                      className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-xs text-navy focus:ring-1 focus:ring-primary focus:outline-none resize-none leading-relaxed"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-text-muted block mb-1">Quick Presets:</span>
-                    <div className="flex flex-col space-y-1">
-                      {SUGGESTED_OFFERING.map((o, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setOffering(o)}
-                          className="text-left text-[10px] px-2.5 py-1 bg-surface hover:bg-primary-soft hover:text-primary text-text-muted rounded-lg border border-border/80 transition-colors cursor-pointer truncate"
-                          title={o}
-                        >
-                          + {o}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Synergy Guarantee strip */}
-              <div className="p-2.5 bg-gradient-to-r from-navy via-slate-900 to-navy text-white rounded-xl border border-slate-800 flex items-center justify-between shrink-0">
-                <div className="flex items-center space-x-2">
-                  <Cpu className="w-4 h-4 text-sky-400 shrink-0" />
-                  <span className="text-[11px] font-semibold text-slate-200">
-                    <strong className="text-white">MESHVI Synergy Radar:</strong> Counterparties are matched strictly by reciprocal intent alignment.
-                  </span>
-                </div>
-                <span className="text-[10px] text-sky-400 font-bold bg-sky-950/60 px-2 py-0.5 rounded-md border border-sky-800 shrink-0">
-                  AI Calibrated
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================== */}
-          {/* STEP 4: ANTI-SPAM FIREWALL (Compact & Balanced Spacing)  */}
-          {/* ======================================================== */}
-          {step === 4 && (
-            <div className="flex flex-col justify-between space-y-3 animate-fade-in h-full">
-              {/* Header */}
-              <div className="flex items-center justify-between pb-1.5 border-b border-border/80 shrink-0">
-                <div className="flex items-center space-x-2">
-                  <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold border border-rose-200">
-                    <ShieldAlert className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-black text-navy leading-tight">Anti-Spam Pitch Firewall & Protocol</h2>
-                    <p className="text-[11px] text-text-muted leading-tight">Inbound proposals matching blocked tags are intercepted before reaching your inbox.</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
-                  {firewallTags.length} Interceptors Active
-                </span>
-              </div>
-
-              {/* Card 1: Blocked Topic Tags Cloud & Add custom */}
-              <div className="p-3 bg-surface-muted/30 border border-border rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-navy flex items-center space-x-1.5">
-                    <Lock className="w-3.5 h-3.5 text-rose-600" />
-                    <span>Active Blocked Topic Perimeter</span>
-                  </span>
-                  <span className="text-[10px] text-text-muted">Click ✕ to unblock</span>
-                </div>
-
-                {/* Tag Pills */}
-                <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto p-1 bg-surface rounded-lg border border-border/60">
-                  {firewallTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-rose-50 border border-rose-300 text-rose-800 rounded-lg text-[10px] font-bold shadow-2xs"
-                    >
-                      <span>✕ {tag}</span>
-                      <button
-                        type="button"
-                        onClick={() => setFirewallTags(firewallTags.filter((t) => t !== tag))}
-                        className="text-rose-400 hover:text-rose-700 ml-1 cursor-pointer"
-                        title="Remove filter"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-
-                {/* Quick Add Presets + Custom Tag Input */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  <span className="text-[10px] font-bold text-text-muted">Quick add:</span>
-                  {POPULAR_FIREWALL_PRESETS.map((p, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        if (!firewallTags.includes(p)) setFirewallTags([...firewallTags, p]);
-                      }}
-                      className="text-[10px] px-2 py-0.5 bg-surface hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 text-text-muted rounded-md border border-border transition-colors cursor-pointer"
-                    >
-                      + {p}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex space-x-2 pt-0.5">
-                  <input
-                    type="text"
-                    value={customTagInput}
-                    onChange={(e) => setCustomTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && customTagInput.trim()) {
-                        e.preventDefault();
-                        if (!firewallTags.includes(customTagInput.trim())) {
-                          setFirewallTags([...firewallTags, customTagInput.trim()]);
-                        }
-                        setCustomTagInput('');
-                      }
-                    }}
-                    placeholder="Type custom blocked keyword (e.g. Cold Crypto Pitch, Offshore Outbound)..."
-                    className="flex-1 px-3 py-1.5 bg-surface border border-border rounded-lg text-xs text-navy focus:ring-1 focus:ring-primary focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (customTagInput.trim() && !firewallTags.includes(customTagInput.trim())) {
-                        setFirewallTags([...firewallTags, customTagInput.trim()]);
-                        setCustomTagInput('');
-                      }
-                    }}
-                    className="px-3.5 py-1.5 bg-navy hover:bg-neutral-800 text-white font-bold text-xs rounded-lg cursor-pointer transition-colors"
-                  >
-                    Add Interceptor
-                  </button>
-                </div>
-              </div>
-
-              {/* Card 2: Default Reception Protocol (Can select single or both) */}
-              <div className="p-3 bg-surface-muted/30 border border-border rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-navy">
-                    Default Reception Protocol (Single or Both Active)
-                  </span>
-                  <span className="text-[10px] text-primary font-bold bg-primary-soft px-2 py-0.5 rounded-full border border-primary/20">
-                    {selectedProtocols.length === 2 ? 'Both Protocols Active ✓' : '1 Protocol Active'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div
-                    onClick={() => toggleProtocol('DEAL_ROOM')}
-                    className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-start justify-between ${
-                      selectedProtocols.includes('DEAL_ROOM')
-                        ? 'bg-primary-soft/80 border-primary ring-1 ring-primary'
-                        : 'bg-surface border-border hover:bg-surface-muted'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center space-x-1.5">
-                        <Lock className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-xs font-bold text-navy">Micro Deal Room First</span>
-                      </div>
-                      <p className="text-[10px] text-text-muted mt-0.5 leading-snug">
-                        Require mutual agenda & bilateral NDA before releasing calendar slots.
-                      </p>
-                    </div>
-                    <div className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 ml-2 ${
-                      selectedProtocols.includes('DEAL_ROOM') ? 'bg-primary border-primary text-white' : 'border-border'
-                    }`}>
-                      {selectedProtocols.includes('DEAL_ROOM') && <Check className="w-3 h-3" />}
-                    </div>
-                  </div>
-
-                  <div
-                    onClick={() => toggleProtocol('SCHEDULED_CALL')}
-                    className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-start justify-between ${
-                      selectedProtocols.includes('SCHEDULED_CALL')
-                        ? 'bg-primary-soft/80 border-primary ring-1 ring-primary'
-                        : 'bg-surface border-border hover:bg-surface-muted'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center space-x-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-xs font-bold text-navy">Direct Calendar Slot Lock</span>
-                      </div>
-                      <p className="text-[10px] text-text-muted mt-0.5 leading-snug">
-                        Permit 1-click in-stream calendar slot locks upon verified mutual match.
-                      </p>
-                    </div>
-                    <div className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 ml-2 ${
-                      selectedProtocols.includes('SCHEDULED_CALL') ? 'bg-primary border-primary text-white' : 'border-border'
-                    }`}>
-                      {selectedProtocols.includes('SCHEDULED_CALL') && <Check className="w-3 h-3" />}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Perimeter Seal Status */}
-              <div className="p-2.5 bg-emerald-50 text-emerald-950 rounded-xl border border-emerald-200 flex items-center justify-between shrink-0">
-                <div className="flex items-center space-x-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span className="text-[11px] font-semibold text-emerald-900">
-                    <strong className="text-emerald-950">Inbound Shield Engaged:</strong> 100% of unsolicited pitches matching your {firewallTags.length} filters are rejected automatically.
-                  </span>
-                </div>
-                <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wider">
-                  Zero Spam
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================== */}
-          {/* STEP 5: REVIEW PAGE (BEST ENGAGING EXECUTIVE DOSSIER)   */}
-          {/* ======================================================== */}
-          {step === 5 && (
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between pb-2 border-b border-border">
                 <div className="flex items-center space-x-2">
@@ -1729,14 +1440,47 @@ export const OnboardingPage: React.FC = () => {
                       <Target className="w-3.5 h-3.5 text-primary" />
                       <span>Commercial Intent Mandate</span>
                     </span>
-                    <button type="button" onClick={() => setStep(3)} className="text-[10px] text-primary font-bold hover:underline">Edit</button>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditIntent(!showEditIntent)}
+                      className="text-[10px] text-primary font-bold hover:underline cursor-pointer"
+                    >
+                      {showEditIntent ? 'Done' : 'Customize'}
+                    </button>
                   </div>
-                  <div className="text-xs text-text-muted leading-relaxed line-clamp-3">
-                    <strong className="text-navy">Seeking:</strong> {lookingFor}
-                  </div>
-                  <div className="text-xs text-text-muted leading-relaxed line-clamp-2">
-                    <strong className="text-navy">Offering:</strong> {offering}
-                  </div>
+                  {showEditIntent ? (
+                    <div className="space-y-2 pt-1 animate-fade-in">
+                      <div>
+                        <label className="text-[10px] font-bold text-navy block mb-0.5">Looking For</label>
+                        <textarea
+                          rows={2}
+                          value={lookingFor}
+                          onChange={(e) => setLookingFor(e.target.value)}
+                          className="w-full text-xs p-2 bg-surface border border-border rounded-lg text-navy focus:ring-1 focus:ring-primary focus:outline-none"
+                          placeholder="What partners or opportunities are you looking for?"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-navy block mb-0.5">Offering</label>
+                        <textarea
+                          rows={2}
+                          value={offering}
+                          onChange={(e) => setOffering(e.target.value)}
+                          className="w-full text-xs p-2 bg-surface border border-border rounded-lg text-navy focus:ring-1 focus:ring-primary focus:outline-none"
+                          placeholder="What resources, deals, or expertise do you offer?"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-xs text-text-muted leading-relaxed line-clamp-3">
+                        <strong className="text-navy">Seeking:</strong> {lookingFor || 'Executive alliances, strategic co-ventures, enterprise integration'}
+                      </div>
+                      <div className="text-xs text-text-muted leading-relaxed line-clamp-2">
+                        <strong className="text-navy">Offering:</strong> {offering || 'Enterprise domain expertise, capital access, high-trust network'}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Firewall Column */}
@@ -1746,40 +1490,134 @@ export const OnboardingPage: React.FC = () => {
                       <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
                       <span>Pitch Barrier & Protocols</span>
                     </span>
-                    <button type="button" onClick={() => setStep(4)} className="text-[10px] text-primary font-bold hover:underline">Edit</button>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditFirewall(!showEditFirewall)}
+                      className="text-[10px] text-primary font-bold hover:underline cursor-pointer"
+                    >
+                      {showEditFirewall ? 'Done' : 'Customize'}
+                    </button>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {firewallTags.slice(0, 4).map((t) => (
-                      <span key={t} className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-rose-50 border border-rose-200 text-rose-800">
-                        ✕ {t}
-                      </span>
-                    ))}
-                    {firewallTags.length > 4 && (
-                      <span className="text-[9px] font-bold text-text-muted self-center">
-                        +{firewallTags.length - 4} more
-                      </span>
-                    )}
-                  </div>
-                  <div className="pt-1 text-[10px] text-text-muted">
-                    <strong className="text-navy">Reception:</strong> {selectedProtocols.map(p => p === 'DEAL_ROOM' ? 'Micro Deal Room' : 'Calendar Slot Lock').join(' & ')}
-                  </div>
+                  {showEditFirewall ? (
+                    <div className="space-y-2 pt-1 animate-fade-in">
+                      <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1 bg-surface rounded-lg border border-border/60">
+                        {firewallTags.map((t) => (
+                          <span key={t} className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-rose-50 border border-rose-200 text-rose-800 flex items-center space-x-1">
+                            <span>✕ {t}</span>
+                            <button
+                              type="button"
+                              onClick={() => setFirewallTags(firewallTags.filter((tag) => tag !== t))}
+                              className="text-rose-400 hover:text-rose-700 ml-1 cursor-pointer"
+                            >
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Quick Presets */}
+                      <div className="flex flex-wrap items-center gap-1">
+                        <span className="text-[9px] font-bold text-text-muted">Quick add:</span>
+                        {POPULAR_FIREWALL_PRESETS.map((p, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (!firewallTags.includes(p)) setFirewallTags([...firewallTags, p]);
+                            }}
+                            className="text-[9px] px-1.5 py-0.5 bg-surface hover:bg-rose-50 hover:text-rose-700 text-text-muted rounded border border-border cursor-pointer transition-colors"
+                          >
+                            + {p}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex space-x-1.5">
+                        <input
+                          type="text"
+                          value={customTagInput}
+                          onChange={(e) => setCustomTagInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && customTagInput.trim()) {
+                              e.preventDefault();
+                              if (!firewallTags.includes(customTagInput.trim())) {
+                                setFirewallTags([...firewallTags, customTagInput.trim()]);
+                              }
+                              setCustomTagInput('');
+                            }
+                          }}
+                          placeholder="Add blocked topic..."
+                          className="flex-1 px-2 py-1 bg-surface border border-border rounded text-[11px] text-navy focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (customTagInput.trim() && !firewallTags.includes(customTagInput.trim())) {
+                              setFirewallTags([...firewallTags, customTagInput.trim()]);
+                              setCustomTagInput('');
+                            }
+                          }}
+                          className="px-2 py-1 bg-navy text-white text-[10px] font-bold rounded cursor-pointer"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      {/* Protocols */}
+                      <div className="flex items-center space-x-3 pt-1 text-[10px] text-navy font-bold">
+                        <label className="flex items-center space-x-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedProtocols.includes('DEAL_ROOM')}
+                            onChange={() => toggleProtocol('DEAL_ROOM')}
+                            className="rounded text-primary focus:ring-0"
+                          />
+                          <span>Micro Deal Room</span>
+                        </label>
+                        <label className="flex items-center space-x-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedProtocols.includes('SCHEDULED_CALL')}
+                            onChange={() => toggleProtocol('SCHEDULED_CALL')}
+                            className="rounded text-primary focus:ring-0"
+                          />
+                          <span>Direct Slot Lock</span>
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap gap-1">
+                        {firewallTags.slice(0, 4).map((t) => (
+                          <span key={t} className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-rose-50 border border-rose-200 text-rose-800">
+                            ✕ {t}
+                          </span>
+                        ))}
+                        {firewallTags.length > 4 && (
+                          <span className="text-[9px] font-bold text-text-muted self-center">
+                            +{firewallTags.length - 4} more
+                          </span>
+                        )}
+                      </div>
+                      <div className="pt-1 text-[10px] text-text-muted">
+                        <strong className="text-navy">Reception:</strong> {selectedProtocols.map(p => p === 'DEAL_ROOM' ? 'Micro Deal Room' : 'Calendar Slot Lock').join(' & ')}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* Launch Action */}
-              <div className="pt-2 text-center space-y-2">
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => saveProgress(true)}
-                  className="w-full sm:w-auto px-8 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-black text-xs shadow-md transition-all flex items-center justify-center space-x-2 mx-auto cursor-pointer"
-                >
-                  <span>{loading ? 'Initializing Node...' : 'Authorize Identity & Initialize MESHVI Workspace (5s) →'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <p className="text-[10px] text-text-muted">
-                  Launches 5-second workspace initialization with calibrated routing.
-                </p>
+              {/* Ready Confirmation Banner (Duplicate button removed!) */}
+              <div className="p-3 bg-primary-soft/50 border border-primary/20 rounded-xl flex items-center justify-between text-xs">
+                <div className="flex items-center space-x-2">
+                  <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-navy font-medium">
+                    Verified Executive Node ready for workspace initialization with calibrated high-trust routing.
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-wider shrink-0 ml-2">
+                  Click Launch Below ↓
+                </span>
               </div>
             </div>
           )}
@@ -1798,11 +1636,11 @@ export const OnboardingPage: React.FC = () => {
                 className="px-3.5 py-1.5 bg-surface hover:bg-surface-muted border border-border text-navy rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs hover:border-slate-300"
               >
                 <ArrowLeft className="w-3.5 h-3.5 text-primary" />
-                <span>Back to Step {step - 1}</span>
+                <span>{step === 3 ? 'Back to Affiliation' : 'Back to Step 1'}</span>
               </button>
             ) : (
               <div className="text-[11px] text-text-muted font-medium">
-                Step 1 of 5 &bull; Identity
+                Step 1 of 3 &bull; Identity
               </div>
             )}
           </div>
@@ -1830,7 +1668,7 @@ export const OnboardingPage: React.FC = () => {
               <span>Save Draft</span>
             </button>
 
-            {step < 5 ? (
+            {step < 3 ? (
               <button
                 type="button"
                 onClick={handleNext}

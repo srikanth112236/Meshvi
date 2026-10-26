@@ -45,6 +45,8 @@ export class ProfilesService {
     }
 
     const updatedProfile = await this.prisma.$transaction(async (tx) => {
+      const effectivePhone = (dto.phoneNumber || dto.phone)?.trim();
+
       // 1. Update Profile entity
       const profile = await tx.professionalProfile.update({
         where: { id: existingProfile.id },
@@ -61,7 +63,7 @@ export class ProfilesService {
           industry: dto.industry !== undefined ? dto.industry.trim() : undefined,
           city: dto.city !== undefined ? dto.city.trim() : undefined,
           countryCode: dto.countryCode !== undefined ? dto.countryCode.trim().toUpperCase() : undefined,
-          phoneNumber: dto.phoneNumber !== undefined ? dto.phoneNumber.trim() : undefined,
+          phoneNumber: effectivePhone !== undefined ? effectivePhone : undefined,
           visibility: dto.visibility !== undefined ? dto.visibility : undefined,
         },
       });
@@ -129,8 +131,8 @@ export class ProfilesService {
 
       // 5. Update user onboarding state & phone number
       const userUpdateData: any = {};
-      if (dto.phoneNumber !== undefined && dto.phoneNumber.trim()) {
-        userUpdateData.phoneNumber = dto.phoneNumber.trim();
+      if (effectivePhone) {
+        userUpdateData.phoneNumber = effectivePhone;
         userUpdateData.phoneVerified = true;
       }
       if (dto.isCompleted) {
