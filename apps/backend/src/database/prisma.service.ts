@@ -112,6 +112,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
         this.logger.log(`✔ Super Admin created: ${adminEmail} (Password: Password123!)`);
       }
+
+      // Check if 500 diverse global members are seeded for live search
+      const seedCount = await (this as any).professionalProfile.count({
+        where: { isSeedData: true },
+      });
+      if (seedCount < 500) {
+        this.logger.log(`Found ${seedCount} seed profiles. Automatically seeding 500 diverse global members across India, Australia, UK, and worldwide...`);
+        const { seed500DiverseMembers } = await import('./diverse-seeder');
+        await seed500DiverseMembers(this);
+        this.logger.log('✔ Successfully seeded 500 diverse global members into live search database!');
+      }
     } catch (err: any) {
       this.logger.warn(`Seed check: ${err.message}`);
     }
