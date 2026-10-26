@@ -8,9 +8,9 @@
 ## 1. Completed Features
 - **Monorepo Workspace Scaffolding:** Configured root npm workspaces (`apps/backend` and `apps/frontend`).
 - **Network & Port Locking:**
-  - **Frontend:** Verified running on **Port 3100** (`http://localhost:3100`).
-  - **Backend API:** Verified running on **Port 3500** (`http://localhost:3500/api/v1`).
-  - **OpenAPI Swagger:** Verified running at `http://localhost:3500/api/docs`.
+  - **Frontend:** Verified running on **Port 3100** (`https://setu-frontend.onrender.com`).
+  - **Backend API:** Verified running on **Port 3500** (`https://setu-backend.onrender.com/api/v1`).
+  - **OpenAPI Swagger:** Verified running at `https://setu-backend.onrender.com/api/docs`.
   - **Frontend Dev Proxy:** Verified forwarding `/api/*` from Port 3100 to Port 3500.
 - **Database Architecture & Synchronization:**
   - Configured PostgreSQL 16 connection to dedicated schema `project_setu`.
@@ -70,7 +70,7 @@
 ## 4. API Endpoints Verified
 - `GET /api/v1/health` -> HTTP 200 (database connected, latency ~2ms)
 - `GET /api/docs` -> HTTP 200 (Swagger UI operational)
-- `GET http://localhost:3100/api/v1/health` -> HTTP 200 (Vite proxy operational)
+- `GET https://setu-frontend.onrender.com/api/v1/health` -> HTTP 200 (Vite proxy operational)
 
 ---
 

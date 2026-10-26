@@ -57,6 +57,6 @@ EXPOSE 3500
 
 # Health check for Azure App Service & Container Apps
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3500/api/v1/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider https://setu-backend.onrender.com/api/v1/health || exit 1
 
 CMD ["node", "dist/main"]

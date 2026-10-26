@@ -1,7 +1,7 @@
 # Project Setu — Architecture Decision Records (ADR)
 
 ## ADR-001: Port Allocation
-- **Decision:** Frontend is assigned port **3100** (`http://localhost:3100`), Backend is assigned port **3500** (`http://localhost:3500`).
+- **Decision:** Frontend is assigned port **3100** (`https://setu-frontend.onrender.com`), Backend is assigned port **3500** (`https://setu-backend.onrender.com`).
 - **Rationale:** Strict user instruction to avoid collisions with standard dev servers (3000, 5173, 5000, 8080).
 
 ## ADR-002: Monorepo Architecture

@@ -5,8 +5,8 @@
 This report documents the implementation and end-to-end verification of **Phase 7** (AI Provider Abstraction), **Phase 8** (Grounded Ranking, Relevance Signals & Explainability), and **Phase 9** (Connection & Introduction Request Engine) for the **Project Setu MVP**.
 
 All requirements have been met, rigorously tested via automated unit suites and live API probes, and verified against the designated ports:
-- **Frontend Live Port**: `http://localhost:3100`
-- **Backend Live Port**: `http://localhost:3500/api/v1`
+- **Frontend Live Port**: `https://setu-frontend.onrender.com`
+- **Backend Live Port**: `https://setu-backend.onrender.com/api/v1`
 - **Database Schema**: PostgreSQL 16 `project_setu` on database `leadcrm`
 
 ---

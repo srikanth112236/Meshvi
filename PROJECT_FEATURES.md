@@ -11,9 +11,9 @@ Project Setu is an enterprise-grade, verified B2B commercial intent network desi
 
 | Component | Technology | Port / URL | Status |
 | :--- | :--- | :--- | :--- |
-| **Backend API** | NestJS 10, TypeScript, RxJS, Passport JWT | `http://localhost:3500/api/v1` | Active (Port 3500) |
-| **OpenAPI Docs** | Swagger / OpenAPI 3.0 | `http://localhost:3500/api/docs` | Active |
-| **Frontend Web** | Vite 6, React 18, Tailwind CSS, Lucide | `http://localhost:3100` | Active (Port 3100) |
+| **Backend API** | NestJS 10, TypeScript, RxJS, Passport JWT | `https://setu-backend.onrender.com/api/v1` | Active (Port 3500) |
+| **OpenAPI Docs** | Swagger / OpenAPI 3.0 | `https://setu-backend.onrender.com/api/docs` | Active |
+| **Frontend Web** | Vite 6, React 18, Tailwind CSS, Lucide | `https://setu-frontend.onrender.com` | Active (Port 3100) |
 | **Database** | PostgreSQL 16 (Schema: `project_setu`) | `localhost:5432/leadcrm` | Active (1,003+ Cos, 507+ Users) |
 | **Real-Time Stream** | Native Server-Sent Events (SSE) + Subject | `GET /api/v1/notifications/stream` | Active |
 

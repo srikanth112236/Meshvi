@@ -465,10 +465,10 @@ export const LoginPage = () => {
               <ul className="space-y-1 text-[11px] list-disc list-inside text-slate-600 pl-1 leading-relaxed">
                 <li>Create an OAuth 2.0 Web Client ID in Google Cloud Console.</li>
                 <li>
-                  Authorized JavaScript origin: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-primary font-mono text-[10px]">http://localhost:3100</code>
+                  Authorized JavaScript origin: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-primary font-mono text-[10px]">https://setu-frontend.onrender.com</code>
                 </li>
                 <li>
-                  Authorized redirect URI: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-primary font-mono text-[10px]">http://localhost:3100/auth/google/callback</code>
+                  Authorized redirect URI: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-primary font-mono text-[10px]">https://setu-frontend.onrender.com/auth/google/callback</code>
                 </li>
                 <li>Add Client ID & Secret to <code className="font-mono text-[10px]">apps/frontend/.env</code> and <code className="font-mono text-[10px]">apps/backend/.env</code>.</li>
               </ul>

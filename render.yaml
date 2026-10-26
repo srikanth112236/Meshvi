@@ -12,8 +12,8 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm ci && cd apps/backend && npx prisma generate && npm run build
-    startCommand: cd apps/backend && npx prisma db push --skip-generate && node dist/main
+    buildCommand: npm ci && npx prisma generate --schema=apps/backend/prisma/schema.prisma && cd apps/backend && npx prisma generate && npm run build
+    startCommand: npx prisma db push --schema=apps/backend/prisma/schema.prisma --skip-generate && cd apps/backend && node dist/main
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV

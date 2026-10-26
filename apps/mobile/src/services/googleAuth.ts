@@ -7,7 +7,7 @@ export async function launchGoogleOAuth(options?: { promptSelectAccount?: boolea
   // Google OAuth 2.0 strictly requires authorized redirect URIs (localhost or registered HTTPS domain).
   // Private IPs (like 192.168.x.x) are rejected with "Access blocked: authorization error (redirect_uri_mismatch)".
   const redirectUri =
-    process.env.EXPO_PUBLIC_GOOGLE_REDIRECT_URI || 'http://localhost:3100/auth/google/callback';
+    process.env.EXPO_PUBLIC_GOOGLE_REDIRECT_URI || 'https://setu-frontend.onrender.com/auth/google/callback';
 
   // 1. Try to get dynamic OAuth initiation URL from backend
   try {

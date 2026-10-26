@@ -10,11 +10,11 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3500',
+        target: 'https://setu-backend.onrender.com',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://localhost:3500',
+        target: 'https://setu-backend.onrender.com',
         changeOrigin: true,
       },
     },

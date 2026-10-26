@@ -3,8 +3,8 @@
 Project Setu is an intent-driven B2B professional and business connection platform (*"Who do you need to connect with?"*).
 
 ## Network Ports & Topology
-- **Frontend Web Application:** Port `3100` (`http://localhost:3100`)
-- **Backend API & Swagger:** Port `3500` (`http://localhost:3500/api/v1` and `http://localhost:3500/api/docs`)
+- **Frontend Web Application:** Port `3100` (`https://setu-frontend.onrender.com`)
+- **Backend API & Swagger:** Port `3500` (`https://setu-backend.onrender.com/api/v1` and `https://setu-backend.onrender.com/api/docs`)
 - **PostgreSQL Database:** Port `5432` (`postgresql://leadcrm:***@localhost:5432/leadcrm?schema=project_setu`)
 
 ## Structure

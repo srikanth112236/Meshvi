@@ -7,8 +7,8 @@ This document confirms the completion and end-to-end verification of all milesto
 ---
 
 ## 1. Port Allocation & Platform Architecture
-- **Frontend App**: Strict **Port 3100** (`http://localhost:3100`)
-- **Backend API**: Strict **Port 3500** (`http://localhost:3500/api/v1`)
+- **Frontend App**: Strict **Port 3100** (`https://setu-frontend.onrender.com`)
+- **Backend API**: Strict **Port 3500** (`https://setu-backend.onrender.com/api/v1`)
 - **Database**: PostgreSQL 16 schema `project_setu` on database `leadcrm` (`postgresql://leadcrm:leadcrm_dev_2026@localhost:5432/leadcrm?schema=project_setu`)
 
 ---
@@ -71,5 +71,5 @@ Tests:       34 passed, 34 total
 ```
 - **Frontend Build**: `npm run build --workspace=@setu/frontend` passed with 0 errors.
 - **Live HTTP Status**:
-  - `GET http://localhost:3100/` &rarr; `200 OK`
-  - `GET http://localhost:3500/api/v1/health` &rarr; `200 OK`
+  - `GET https://setu-frontend.onrender.com/` &rarr; `200 OK`
+  - `GET https://setu-backend.onrender.com/api/v1/health` &rarr; `200 OK`

@@ -128,7 +128,7 @@ To test real-time interactions, open two browser windows side-by-side:
 ### Scenario 1: Direct Connection Bridge & Upgrade Innovations
 
 #### 1.1 Reciprocity Radar (Double-Blind Mutual Intent)
-1. In **Window 1 (Priya)**, navigate to `http://localhost:3100/app/search`.
+1. In **Window 1 (Priya)**, navigate to `https://setu-frontend.onrender.com/app/search`.
 2. Find **Marcus Sterling** in the directory and click his card to open the **Person Dossier Drawer**.
 3. In the drawer footer, click the **"Signal Mutual Intent"** button (radar icon).
 4. **Observe the UI reaction**:
@@ -160,7 +160,7 @@ To test real-time interactions, open two browser windows side-by-side:
 5. **Observe**: The 7-day quota counter decrements by 1 and a success notification toast is displayed.
 
 #### 1.5 Recipient Triage & Decision Branches
-1. Switch to **Window 2 (Marcus)** and open `http://localhost:3100/app/requests`.
+1. Switch to **Window 2 (Marcus)** and open `https://setu-frontend.onrender.com/app/requests`.
 2. Locate the incoming bridge card from Priya Sharma.
 3. **Test Voice Memo Playback**: Click the **Play** button on the voice memo card. Verify the frequency wave bars animate while audio plays.
 4. **Test Agenda Deliverables Card**: Verify the *"Pre-Meeting Agenda Deliverables Agreed"* section displays the checklist Priya configured.
@@ -190,16 +190,16 @@ To test real-time interactions, open two browser windows side-by-side:
 2. **Observe the system reactions**:
    - Status transitions to `ACCEPTED`.
    - Real-time notification dispatched to Priya.
-   - Navigate to `http://localhost:3100/app/deal-rooms`: A dedicated Deal Room is automatically created for Marcus & Priya!
-   - Navigate to `http://localhost:3100/app/connections`: Priya and Marcus now appear in each other's active business network with **"Chat"** and **"Deal Room"** action buttons.
+   - Navigate to `https://setu-frontend.onrender.com/app/deal-rooms`: A dedicated Deal Room is automatically created for Marcus & Priya!
+   - Navigate to `https://setu-frontend.onrender.com/app/connections`: Priya and Marcus now appear in each other's active business network with **"Chat"** and **"Deal Room"** action buttons.
 
 ---
 
 ### Scenario 2: Real-Time Live Messaging & Calendar Scheduling
 
 #### 2.1 Live Channel SSE Connection
-1. In **Window 1 (Priya)**, navigate to `http://localhost:3100/app/messages` and select the conversation with Marcus Sterling.
-2. In **Window 2 (Marcus)**, navigate to `http://localhost:3100/app/messages` and select the conversation with Priya Sharma.
+1. In **Window 1 (Priya)**, navigate to `https://setu-frontend.onrender.com/app/messages` and select the conversation with Marcus Sterling.
+2. In **Window 2 (Marcus)**, navigate to `https://setu-frontend.onrender.com/app/messages` and select the conversation with Priya Sharma.
 3. In both chat headers, verify the pulsing indicator: **"● Live Channel"**.
 
 #### 2.2 Zero-Refresh Message Transmission
@@ -223,14 +223,14 @@ To test real-time interactions, open two browser windows side-by-side:
 ### Scenario 3: Three-Way Warm Introduction & Step-Aside Handover
 
 #### 3.1 Requesting Warm Introduction
-1. In **Window 1 (Priya)**, navigate to `http://localhost:3100/app/search`.
+1. In **Window 1 (Priya)**, navigate to `https://setu-frontend.onrender.com/app/search`.
 2. Locate Marcus Sterling $\to$ Click **"Request Introduction"**.
 3. Select **Mei Ling Ooi** as the mutual intermediary connector.
 4. Enter business rationale and click **"Dispatch Introduction Request"**.
 
 #### 3.2 Intermediary Attested Endorsement
 1. Open a browser window logged in as **Mei Ling Ooi** (`mei.ling@borneoagro.com` / `Password123!`).
-2. Navigate to `http://localhost:3100/app/introductions`.
+2. Navigate to `https://setu-frontend.onrender.com/app/introductions`.
 3. Locate Priya's introduction request:
    - Visual connector path: `Priya Sharma → Mei Ling Ooi (Bridge) → Marcus Sterling`.
 4. Click **"Forward with Endorsement"**.
@@ -239,7 +239,7 @@ To test real-time interactions, open two browser windows side-by-side:
 6. Click **"Attest & Forward Bridge"**.
 
 #### 3.3 Target Executive Acceptance
-1. In **Window 2 (Marcus)**, navigate to `http://localhost:3100/app/introductions`.
+1. In **Window 2 (Marcus)**, navigate to `https://setu-frontend.onrender.com/app/introductions`.
 2. Locate the incoming introduction:
    - Notice the green badge: **"Attested Intermediary Endorsement"** displaying Mei Ling's note.
 3. Marcus clicks **"Accept Introduction"**.
@@ -278,7 +278,7 @@ To test real-time interactions, open two browser windows side-by-side:
 
 ## 4. Troubleshooting & FAQ
 
-- **Backend health status**: Visit `http://localhost:3500/health` to confirm the PostgreSQL database is connected and status is `READY`.
+- **Backend health status**: Visit `https://setu-backend.onrender.com/health` to confirm the PostgreSQL database is connected and status is `READY`.
 - **Database reset & re-seeding**: If you want to reset all test state back to a clean slate:
   ```bash
   cd apps/backend

@@ -7,6 +7,7 @@
     "apps/*"
   ],
   "scripts": {
+    "postinstall": "prisma generate --schema=apps/backend/prisma/schema.prisma",
     "dev:backend": "npm run start:dev --workspace=@setu/backend",
     "dev:frontend": "npm run dev --workspace=@setu/frontend",
     "dev:mobile": "npm run start --workspace=@setu/mobile",
@@ -15,6 +16,9 @@
     "test": "npm run test --workspaces",
     "test:flow": "ts-node --project apps/backend/tsconfig.json scripts/test-connections-flow.ts",
     "lint": "npm run lint --workspaces"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
   },
   "keywords": [
     "b2b",
