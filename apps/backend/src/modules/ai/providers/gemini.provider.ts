@@ -118,23 +118,27 @@ Analyze the given partnership title and requirements. Return pure JSON with:
 Return pure JSON with no markdown wrapping.`;
 
     const candidateModels = Array.from(
-      new Set([model, 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash'])
+      new Set([model === 'gemini-2.5-flash' ? 'gemini-1.5-flash' : model, 'gemini-1.5-flash', 'gemini-2.0-flash'])
     );
 
     const promptPayload = `Partnership Title: "${data.title}"
 Partnership Mandate & Requirements: "${data.content}"
 Tags: ${(data.tags || []).join(', ')}`;
 
-    let activeModel = model;
+    let activeModel = candidateModels[0];
     let response: any = null;
     let lastError: any = null;
 
     for (const m of candidateModels) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2200);
+
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
         response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             contents: [
               {
@@ -149,6 +153,8 @@ Tags: ${(data.tags || []).join(', ')}`;
           }),
         });
 
+        clearTimeout(timeoutId);
+
         if (response.ok) {
           activeModel = m;
           break;
@@ -162,7 +168,9 @@ Tags: ${(data.tags || []).join(', ')}`;
         }
         throw lastError;
       } catch (err: any) {
+        clearTimeout(timeoutId);
         lastError = err;
+        break; // Drop immediately to ultra-fast fallback provider
       }
     }
 

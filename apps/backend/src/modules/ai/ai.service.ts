@@ -262,6 +262,12 @@ Strict Constraints: Maximum 240 characters. Crisp and high-trust. Zero sales cli
     const content = data?.content?.trim() || '';
     const tags = data?.tags || [];
 
+    // Instant Fast-Path: evaluate instant heuristics in < 2ms
+    const fastCheck = await this.fallbackProvider.validatePartnershipMandate({ title, content, tags });
+    if (!fastCheck.validation.isCompliant && fastCheck.validation.classification === 'PERSONAL_MILESTONE') {
+      return fastCheck;
+    }
+
     let result: MandateValidationResult;
     let status = 'SUCCESS';
     let errorCode: string | null = null;
@@ -269,10 +275,10 @@ Strict Constraints: Maximum 240 characters. Crisp and high-trust. Zero sales cli
     try {
       result = await this.geminiProvider.validatePartnershipMandate({ title, content, tags });
     } catch (err: any) {
-      this.logger.warn(`Gemini mandate validation failed (${err.message}). Engaging fallback guardrail.`);
+      this.logger.warn(`Gemini mandate validation fast fallback engaged: ${err.message}`);
       status = 'FALLBACK';
       errorCode = err.message?.slice(0, 100);
-      result = await this.fallbackProvider.validatePartnershipMandate({ title, content, tags });
+      result = fastCheck;
     }
 
     // Persist usage event in PostgreSQL
