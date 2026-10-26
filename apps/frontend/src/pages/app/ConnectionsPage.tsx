@@ -59,13 +59,18 @@ interface RequestItem {
   reminderNote?: string;
   delegatedFromUserId?: string;
   delegationNote?: string;
+  requesterPhone?: string | null;
+  recipientPhone?: string | null;
+  partnerPhone?: string | null;
   requester?: {
     id: string;
     email: string;
+    phoneNumber?: string | null;
     profile?: {
       displayName: string;
       headline: string | null;
       function: string | null;
+      phoneNumber?: string | null;
       company?: { name: string } | null;
     } | null;
   };
@@ -73,7 +78,12 @@ interface RequestItem {
     displayName: string;
     headline: string | null;
     function: string | null;
+    phoneNumber?: string | null;
     company?: { name: string } | null;
+    user?: {
+      email?: string;
+      phoneNumber?: string | null;
+    } | null;
   };
 }
 
@@ -795,6 +805,46 @@ export const ConnectionsPage = () => {
                     <p className="italic">"{req.businessReason}"</p>
                   </div>
 
+                  {/* Verified Requester Phone Coordinate */}
+                  {(() => {
+                    const phone = req.requesterPhone || req.requester?.phoneNumber || req.requester?.profile?.phoneNumber;
+                    if (!phone) return null;
+                    return (
+                      <div className="flex items-center justify-between p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-xl">
+                        <div className="flex items-center space-x-2">
+                          <Phone className="w-4 h-4 text-emerald-600" />
+                          <div>
+                            <span className="text-[10px] font-bold text-emerald-900 uppercase tracking-wider block">
+                              Verified Mobile Coordinate (Requester)
+                            </span>
+                            <span className="text-xs font-mono font-bold text-navy select-all">
+                              {phone}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1.5">
+                          <a
+                            href={`tel:${phone.replace(/\s+/g, '')}`}
+                            className="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition-colors flex items-center space-x-1 shadow-2xs"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>Call</span>
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(phone);
+                              showToast({ title: 'Phone Copied', message: phone, type: 'info' });
+                            }}
+                            className="px-2.5 py-1 bg-white hover:bg-neutral-100 text-navy border border-border rounded-lg text-xs font-bold transition-colors shadow-2xs"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* 4-Way Triage Action Bar with clear Action Required banner */}
                   <div className="pt-3 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
@@ -892,6 +942,35 @@ export const ConnectionsPage = () => {
                     <p className="text-[11px] text-text-muted line-clamp-1 italic">
                       "{req.businessReason}"
                     </p>
+
+                    {/* Bilateral Phone Coordinate on Outgoing Request */}
+                    {(() => {
+                      const recipientPhone = req.recipientPhone || req.recipientProfile?.phoneNumber || req.recipientProfile?.user?.phoneNumber;
+                      const myPhone = req.requesterPhone || req.requester?.phoneNumber;
+                      if (!recipientPhone && !myPhone) return null;
+                      return (
+                        <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-navy pt-1.5 border-t border-border/50">
+                          {recipientPhone && (
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-[10px] text-text-muted font-sans font-bold">Recipient:</span>
+                              <strong className="select-all">{recipientPhone}</strong>
+                              <a
+                                href={`tel:${recipientPhone.replace(/\s+/g, '')}`}
+                                className="px-2 py-0.5 bg-surface-muted hover:bg-surface text-primary border border-border rounded text-[10px] font-sans font-bold shadow-2xs"
+                              >
+                                Call
+                              </a>
+                            </div>
+                          )}
+                          {myPhone && (
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-[10px] text-text-muted font-sans font-bold">Your Transmitted Phone:</span>
+                              <span className="text-text-muted select-all">{myPhone}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-center space-x-3 shrink-0 text-xs text-text-muted">

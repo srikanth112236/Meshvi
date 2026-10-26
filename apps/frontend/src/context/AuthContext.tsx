@@ -15,6 +15,7 @@ export interface UserProfile {
   industry?: string;
   city?: string;
   countryCode?: string;
+  phoneNumber?: string;
   visibility: 'PUBLIC' | 'SIGNED_IN_ONLY' | 'PRIVATE';
   verificationStatus: string;
   isLinkedInVerified?: boolean;
@@ -41,6 +42,8 @@ export interface User {
   onboardingCompleted?: boolean;
   linkedinVerified?: boolean;
   workEmailVerified?: boolean;
+  phoneNumber?: string;
+  phoneVerified?: boolean;
   profile?: UserProfile;
   memberships?: any[];
   portalScope?: 'CONSUMER' | 'COMPANY_ADMIN' | 'SUPER_ADMIN';

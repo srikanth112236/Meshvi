@@ -11,6 +11,7 @@ import {
   Briefcase,
   MessageSquare,
   ArrowRight,
+  Phone,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -30,10 +31,12 @@ interface AcceptAndConnectModalProps {
   requester: {
     id: string;
     email: string;
+    phoneNumber?: string | null;
     profile?: {
       displayName: string;
       headline: string | null;
       function: string | null;
+      phoneNumber?: string | null;
       company?: { name: string } | null;
     } | null;
   };
@@ -60,6 +63,7 @@ export const AcceptAndConnectModal: React.FC<AcceptAndConnectModalProps> = ({
   const [completedDirect, setCompletedDirect] = useState(false);
   const [completedDelegated, setCompletedDelegated] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
 
   useEffect(() => {
     if (!token || !isOpen) return;
@@ -84,11 +88,19 @@ export const AcceptAndConnectModal: React.FC<AcceptAndConnectModalProps> = ({
   const requesterCompany = requester?.profile?.company?.name || 'Verified Organization';
   const requesterTitle = requester?.profile?.headline || requester?.profile?.function || 'Executive';
   const requesterEmail = requester?.email || 'verified.user@partner.Meshvi';
+  const requesterPhone = requester?.phoneNumber || requester?.profile?.phoneNumber || null;
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(requesterEmail);
     setCopiedEmail(true);
     setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
+  const handleCopyPhone = () => {
+    if (!requesterPhone) return;
+    navigator.clipboard.writeText(requesterPhone);
+    setCopiedPhone(true);
+    setTimeout(() => setCopiedPhone(false), 2000);
   };
 
   const handleConnectDirectly = async () => {
@@ -234,6 +246,40 @@ export const AcceptAndConnectModal: React.FC<AcceptAndConnectModalProps> = ({
                   <span>{copiedEmail ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
+
+              {/* Verified Direct Phone Card with Copy & Call */}
+              {requesterPhone && (
+                <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4 text-emerald-600" />
+                    <div>
+                      <div className="text-[10px] font-bold text-emerald-900 uppercase tracking-wider">
+                        Verified Direct Mobile Coordinate
+                      </div>
+                      <div className="text-xs font-mono font-bold text-navy select-all">
+                        {requesterPhone}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <a
+                      href={`tel:${requesterPhone.replace(/\s+/g, '')}`}
+                      className="px-2.5 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-md text-xs font-bold flex items-center space-x-1 transition-colors"
+                    >
+                      <Phone className="w-3 h-3" />
+                      <span>Call</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={handleCopyPhone}
+                      className="px-2.5 py-1.5 bg-white hover:bg-neutral-100 text-navy text-xs font-bold rounded-md flex items-center space-x-1 border border-border transition-colors"
+                    >
+                      {copiedPhone ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedPhone ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Proposal Text */}
               <div className="space-y-1">

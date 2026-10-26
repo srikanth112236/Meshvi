@@ -30,7 +30,15 @@ import {
   X,
   MapPin,
   Globe,
+  Phone,
+  AlertCircle,
 } from 'lucide-react';
+import {
+  getAllCountryPhoneInfos,
+  getPhoneRuleForCountry,
+  validatePhoneNumber,
+  parseExistingPhoneNumber,
+} from '../../utils/phoneUtils';
 
 interface CompanySearchResult {
   id: string;
@@ -107,6 +115,8 @@ const ALL_COUNTRIES = Country.getAllCountries().map((c) => ({
   flag: c.flag,
 }));
 
+const ALL_PHONE_COUNTRIES = getAllCountryPhoneInfos();
+
 export const OnboardingPage: React.FC = () => {
   const { user, token, refreshUser } = useAuth();
   const { showToast } = useNotifications();
@@ -129,6 +139,33 @@ export const OnboardingPage: React.FC = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Phone number & country code state (Mandatory on onboarding)
+  const [phoneNumber, setPhoneNumber] = useState(
+    (user as any)?.phoneNumber || user?.profile?.phoneNumber || ''
+  );
+  const [phoneCountryIso, setPhoneCountryIso] = useState('IN');
+  const [phoneDialCode, setPhoneDialCode] = useState('+91');
+  const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
+  const [phoneSearchQuery, setPhoneSearchQuery] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const phoneDropdownRef = useRef<HTMLDivElement>(null);
+
+  const phoneValidation = React.useMemo(() => {
+    return validatePhoneNumber(phoneNumber, phoneCountryIso, phoneDialCode);
+  }, [phoneNumber, phoneCountryIso, phoneDialCode]);
+
+  const filteredPhoneCountries = React.useMemo(() => {
+    if (!phoneSearchQuery.trim()) return ALL_PHONE_COUNTRIES.slice(0, 50);
+    const q = phoneSearchQuery.toLowerCase();
+    return ALL_PHONE_COUNTRIES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.isoCode.toLowerCase().includes(q) ||
+        c.dialCode.includes(q)
+    ).slice(0, 50);
+  }, [phoneSearchQuery]);
 
   // Step 2: Corporate Affiliation & Scope
   const [currentTitle, setCurrentTitle] = useState(user?.profile?.currentTitle || 'VP of Partnerships');
@@ -201,6 +238,9 @@ export const OnboardingPage: React.FC = () => {
       if (companySearchRef.current && !companySearchRef.current.contains(e.target as Node)) {
         setCompanyDropdownOpen(false);
       }
+      if (phoneDropdownRef.current && !phoneDropdownRef.current.contains(e.target as Node)) {
+        setPhoneDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -239,6 +279,18 @@ export const OnboardingPage: React.FC = () => {
             if (foundC) setSelectedCountryName(foundC.name);
           }
           if (p.city) setSelectedCity(p.city);
+
+          const rawPhone = p.user?.phoneNumber || p.phoneNumber || (user as any)?.phoneNumber || '';
+          if (rawPhone) {
+            const parsed = parseExistingPhoneNumber(rawPhone, p.countryCode || 'IN');
+            setPhoneCountryIso(parsed.countryIso);
+            setPhoneDialCode(parsed.dialCode);
+            setPhoneNumber(parsed.subscriberDigits);
+          } else if (p.countryCode) {
+            const rule = getPhoneRuleForCountry(p.countryCode);
+            setPhoneCountryIso(rule.countryCode);
+            setPhoneDialCode(rule.dialCode);
+          }
 
           if (p.intents && p.intents.length > 0) {
             const lk = p.intents.find((i: any) => i.intentType === 'LOOKING_FOR');
@@ -391,6 +443,20 @@ export const OnboardingPage: React.FC = () => {
     setLoading(true);
     setError('');
 
+    const phoneVal = validatePhoneNumber(phoneNumber, phoneCountryIso, phoneDialCode);
+    if (complete && !phoneVal.isValid) {
+      setPhoneTouched(true);
+      setPhoneError(phoneVal.errorMessage || 'Mobile phone number is mandatory.');
+      showToast({
+        title: 'Phone Number Mandatory',
+        message: phoneVal.errorMessage || 'Please provide a valid mobile number for your country.',
+        type: 'error',
+      });
+      setStep(1);
+      setLoading(false);
+      return;
+    }
+
     const sanitizedIntents = [
       ...(lookingFor?.trim() ? [{ intentType: 'LOOKING_FOR', description: lookingFor.trim() }] : []),
       ...(offering?.trim() ? [{ intentType: 'OFFERING', description: offering.trim() }] : []),
@@ -411,6 +477,11 @@ export const OnboardingPage: React.FC = () => {
       industry,
       city: selectedCity,
       countryCode,
+      phoneNumber: phoneVal.isValid
+        ? phoneVal.formattedNumber
+        : phoneNumber.trim()
+        ? `${phoneDialCode} ${phoneNumber.trim()}`
+        : undefined,
       intents: sanitizedIntents,
       isCompleted: complete,
     };
@@ -487,6 +558,19 @@ export const OnboardingPage: React.FC = () => {
   }, [isProvisioning, navigate, refreshUser]);
 
   const handleNext = async () => {
+    if (step === 1) {
+      setPhoneTouched(true);
+      const v = validatePhoneNumber(phoneNumber, phoneCountryIso, phoneDialCode);
+      if (!v.isValid) {
+        setPhoneError(v.errorMessage || 'Direct mobile phone number is mandatory.');
+        showToast({
+          title: 'Phone Number Mandatory',
+          message: v.errorMessage || 'Please enter a valid phone number for your selected country.',
+          type: 'error',
+        });
+        return;
+      }
+    }
     await saveProgress(false);
     setStep((prev) => Math.min(prev + 1, 5));
   };
@@ -686,8 +770,8 @@ export const OnboardingPage: React.FC = () => {
       {/* ------------------------------------------------------------- */}
       <main className="max-w-5xl w-full mx-auto flex-1 my-2 bg-surface border border-border rounded-2xl shadow-xs flex flex-col justify-between overflow-hidden">
         
-        {/* Inner Step Body: Steps 1-4 NO SCROLL. Step 5 (Review) ALLOWS SCROLL */}
-        <div className={`p-4 sm:p-5 flex-1 flex flex-col justify-start ${step === 5 ? 'overflow-y-auto max-h-[calc(100vh-140px)]' : 'overflow-hidden'}`}>
+        {/* Inner Step Body: Scrollable with Clean Layout */}
+        <div className="p-4 sm:p-5 flex-1 flex flex-col justify-start overflow-y-auto max-h-[calc(100vh-140px)]">
 
           {/* ======================================================== */}
           {/* STEP 1: EXECUTIVE IDENTITY & PHOTO                       */}
@@ -819,6 +903,125 @@ export const OnboardingPage: React.FC = () => {
                     className="w-full px-3 py-2 bg-surface-muted border border-border rounded-xl text-xs text-text-muted cursor-not-allowed"
                   />
                 </div>
+              </div>
+
+              {/* Mandatory Phone Number with Country Code */}
+              <div className="p-3 bg-surface-muted/40 border border-border rounded-xl space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-navy flex items-center space-x-1.5">
+                    <Phone className="w-3.5 h-3.5 text-primary" />
+                    <span>Direct Mobile Phone Number *</span>
+                  </label>
+                  <span className="text-[10px] font-bold text-primary bg-primary-soft px-2 py-0.5 rounded-full border border-primary/20">
+                    Mandatory &bull; Bilateral Trust
+                  </span>
+                </div>
+
+                <div className="flex items-start space-x-2">
+                  {/* Custom Country Code Selector Dropdown */}
+                  <div className="relative shrink-0" ref={phoneDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setPhoneDropdownOpen(!phoneDropdownOpen)}
+                      className="h-9 px-3 bg-surface hover:bg-surface-muted border border-border rounded-xl text-xs font-bold text-navy flex items-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
+                      title="Select Country Code"
+                    >
+                      <span className="text-base">
+                        {ALL_PHONE_COUNTRIES.find((c) => c.isoCode === phoneCountryIso)?.flag || '🌐'}
+                      </span>
+                      <span className="font-mono text-xs text-navy font-bold">{phoneDialCode}</span>
+                      <ChevronDown className="w-3 h-3 text-text-muted ml-0.5" />
+                    </button>
+
+                    {phoneDropdownOpen && (
+                      <div className="absolute left-0 mt-1 w-64 max-h-64 bg-surface border border-border rounded-xl shadow-xl z-50 flex flex-col overflow-hidden animate-fade-in">
+                        <div className="p-2 border-b border-border bg-surface-muted/50">
+                          <div className="relative">
+                            <Search className="w-3.5 h-3.5 text-text-muted absolute left-2.5 top-2" />
+                            <input
+                              type="text"
+                              value={phoneSearchQuery}
+                              onChange={(e) => setPhoneSearchQuery(e.target.value)}
+                              placeholder="Search country or code..."
+                              className="w-full pl-7 pr-2.5 py-1 text-xs bg-surface border border-border rounded-lg text-navy focus:outline-none focus:ring-1 focus:ring-primary"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+
+                        <div className="overflow-y-auto divide-y divide-border/40 max-h-52">
+                          {filteredPhoneCountries.map((c) => (
+                            <button
+                              key={`${c.isoCode}-${c.dialCode}`}
+                              type="button"
+                              onClick={() => {
+                                setPhoneCountryIso(c.isoCode);
+                                setPhoneDialCode(c.dialCode);
+                                setPhoneDropdownOpen(false);
+                                setPhoneSearchQuery('');
+                                setPhoneTouched(true);
+                              }}
+                              className={`w-full px-3 py-2 text-left flex items-center justify-between text-xs hover:bg-primary-soft transition-colors cursor-pointer ${
+                                phoneCountryIso === c.isoCode ? 'bg-primary-soft/60 font-bold text-primary' : 'text-navy'
+                              }`}
+                            >
+                              <div className="flex items-center space-x-2 truncate">
+                                <span>{c.flag}</span>
+                                <span className="truncate">{c.name}</span>
+                              </div>
+                              <span className="font-mono text-[11px] text-text-muted shrink-0 ml-2 font-bold">
+                                {c.dialCode}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Number Input Field */}
+                  <div className="flex-1">
+                    <input
+                      type="tel"
+                      required
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        setPhoneNumber(e.target.value);
+                        setPhoneTouched(true);
+                        setPhoneError('');
+                      }}
+                      onBlur={() => setPhoneTouched(true)}
+                      placeholder={`e.g. ${getPhoneRuleForCountry(phoneCountryIso).placeholder}`}
+                      className={`w-full h-9 px-3 bg-surface border rounded-xl text-xs font-mono text-navy focus:outline-none focus:ring-1 transition-all ${
+                        phoneTouched && !phoneValidation.isValid
+                          ? 'border-rose-400 focus:ring-rose-500 bg-rose-50/20'
+                          : phoneValidation.isValid
+                          ? 'border-emerald-400 focus:ring-emerald-500 bg-emerald-50/10'
+                          : 'border-border focus:ring-primary'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Validation Feedback */}
+                {phoneTouched && !phoneValidation.isValid ? (
+                  <div className="flex items-center space-x-1.5 text-[11px] text-rose-600 font-semibold pt-0.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{phoneError || phoneValidation.errorMessage}</span>
+                  </div>
+                ) : phoneValidation.isValid ? (
+                  <div className="flex items-center justify-between text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg pt-0.5">
+                    <div className="flex items-center space-x-1.5 font-bold">
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Verified Format: {phoneValidation.formattedNumber}</span>
+                    </div>
+                    <span className="text-[10px] text-emerald-800 font-medium">Bilateral Coordinate</span>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-text-muted">
+                    Format: {getPhoneRuleForCountry(phoneCountryIso).formatExample}. Direct phone is strictly shared when bilateral connection requests are approved by both sides.
+                  </p>
+                )}
               </div>
 
               {/* Headline with Auto-fill Suggestions */}
@@ -1483,6 +1686,13 @@ export const OnboardingPage: React.FC = () => {
                         <span className="font-bold text-white">{currentCompany || 'Organization'}</span>
                         {companyDomain && <span>&bull; {companyDomain}</span>}
                         <span>&bull; {selectedCity}, {countryCode}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-[11px] text-emerald-400 font-mono font-bold pt-1">
+                        <Phone className="w-3 h-3 text-emerald-400 shrink-0" />
+                        <span>{phoneValidation.formattedNumber || `${phoneDialCode} ${phoneNumber}`}</span>
+                        <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/40 uppercase font-sans">
+                          Verified Bilateral Coordinate
+                        </span>
                       </div>
                     </div>
                   </div>

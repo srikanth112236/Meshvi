@@ -24,6 +24,7 @@ export class ProfilesService {
         expertise: true,
         intents: true,
         company: true,
+        user: { select: { id: true, email: true, phoneNumber: true, phoneVerified: true } },
       },
     });
 
@@ -60,6 +61,7 @@ export class ProfilesService {
           industry: dto.industry !== undefined ? dto.industry.trim() : undefined,
           city: dto.city !== undefined ? dto.city.trim() : undefined,
           countryCode: dto.countryCode !== undefined ? dto.countryCode.trim().toUpperCase() : undefined,
+          phoneNumber: dto.phoneNumber !== undefined ? dto.phoneNumber.trim() : undefined,
           visibility: dto.visibility !== undefined ? dto.visibility : undefined,
         },
       });
@@ -125,14 +127,20 @@ export class ProfilesService {
         }
       }
 
-      // 5. Update user onboarding state
+      // 5. Update user onboarding state & phone number
+      const userUpdateData: any = {};
+      if (dto.phoneNumber !== undefined && dto.phoneNumber.trim()) {
+        userUpdateData.phoneNumber = dto.phoneNumber.trim();
+        userUpdateData.phoneVerified = true;
+      }
       if (dto.isCompleted) {
+        userUpdateData.onboardingCompleted = true;
+        userUpdateData.onboardingStep = 5;
+      }
+      if (Object.keys(userUpdateData).length > 0) {
         await tx.user.update({
           where: { id: userId },
-          data: {
-            onboardingCompleted: true,
-            onboardingStep: 5,
-          },
+          data: userUpdateData,
         });
       }
 
@@ -141,7 +149,8 @@ export class ProfilesService {
       if (profile.displayName && profile.headline) score += 20;
       if (profile.currentTitle && (profile.currentCompanyId || dto.currentCompanyName)) score += 20;
       if (existingProfile.isWorkEmailVerified) score += 20;
-      if (dto.intents && dto.intents.length >= 2) score += 15;
+      if (dto.phoneNumber || existingProfile.phoneNumber) score += 5;
+      if (dto.intents && dto.intents.length >= 2) score += 10;
       if (dto.expertiseTerms && dto.expertiseTerms.length >= 2) score += 5;
       const finalScore = Math.min(100, score);
 
@@ -173,6 +182,7 @@ export class ProfilesService {
           expertise: true,
           intents: true,
           company: true,
+          user: { select: { id: true, email: true, phoneNumber: true, phoneVerified: true } },
         },
       });
     });

@@ -400,7 +400,7 @@ export class ConnectionsService {
             companyName: conn.recipientProfile.company?.name || null,
             profileId: conn.recipientProfile.id,
             email: conn.recipientProfile.user?.email || null,
-            phoneNumber: conn.recipientProfile.user?.phoneNumber || null,
+            phoneNumber: conn.recipientProfile.user?.phoneNumber || conn.recipientProfile.phoneNumber || null,
           }
         : {
             userId: conn.requester.id,
@@ -410,7 +410,7 @@ export class ConnectionsService {
             companyName: conn.requester.profile?.company?.name || null,
             profileId: conn.requester.profile?.id || null,
             email: conn.requester.email || null,
-            phoneNumber: conn.requester.phoneNumber || null,
+            phoneNumber: conn.requester.phoneNumber || conn.requester.profile?.phoneNumber || null,
           };
 
       return {
@@ -499,8 +499,14 @@ export class ConnectionsService {
     const outgoing = await this.prisma.connection.findMany({
       where: { requesterUserId: userId },
       include: {
+        requester: {
+          select: { id: true, email: true, phoneNumber: true },
+        },
         recipientProfile: {
-          include: { company: true },
+          include: {
+            company: true,
+            user: { select: { id: true, email: true, phoneNumber: true } },
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -513,6 +519,12 @@ export class ConnectionsService {
         include: {
           requester: {
             include: { profile: { include: { company: true } } },
+          },
+          recipientProfile: {
+            include: {
+              company: true,
+              user: { select: { id: true, email: true, phoneNumber: true } },
+            },
           },
           delegatedToProfile: {
             include: { company: true },
@@ -532,8 +544,39 @@ export class ConnectionsService {
       const reminderCount = meta.reminderCount || 0;
       const canRemind = isOutgoing && conn.status === ConnectionStatus.PENDING && reminderCount === 0;
 
+      const requesterPhone =
+        conn.requester?.phoneNumber ||
+        conn.requester?.profile?.phoneNumber ||
+        null;
+
+      const recipientPhone =
+        conn.recipientProfile?.user?.phoneNumber ||
+        conn.recipientProfile?.phoneNumber ||
+        null;
+
       return {
         ...conn,
+        requesterPhone,
+        recipientPhone,
+        partnerPhone: isOutgoing ? recipientPhone : requesterPhone,
+        requester: conn.requester
+          ? {
+              ...conn.requester,
+              phoneNumber: requesterPhone,
+              profile: conn.requester.profile
+                ? {
+                    ...conn.requester.profile,
+                    phoneNumber: requesterPhone,
+                  }
+                : undefined,
+            }
+          : undefined,
+        recipientProfile: conn.recipientProfile
+          ? {
+              ...conn.recipientProfile,
+              phoneNumber: recipientPhone,
+            }
+          : undefined,
         clarificationQuestion: meta.clarificationQuestion || null,
         clarificationAnswer: meta.clarificationAnswer || null,
         remindedAt: meta.remindedAt || null,

@@ -836,6 +836,8 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
+      phoneNumber: user.phoneNumber || user.profile?.phoneNumber || null,
+      phoneVerified: user.phoneVerified,
       roles: user.roles.map((r) => r.role),
       profile: user.profile,
       memberships: user.memberships,
