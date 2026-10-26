@@ -1,0 +1,84 @@
+# ==============================================================================
+# RENDER BLUEPRINT (Infrastructure as Code)
+# Automated deployment of Database, NestJS Backend & Vite Frontend
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. NestJS Backend API Service
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: setu-backend
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci && cd apps/backend && npx prisma generate && npm run build
+    startCommand: cd apps/backend && npx prisma db push --skip-generate && node dist/main
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3500
+      - key: DATABASE_URL
+        fromDatabase:
+          name: setu-db
+          property: connectionString
+      - key: FRONTEND_URL
+        value: https://setu-frontend.onrender.com
+      - key: GOOGLE_REDIRECT_URI
+        value: https://setu-frontend.onrender.com/auth/google/callback
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: REFRESH_TOKEN_EXPIRES_IN
+        value: 7d
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AI_PRIMARY_PROVIDER
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: LINKEDIN_CLIENT_ID
+        sync: false
+      - key: LINKEDIN_CLIENT_SECRET
+        sync: false
+      - key: LINKEDIN_REDIRECT_URI
+        value: https://setu-frontend.onrender.com/auth/linkedin/callback
+
+  # ----------------------------------------------------------------------------
+  # 2. Vite React Frontend (Static Site)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: setu-frontend
+    runtime: static
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build --workspace=@setu/frontend
+    staticPublishPath: apps/frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://setu-backend.onrender.com/api/v1
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+
+# ------------------------------------------------------------------------------
+# 3. Managed PostgreSQL Database
+# ------------------------------------------------------------------------------
+databases:
+  - name: setu-db
+    databaseName: project_setu
+    user: setuadmin
+    plan: free
+    region: singapore
