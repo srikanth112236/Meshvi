@@ -36,15 +36,21 @@ async function bootstrap() {
   // Flexible CORS configuration for Web, Local Network Mobile Devices & Expo
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow mobile apps, curl, Postman (which have no origin header) and any local network device
-      if (!origin || origin.includes('localhost') || origin.includes('192.168.1.6') || origin.includes('10.236.182.78') || origin.includes('127.0.0.1') || origin.startsWith('exp://')) {
-        callback(null, true);
-      } else {
-        callback(null, true); // Allow during development
-      }
+      // Allow all origins (web frontend, mobile apps, local network)
+      callback(null, true);
     },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'x-client-portal',
+      'Cache-Control',
+    ],
     credentials: true,
+    optionsSuccessStatus: 200,
   });
 
   // Global Validation & Envelope
