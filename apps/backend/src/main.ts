@@ -28,7 +28,7 @@ async function bootstrap() {
 
   // Locked Backend Port: 3500
   const port = process.env.PORT || 3500;
-  const frontendUrl = process.env.FRONTEND_URL || 'https://setu-frontend.onrender.com';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://meshvi-1.onrender.com';
 
   // Global API Prefix
   app.setGlobalPrefix('api/v1');

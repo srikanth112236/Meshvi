@@ -895,7 +895,7 @@ async function main() {
   console.log('   Email:    admin@vedasynk.local (or superadmin@projectsetu.com)');
   console.log('   Password: Password123!');
   console.log('   Roles:    [SUPER_ADMIN, USER]');
-  console.log('   Portal:   https://setu-frontend.onrender.com/admin/login or /admin/dashboard\n');
+  console.log('   Portal:   https://meshvi-1.onrender.com/admin/login or /admin/dashboard\n');
 
   console.log('🏢 2. SAMPLE 5 GLOBAL COMPANY ADMIN CREDENTIALS (PASSWORD: Password123!):');
   sampleLoginCredentials.forEach((cred, idx) => {
@@ -904,7 +904,7 @@ async function main() {
     console.log(`       Name:     ${cred.name} (${cred.title})`);
     console.log(`       Email:    ${cred.email}`);
     console.log(`       Password: Password123!`);
-    console.log(`       Portal:   https://setu-frontend.onrender.com/company/login or /login`);
+    console.log(`       Portal:   https://meshvi-1.onrender.com/company/login or /login`);
   });
   console.log('========================================================================\n');
 }

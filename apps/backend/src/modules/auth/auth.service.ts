@@ -850,7 +850,7 @@ export class AuthService {
   getGoogleAuthUrl(state?: string, redirectUri?: string) {
     const clientId = process.env.GOOGLE_CLIENT_ID || '';
     const effectiveRedirectUri =
-      redirectUri || (process.env.GOOGLE_REDIRECT_URI || 'https://setu-frontend.onrender.com/auth/google/callback');
+      redirectUri || (process.env.GOOGLE_REDIRECT_URI || 'https://meshvi-1.onrender.com/auth/google/callback');
     const effectiveState = state || Math.random().toString(36).substring(2, 15);
 
     const url = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
@@ -872,7 +872,7 @@ export class AuthService {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const effectiveRedirectUri =
-      redirectUri || process.env.GOOGLE_REDIRECT_URI || 'https://setu-frontend.onrender.com/auth/google/callback';
+      redirectUri || process.env.GOOGLE_REDIRECT_URI || 'https://meshvi-1.onrender.com/auth/google/callback';
 
     // If sandbox or credentials not set, fallback gracefully
     if (!clientId || !clientSecret || clientId.trim() === '' || clientId.includes('placeholder')) {
@@ -940,7 +940,7 @@ export class AuthService {
   getLinkedInAuthUrl(state?: string, redirectUri?: string) {
     const clientId = process.env.LINKEDIN_CLIENT_ID || 'setu_linkedin_dev_app';
     const effectiveRedirectUri =
-      redirectUri || process.env.LINKEDIN_REDIRECT_URI || 'https://setu-frontend.onrender.com/auth/linkedin/callback';
+      redirectUri || process.env.LINKEDIN_REDIRECT_URI || 'https://meshvi-1.onrender.com/auth/linkedin/callback';
     const effectiveState = state || Math.random().toString(36).substring(2, 15);
 
     const url = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
@@ -962,7 +962,7 @@ export class AuthService {
     const clientId = process.env.LINKEDIN_CLIENT_ID;
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
     const effectiveRedirectUri =
-      redirectUri || process.env.LINKEDIN_REDIRECT_URI || 'https://setu-frontend.onrender.com/auth/linkedin/callback';
+      redirectUri || process.env.LINKEDIN_REDIRECT_URI || 'https://meshvi-1.onrender.com/auth/linkedin/callback';
 
     // If sandbox / placeholder credentials, fall back gracefully to high-fidelity test OIDC handshake
     if (

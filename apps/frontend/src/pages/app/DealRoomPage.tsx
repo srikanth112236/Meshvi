@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const API = (import.meta as any).env?.VITE_API_URL || 'https://setu-backend.onrender.com/api/v1';
+const API = (import.meta as any).env?.VITE_API_URL || 'https://meshvi.onrender.com/api/v1';
 
 function api(path: string, token: string, opts?: RequestInit) {
   return fetch(`${API}${path}`, {

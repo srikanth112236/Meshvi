@@ -10,11 +10,11 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'https://setu-backend.onrender.com',
+        target: 'https://meshvi.onrender.com',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'https://setu-backend.onrender.com',
+        target: 'https://meshvi.onrender.com',
         changeOrigin: true,
       },
     },
