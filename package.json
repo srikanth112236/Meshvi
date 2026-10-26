@@ -7,7 +7,6 @@
     "apps/*"
   ],
   "scripts": {
-    "postinstall": "prisma generate --schema=apps/backend/prisma/schema.prisma",
     "dev:backend": "npm run start:dev --workspace=@setu/backend",
     "dev:frontend": "npm run dev --workspace=@setu/frontend",
     "dev:mobile": "npm run start --workspace=@setu/mobile",
@@ -18,6 +17,7 @@
     "lint": "npm run lint --workspaces"
   },
   "devDependencies": {
+    "@prisma/client": "^5.22.0",
     "prisma": "^5.22.0"
   },
   "keywords": [
