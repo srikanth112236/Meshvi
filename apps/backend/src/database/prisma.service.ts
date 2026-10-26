@@ -20,8 +20,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       // Automatically push schema if running on production (Render / Azure) to ensure tables exist
       try {
         const { execSync } = await import('child_process');
-        this.logger.log('Verifying PostgreSQL tables and schema status...');
-        execSync('npx prisma db push --skip-generate --accept-data-loss', {
+        const fs = await import('fs');
+        const { join } = await import('path');
+
+        let schemaArg = '';
+        if (fs.existsSync(join(process.cwd(), 'apps/backend/prisma/schema.prisma'))) {
+          schemaArg = `--schema="${join(process.cwd(), 'apps/backend/prisma/schema.prisma')}"`;
+        } else if (fs.existsSync(join(process.cwd(), 'prisma/schema.prisma'))) {
+          schemaArg = `--schema="${join(process.cwd(), 'prisma/schema.prisma')}"`;
+        }
+
+        this.logger.log(`Verifying PostgreSQL tables and schema status (${schemaArg || 'default'})...`);
+        execSync(`npx prisma db push --skip-generate --accept-data-loss ${schemaArg}`.trim(), {
           stdio: 'inherit',
           env: process.env,
         });
