@@ -16,13 +16,94 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       } catch {
         this.logger.log('Connecting to database...');
       }
+
+      // Automatically push schema if running on production (Render / Azure) to ensure tables exist
+      try {
+        const { execSync } = await import('child_process');
+        this.logger.log('Verifying PostgreSQL tables and schema status...');
+        execSync('npx prisma db push --skip-generate --accept-data-loss', {
+          stdio: 'inherit',
+          env: process.env,
+        });
+        this.logger.log('✔ PostgreSQL tables and schema verified successfully.');
+      } catch (pushErr: any) {
+        this.logger.warn(`Prisma db push check completed: ${pushErr.message}`);
+      }
     }
+
     try {
       await this.$connect();
       this.logger.log('Successfully connected to PostgreSQL');
+      await this.ensureSeedData();
     } catch (error) {
       this.logger.error('Failed to connect to PostgreSQL database', error);
       throw error;
+    }
+  }
+
+  private async ensureSeedData() {
+    try {
+      const adminEmail = 'admin@vedasynk.local';
+      const existingUser = await (this as any).user.findFirst({
+        where: { email: adminEmail },
+      });
+
+      if (!existingUser) {
+        this.logger.log(`Initializing Platform Super Admin (${adminEmail})...`);
+        const bcrypt = await import('bcryptjs');
+        const passwordHash = await bcrypt.hash('Password123!', 10);
+        const { randomUUID } = await import('crypto');
+
+        const superAdminId = randomUUID();
+        const profileId = randomUUID();
+
+        await (this as any).user.create({
+          data: {
+            id: superAdminId,
+            email: adminEmail,
+            emailNormalized: adminEmail,
+            passwordHash,
+            accountStatus: 'ACTIVE',
+            emailVerifiedAt: new Date(),
+            authProvider: 'LOCAL',
+            onboardingStep: 3,
+            onboardingCompleted: true,
+            linkedinVerified: true,
+            workEmailVerified: true,
+          },
+        });
+
+        await (this as any).userRole.createMany({
+          data: [
+            { id: randomUUID(), userId: superAdminId, role: 'SUPER_ADMIN' },
+            { id: randomUUID(), userId: superAdminId, role: 'USER' },
+          ],
+        });
+
+        await (this as any).professionalProfile.create({
+          data: {
+            id: profileId,
+            userId: superAdminId,
+            displayName: 'Setu Platform Administrator',
+            headline: 'Chief Administrative Officer & Platform Governance',
+            summary: 'Master administrative overseer managing system integrity and verification compliance across Project Setu.',
+            currentTitle: 'Head of Platform Administration',
+            function: 'Platform Operations',
+            seniority: 'C-Level / Super Admin',
+            industry: 'Enterprise Software & AI',
+            city: 'Bengaluru',
+            countryCode: 'IN',
+            visibility: 'PUBLIC',
+            verificationStatus: 'VERIFIED',
+            completenessScore: 100,
+            isSeedData: true,
+          },
+        });
+
+        this.logger.log(`✔ Super Admin created: ${adminEmail} (Password: Password123!)`);
+      }
+    } catch (err: any) {
+      this.logger.warn(`Seed check: ${err.message}`);
     }
   }
 

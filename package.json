@@ -7,7 +7,7 @@
     "apps/*"
   ],
   "scripts": {
-    "start": "node apps/backend/dist/main",
+    "start": "cd apps/backend && npx prisma db push --skip-generate --accept-data-loss && node dist/main",
     "dev:backend": "npm run start:dev --workspace=@setu/backend",
     "dev:frontend": "npm run dev --workspace=@setu/frontend",
     "dev:mobile": "npm run start --workspace=@setu/mobile",
