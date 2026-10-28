@@ -9,15 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleAuthModal } from '../../components/GoogleAuthModal';
-import { launchGoogleOAuth } from '../../services/googleAuth';
 
 interface LoginScreenProps {
   onRegister: () => void;
@@ -26,9 +25,14 @@ interface LoginScreenProps {
   initialEmail?: string;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onRegister, onForgotPassword, onBack, initialEmail }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({
+  onRegister,
+  onForgotPassword,
+  onBack,
+  initialEmail,
+}) => {
   const insets = useSafeAreaInsets();
-  const { login, quickDemoLogin, loginWithGoogle } = useAuth();
+  const { login, quickDemoLogin } = useAuth();
   const [email, setEmail] = useState(initialEmail || 'aditi.park@novus-infrastructure-101-singapore.com');
   const [password, setPassword] = useState('Password123!');
   const [showPassword, setShowPassword] = useState(false);
@@ -54,7 +58,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onRegister, onForgotPa
     }
     setError('');
     setLoading(true);
-    const res = await login(email, password);
+    const res = await login(email.trim(), password);
     setLoading(false);
     if (!res.success) {
       setError(res.error || 'Authentication rejected. Check credentials.');
@@ -62,160 +66,182 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onRegister, onForgotPa
   };
 
   return (
-    <View style={[styles.container, { paddingTop: Math.max(insets.top, 16), paddingBottom: Math.max(insets.bottom, 16) }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+    <View style={styles.container}>
+      <StatusBar style="light" />
+
+      {/* TOP GRADIENT HEADER (Matching Reference UI) */}
+      <LinearGradient
+        colors={['#071120', '#0B1D3A', '#0284C7']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.headerGradient, { paddingTop: Math.max(insets.top, 20) + 8 }]}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header Bar */}
-          <View style={styles.headerBar}>
-            <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
-              <Feather name="arrow-left" size={18} color={COLORS.text} />
-            </TouchableOpacity>
-            <View style={styles.headerBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.headerBadgeText}>MESHVI Clearance Node</Text>
-            </View>
-          </View>
+        {/* Top Action Row: Back Button & "Don't have an account? Get Started" */}
+        <View style={styles.topNavRow}>
+          <TouchableOpacity
+            onPress={onBack}
+            style={styles.backCircleBtn}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Feather name="chevron-left" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
 
-          {/* Title Section */}
-          <View style={styles.titleSection}>
-            <Image
-              source={require('../../../assets/icon.png')}
-              style={{ width: 54, height: 54, borderRadius: 14, marginBottom: 12 }}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>Executive Sign In</Text>
-            <Text style={styles.subtitle}>
-              Access verified reciprocal intent network for enterprise leaders.
-            </Text>
-          </View>
-
-          {/* Error Banner */}
-          {error ? (
-            <View style={styles.errorBanner}>
-              <Feather name="alert-circle" size={16} color={COLORS.rose} />
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : null}
-
-          {/* Form Card */}
-          <View style={styles.formCard}>
-            {/* Google OAuth Button */}
+          <View style={styles.registerPromptRow}>
+            <Text style={styles.registerPromptText}>Don't have an account?</Text>
             <TouchableOpacity
-              style={styles.googleBtn}
-              onPress={handleGoogleLogin}
-              disabled={loading}
+              onPress={onRegister}
+              style={styles.getStartedPill}
               activeOpacity={0.8}
             >
-              <MaterialCommunityIcons name="google" size={18} color="#EA4335" style={{ marginRight: 8 }} />
-              <Text style={styles.googleBtnText}>Continue with Google</Text>
+              <Text style={styles.getStartedPillText}>Get Started</Text>
             </TouchableOpacity>
+          </View>
+        </View>
 
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or sign in with password</Text>
-              <View style={styles.dividerLine} />
+        {/* Center Brand Title */}
+        <View style={styles.brandTitleContainer}>
+          <Text style={styles.brandTitle}>Meshvi</Text>
+          <Text style={styles.brandSubtitle}>Verified Executive Network</Text>
+        </View>
+      </LinearGradient>
+
+      {/* BOTTOM FLOATING WHITE CARD (Matching Reference UI) */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.cardScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={[styles.mainCard, { paddingBottom: Math.max(insets.bottom, 20) + 16 }]}>
+            {/* Header Titles */}
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Welcome Back</Text>
+              <Text style={styles.cardSubtitle}>Enter your details below</Text>
             </View>
 
-            {/* Email Field */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Corporate Work Email</Text>
-              <View style={styles.inputContainer}>
-                <Feather name="mail" size={16} color={COLORS.textMuted} style={styles.inputIcon} />
+            {/* Error Message */}
+            {error ? (
+              <View style={styles.errorBanner}>
+                <Feather name="alert-circle" size={15} color={COLORS.rose} style={{ marginRight: 6 }} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+
+            {/* Field 1: Email Address */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>Email Address</Text>
+              <View style={styles.inputRow}>
                 <TextInput
-                  style={styles.input}
+                  style={styles.inputField}
                   placeholder="name@company.com"
-                  placeholderTextColor={COLORS.textMuted}
+                  placeholderTextColor="#94A3B8"
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
                   keyboardType="email-address"
+                  autoCorrect={false}
                 />
               </View>
             </View>
 
-            {/* Password Field */}
-            <View style={styles.fieldGroup}>
-              <View style={styles.labelRow}>
-                <Text style={styles.label}>Clearance Key / Password</Text>
-                <TouchableOpacity onPress={onForgotPassword}>
-                  <Text style={styles.forgotText}>Forgot key?</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.inputContainer}>
-                <Feather name="lock" size={16} color={COLORS.textMuted} style={styles.inputIcon} />
+            {/* Field 2: Password */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>Password</Text>
+              <View style={styles.inputRow}>
                 <TextInput
-                  style={styles.input}
-                  placeholder="Enter password"
-                  placeholderTextColor={COLORS.textMuted}
+                  style={[styles.inputField, { flex: 1, paddingRight: 8 }]}
+                  placeholder="••••••••••••"
+                  placeholderTextColor="#94A3B8"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-                  <Feather name={showPassword ? 'eye-off' : 'eye'} size={16} color={COLORS.textMuted} />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeToggleBtn}
+                  activeOpacity={0.7}
+                >
+                  <Feather
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={18}
+                    color="#64748B"
+                  />
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Submit Button */}
+            {/* Sign In Primary CTA Button (LinearGradient) */}
             <TouchableOpacity
-              style={styles.submitBtn}
               onPress={handleLogin}
               disabled={loading}
-              activeOpacity={0.88}
+              activeOpacity={0.85}
+              style={styles.submitBtnWrapper}
             >
               <LinearGradient
-                colors={[COLORS.primary, '#0040D0']}
+                colors={['#0284C7', '#0369A1']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.submitGradient}
+                style={styles.submitBtnGradient}
               >
                 {loading ? (
-                  <ActivityIndicator color={COLORS.white} size="small" />
+                  <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <>
-                    <Text style={styles.submitText}>Authenticate Node</Text>
-                    <Feather name="arrow-right" size={18} color={COLORS.white} />
-                  </>
+                  <Text style={styles.submitBtnText}>Sign In</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Instant Demo Fill */}
+            {/* Forgot Password Link */}
             <TouchableOpacity
-              style={styles.quickFillBtn}
-              onPress={async () => {
-                await quickDemoLogin();
-              }}
+              onPress={onForgotPassword}
+              style={styles.forgotPasswordContainer}
               activeOpacity={0.7}
             >
-              <Feather name="zap" size={13} color={COLORS.primary} style={{ marginRight: 6 }} />
-              <Text style={styles.quickFillText}>Instant Demo Sign In (VP Partnerships)</Text>
+              <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
             </TouchableOpacity>
-          </View>
 
-          {/* Register Prompt */}
-          <View style={styles.registerPrompt}>
-            <Text style={styles.registerPromptText}>Need an enterprise node? </Text>
-            <TouchableOpacity onPress={onRegister}>
-              <Text style={styles.registerLink}>Register Organization</Text>
+            {/* Divider: Or sign in with */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>Or sign in with</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Single Google OAuth Button (No Facebook) */}
+            <TouchableOpacity
+              onPress={handleGoogleLogin}
+              disabled={loading}
+              style={styles.googleOAuthBtn}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons name="google" size={19} color="#EA4335" style={{ marginRight: 8 }} />
+              <Text style={styles.googleOAuthBtnText}>Google</Text>
+            </TouchableOpacity>
+
+            {/* Quick Demo Pre-fill Option */}
+            <TouchableOpacity
+              onPress={quickDemoLogin}
+              style={styles.quickDemoPill}
+              activeOpacity={0.7}
+            >
+              <Feather name="zap" size={12} color="#0284C7" style={{ marginRight: 4 }} />
+              <Text style={styles.quickDemoText}>Instant Demo Clearance (Aditi Park, VP)</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Google Authentication Modal */}
+      {/* Google OAuth Modal */}
       <GoogleAuthModal
         visible={showGoogleModal}
         onClose={() => setShowGoogleModal(false)}
-        defaultEmail={email}
       />
     </View>
   );
@@ -224,149 +250,185 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onRegister, onForgotPa
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#071120',
   },
-  scrollContent: {
+  headerGradient: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 40,
+    minHeight: 200,
+    justifyContent: 'space-between',
   },
-  headerBar: {
+  topNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    marginBottom: 8,
   },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: COLORS.card,
+  backCircleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
   },
-  headerBadge: {
+  registerPromptRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primaryLight,
+  },
+  registerPromptText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginRight: 8,
+    fontWeight: '500',
+  },
+  getStartedPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
+    paddingVertical: 6,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
   },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.emerald,
-    marginRight: 6,
+  getStartedPillText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
-  headerBadgeText: {
-    color: COLORS.primary,
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  titleSection: {
+  brandTitleContainer: {
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  brandTitle: {
+    fontSize: 34,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.6,
+  },
+  brandSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.75)',
+    marginTop: 2,
+    letterSpacing: 0.2,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  cardScrollContent: {
+    flexGrow: 1,
+  },
+  mainCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 24,
+    paddingTop: 30,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  cardHeader: {
+    alignItems: 'center',
     marginBottom: 20,
   },
-  logoPill: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  logoLetter: {
-    color: COLORS.white,
-    fontSize: 28,
-    fontWeight: '900',
-  },
-  title: {
-    color: COLORS.text,
+  cardTitle: {
     fontSize: 24,
-    fontWeight: '900',
-    marginBottom: 6,
-    letterSpacing: -0.5,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.4,
   },
-  subtitle: {
-    color: COLORS.textSecondary,
+  cardSubtitle: {
     fontSize: 13,
-    textAlign: 'center',
-    paddingHorizontal: 16,
-    lineHeight: 18,
+    color: '#64748B',
+    marginTop: 4,
+    fontWeight: '500',
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF1F2',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderColor: '#FECDD3',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
     marginBottom: 16,
   },
   errorText: {
-    color: COLORS.rose,
     fontSize: 12,
+    color: '#B91C1C',
     fontWeight: '600',
-    marginLeft: 8,
     flex: 1,
   },
-  formCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 20,
-    padding: 22,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  googleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
+  fieldContainer: {
+    borderWidth: 1.2,
     borderColor: '#E2E8F0',
     borderRadius: 14,
-    paddingVertical: 12,
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    paddingTop: 8,
+    paddingBottom: 6,
+    marginBottom: 14,
   },
-  googleBtnText: {
+  fieldLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+    textTransform: 'capitalize',
+    marginBottom: 2,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputField: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0F172A',
+    paddingVertical: 2,
+  },
+  eyeToggleBtn: {
+    padding: 6,
+  },
+  submitBtnWrapper: {
+    marginTop: 8,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  submitBtnGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingVertical: 4,
+  },
+  forgotPasswordText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
+    fontWeight: '600',
+    color: '#64748B',
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 20,
   },
   dividerLine: {
     flex: 1,
@@ -374,108 +436,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
   },
   dividerText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#94A3B8',
-    textTransform: 'uppercase',
-    paddingHorizontal: 10,
-    letterSpacing: 0.5,
-  },
-  fieldGroup: {
-    marginBottom: 16,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  label: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  forgotText: {
-    color: COLORS.primary,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.cardAlt,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 12,
-    height: 48,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  eyeBtn: {
-    padding: 6,
-  },
-  submitBtn: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 6,
-    marginBottom: 12,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  submitGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-  },
-  submitText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: '800',
-    marginRight: 6,
-  },
-  quickFillBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 11,
-    backgroundColor: COLORS.cardAlt,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  quickFillText: {
-    color: COLORS.primary,
     fontSize: 12,
-    fontWeight: '700',
+    color: '#94A3B8',
+    paddingHorizontal: 12,
+    fontWeight: '500',
   },
-  registerPrompt: {
+  googleOAuthBtn: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'center',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  registerPromptText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
+  googleOAuthBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
   },
-  registerLink: {
-    color: COLORS.primary,
-    fontSize: 13,
-    fontWeight: '800',
+  quickDemoPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginTop: 16,
+    alignSelf: 'center',
+  },
+  quickDemoText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0284C7',
   },
 });

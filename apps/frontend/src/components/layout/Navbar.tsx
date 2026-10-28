@@ -9,10 +9,11 @@ export const Navbar = () => {
 
   const navLinks = [
     { name: 'How it works', href: '/how-it-works' },
+    { name: 'Search Showcase', href: '/search-showcase' },
+    { name: 'Why Meshvi', href: '/why-meshvi' },
     { name: 'For companies', href: '/for-companies' },
-    { name: 'For professionals', href: '/for-professionals' },
-    { name: 'Use cases', href: '/use-cases' },
-    { name: 'FAQ', href: '/faq' },
+    { name: 'For leaders', href: '/for-professionals' },
+    { name: 'About', href: '/about' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -76,7 +77,7 @@ export const Navbar = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-border bg-surface px-4 pt-2 pb-6 space-y-2">
+        <div className="md:hidden border-b border-border bg-surface px-4 pt-2 pb-6 space-y-1.5 max-h-[calc(100vh-4rem)] overflow-y-auto shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
           {navLinks.map((link) => (
             <Link
               key={link.name}

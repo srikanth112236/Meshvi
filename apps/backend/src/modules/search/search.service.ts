@@ -206,7 +206,215 @@ export const B2B_TYPO_CORRECTIONS: Record<string, string> = {
   malasiya: 'malaysia',
   malasyia: 'malaysia',
   malaysian: 'malaysia',
+  // Prepositions & common typo slips
+  fro: 'for',
+  fo: 'for',
+  fpr: 'for',
+  fr: 'for',
+  wit: 'with',
+  wth: 'with',
+  adn: 'and',
+  nad: 'and',
+
+  // Manufacturing & Industrial
+  manfacturog: 'manufacturing',
+  manfacutring: 'manufacturing',
+  manufacuring: 'manufacturing',
+  manfacturer: 'manufacturer',
+  fabricatn: 'fabrication',
+  industral: 'industrial',
+  machinary: 'machinery',
+  equpment: 'equipment',
+
+  // Aviation, Airport, and Travel typos
+  airpotrt: 'airport',
+  airprot: 'airport',
+  airprt: 'airport',
+  aiport: 'airport',
+  airpot: 'airport',
+  arport: 'airport',
+  airpoort: 'airport',
+  airpport: 'airport',
+  aeroport: 'airport',
+  aerodrome: 'airport',
+  aviaton: 'aviation',
+  avation: 'aviation',
+  avaiation: 'aviation',
+
+  // Lounge & Concession typos
+  longe: 'lounge',
+  luonge: 'lounge',
+  lounj: 'lounge',
+  launge: 'lounge',
+  loung: 'lounge',
+  lounges: 'lounges',
+  luonges: 'lounges',
+  launges: 'lounges',
+  concesion: 'concession',
+  concessionaire: 'concessionaire',
+  concesionaire: 'concessionaire',
+
+  // Beverage, Food, Feed & FMCG
+  bevrg: 'beverage',
+  beverag: 'beverage',
+  bevergs: 'beverages',
+  bevarges: 'beverages',
+  bevearge: 'beverage',
+  bevearges: 'beverages',
+  agri: 'agriculture',
+  agriclture: 'agriculture',
+  livestok: 'livestock',
+  poltry: 'poultry',
+
+  // Intent & Action typos
+  seking: 'seeking',
+  skeing: 'seeking',
+  seeeking: 'seeking',
+  seaking: 'seeking',
+  partnrship: 'partnership',
+  partenship: 'partnership',
+  pratnership: 'partnership',
+  partnershp: 'partnership',
+  partenrs: 'partners',
+  hosptality: 'hospitality',
+  hospitallity: 'hospitality',
+  distribtion: 'distribution',
+  distributr: 'distributor',
+  suppy: 'supply',
+  suplly: 'supply',
+  chan: 'chain',
+  chian: 'chain',
+  logitics: 'logistics',
+  logistcs: 'logistics',
+  logisitcs: 'logistics',
+  logisitic: 'logistics',
+  packging: 'packaging',
+  packagng: 'packaging',
+  warehous: 'warehouse',
+  solor: 'solar',
+  enrgy: 'energy',
+  cleantch: 'cleantech',
+  chemcials: 'chemicals',
+  chemcal: 'chemical',
+  contrat: 'contract',
+  cotnract: 'contract',
+  contrct: 'contract',
+  executiv: 'executive',
+  exective: 'executive',
+  exceutive: 'executive',
+  directer: 'director',
+  dircetor: 'director',
+  direcor: 'director',
+  manger: 'manager',
+  mnaager: 'manager',
+  managr: 'manager',
+  comercial: 'commercial',
+  commerical: 'commercial',
+  commercal: 'commercial',
+  buisness: 'business',
+  bussiness: 'business',
+  busines: 'business',
+  bizness: 'business',
+  devlopment: 'development',
+  developement: 'development',
+  develpment: 'development',
+  retial: 'retail',
+  retal: 'retail',
+  retaill: 'retail',
+  shsoud: 'should',
+  corretev: 'correct',
+  corect: 'correct',
+  tehre: 'there',
+  swlel: 'well',
+  wlel: 'well',
+  thsi: 'this',
 };
+
+export const CANONICAL_B2B_VOCABULARY: string[] = [
+  // Manufacturing & Industrial
+  'manufacturing', 'manufacturer', 'manufacturers', 'production', 'factory', 'fabrication', 'assembly', 'industrial', 'machinery', 'equipment', 'tooling', 'processing',
+  // Food, Feed & Agriculture
+  'food', 'feed', 'agriculture', 'agricultural', 'farming', 'livestock', 'poultry', 'dairy', 'beverage', 'beverages', 'ingredient', 'ingredients', 'organic', 'spices', 'grains', 'crops', 'horticulture', 'agro', 'fertilizer', 'cattle', 'aquaculture',
+  // Logistics & Supply Chain
+  'logistics', 'logistic', 'supply', 'chain', 'warehouse', 'warehousing', 'storage', 'coldchain', 'freight', 'shipping', 'distribution', 'distributor', 'distributors', 'fulfillment', 'customs', 'transport', 'cargo', 'corridor', 'corridors',
+  // Aviation, Aerospace & Travel
+  'airport', 'airports', 'airline', 'airlines', 'aviation', 'aerospace', 'lounge', 'lounges', 'terminal', 'concession', 'concessionaire', 'retail', 'dutyfree', 'hospitality',
+  // Technology & Software
+  'software', 'technology', 'cloud', 'saas', 'platform', 'cybersecurity', 'artificial', 'intelligence', 'enterprise', 'infrastructure', 'developer', 'engineering', 'analytics', 'automation', 'telecom', 'semiconductor',
+  // Healthcare & Life Sciences
+  'pharmaceutical', 'pharma', 'biotech', 'healthcare', 'medical', 'devices', 'clinical', 'hospital', 'laboratory', 'diagnostic', 'formulation',
+  // Energy & Materials
+  'energy', 'renewable', 'solar', 'cleantech', 'wind', 'power', 'battery', 'chemicals', 'chemical', 'polymers', 'petrochemical', 'minerals', 'metals', 'steel',
+  // Retail, Consumer & Packaging
+  'fmcg', 'consumer', 'goods', 'apparel', 'garments', 'textile', 'textiles', 'packaging', 'ecommerce', 'wholesale',
+  // Commercial, Contracting & Partnerships
+  'partnership', 'partnerships', 'partner', 'partners', 'procurement', 'procuring', 'sourcing', 'purchasing', 'buyer', 'buyers', 'supplier', 'suppliers', 'vendor', 'vendors', 'contract', 'contracts', 'tender', 'tenders', 'bids', 'alliance', 'alliances', 'commercial', 'business', 'development', 'corporate',
+  // Executive Roles
+  'director', 'directors', 'manager', 'managers', 'executive', 'executives', 'officer', 'head', 'lead', 'president', 'founder', 'ceo', 'cfo', 'coo', 'cto', 'cpo', 'managing',
+  // Prepositions & Connectors
+  'and', 'for', 'from', 'with', 'into', 'about', 'across', 'seeking', 'looking', 'between', 'global', 'regional'
+];
+
+export function damerauLevenshteinDistance(a: string, b: string): number {
+  const al = a.length;
+  const bl = b.length;
+  if (Math.abs(al - bl) > 3) return 99;
+  const matrix: number[][] = [];
+  for (let i = 0; i <= al; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= bl; j++) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= al; i++) {
+    for (let j = 1; j <= bl; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        matrix[i][j] = Math.min(matrix[i][j], matrix[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return matrix[al][bl];
+}
+
+export function autoCorrectB2BWord(rawWord: string): { corrected: string; wasCorrected: boolean } {
+  const clean = rawWord.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!clean || clean.length < 2) return { corrected: rawWord, wasCorrected: false };
+
+  // 1. Direct dictionary lookup
+  if (B2B_TYPO_CORRECTIONS[clean]) {
+    return { corrected: B2B_TYPO_CORRECTIONS[clean], wasCorrected: true };
+  }
+
+  // If already a canonical vocabulary word, keep as-is
+  if (CANONICAL_B2B_VOCABULARY.includes(clean)) {
+    return { corrected: clean, wasCorrected: false };
+  }
+
+  // 2. Fuzzy Damerau-Levenshtein distance matching
+  let bestMatch: string | null = null;
+  let minDistance = 99;
+
+  for (const target of CANONICAL_B2B_VOCABULARY) {
+    const dist = damerauLevenshteinDistance(clean, target);
+    const maxAllowedDist = clean.length <= 3 ? 1 : clean.length <= 6 ? 1 : clean.length <= 9 ? 2 : 3;
+    if (dist <= maxAllowedDist && dist < minDistance) {
+      minDistance = dist;
+      bestMatch = target;
+    }
+  }
+
+  if (bestMatch && minDistance <= 3) {
+    return { corrected: bestMatch, wasCorrected: true };
+  }
+
+  return { corrected: rawWord, wasCorrected: false };
+}
 
 export const INDUSTRY_TERMS_MAP: Record<string, string> = {
   food: 'FMCG & Consumer Goods',
@@ -663,13 +871,13 @@ function parseQueryIntentAndEntity(rawQuery: string): ParsedQuery {
     }
   }
 
-  // Preprocess spelling mistakes and B2B terminology typos
+  // Preprocess spelling mistakes and B2B terminology typos (exact & fuzzy)
   const rawWords = trimmed.toLowerCase().replace(/#/g, ' ').split(/\s+/).filter(Boolean);
   const detectedTypos: Array<{ wrong: string; right: string }> = [];
   const correctedTokens = rawWords.map((w) => {
     const cleanWord = w.replace(/[^a-z0-9]/g, '');
-    const corrected = B2B_TYPO_CORRECTIONS[cleanWord];
-    if (corrected && corrected !== cleanWord) {
+    const { corrected, wasCorrected } = autoCorrectB2BWord(cleanWord);
+    if (wasCorrected && corrected !== cleanWord) {
       if (!detectedTypos.some((t) => t.wrong === cleanWord)) {
         detectedTypos.push({ wrong: cleanWord, right: corrected });
       }
@@ -1162,7 +1370,8 @@ function extractSearchTerms(rawQuery: string) {
   const rawWords = trimmed.toLowerCase().split(/\s+/);
   const correctedTokens = rawWords.map((w) => {
     const cleanWord = w.replace(/[^a-z0-9]/g, '');
-    return B2B_TYPO_CORRECTIONS[cleanWord] || w;
+    const { corrected } = autoCorrectB2BWord(cleanWord);
+    return corrected || w;
   });
   const normalized = correctedTokens.join(' ').replace(/[-_—–/]/g, ' ');
   const words = normalized.replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
@@ -1448,18 +1657,25 @@ export class SearchService {
     const skip = (page - 1) * limit;
     const isDirectoryBrowse = !query || query.trim() === '';
 
-    // 1. Interpret intent via AI abstraction (Gemini / OpenCode Zen / Fallback)
-    const aiResult = await this.aiService.interpretIntent(userId, query);
-    const interpreted = aiResult.intent;
-
     let parsedQueryData: ParsedQuery | null = null;
     let queryDetectedRoles: string[] = [];
     let cleanDomainTokens: string[] = [];
+    let effectiveQuery = query;
+
     if (query && query.trim() !== '') {
       parsedQueryData = parseQueryIntentAndEntity(query);
       queryDetectedRoles = parsedQueryData.detectedRoles;
+      if (parsedQueryData.queryCorrection?.hasCorrection && parsedQueryData.queryCorrection.correctedQuery) {
+        effectiveQuery = parsedQueryData.queryCorrection.correctedQuery;
+      }
+    }
 
-      const { tokens: meaningfulTokens } = extractSearchTerms(query);
+    // 1. Interpret intent via AI abstraction using clean effective query
+    const aiResult = await this.aiService.interpretIntent(userId, effectiveQuery);
+    const interpreted = aiResult.intent;
+
+    if (query && query.trim() !== '' && parsedQueryData) {
+      const { tokens: meaningfulTokens } = extractSearchTerms(effectiveQuery);
       const locationWords = new Set<string>();
       if (parsedQueryData.detectedCity) {
         parsedQueryData.detectedCity.toLowerCase().split(/\s+/).forEach((w) => locationWords.add(w.replace(/[^a-z0-9]/g, '')));
@@ -1715,7 +1931,7 @@ export class SearchService {
     // P1 & P2: Entity Disentanglement & Company Anchor Engine
     if (query && query.trim() !== '' && parsedQueryData) {
       const parsed = parsedQueryData;
-      const { cleanPhrase, tokens: meaningfulTokens } = extractSearchTerms(query);
+      const { cleanPhrase, tokens: meaningfulTokens } = extractSearchTerms(effectiveQuery);
 
       if (parsed.isStructuredAtQuery) {
         // Structured Person/Role @ Company query (e.g. "Vikram Al-Mansoor @ Boreal Industries")
@@ -2543,7 +2759,7 @@ export class SearchService {
       let roleMatchBonus = 0;
 
       if (query && query.trim()) {
-        const { cleanPhrase, tokens: qTokens } = extractSearchTerms(query);
+        const { cleanPhrase, tokens: qTokens } = extractSearchTerms(effectiveQuery);
         const qLower = query.trim().toLowerCase();
         const candName = (cand.displayName || '').toLowerCase();
         const candTitle = (cand.currentTitle || '').toLowerCase();
@@ -3854,8 +4070,8 @@ export class SearchService {
     const detectedTypos: Array<{ wrong: string; right: string }> = [];
     const correctedWords = rawWords.map((w) => {
       const clean = w.replace(/[^a-z0-9]/g, '');
-      const corrected = B2B_TYPO_CORRECTIONS[clean];
-      if (corrected && corrected !== clean) {
+      const { corrected, wasCorrected } = autoCorrectB2BWord(clean);
+      if (wasCorrected && corrected !== clean) {
         if (!detectedTypos.some((t) => t.wrong === clean)) {
           detectedTypos.push({ wrong: clean, right: corrected });
         }

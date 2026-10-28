@@ -12,6 +12,7 @@ import { AuthService } from '../auth/auth.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { ClaimCompanyDto } from './dto/claim-company.dto';
 import { NotificationType, ConnectionStatus } from '@prisma/client';
+import { autoCorrectB2BWord } from '../search/search.service';
 
 const CORPORATE_LEGAL_SUFFIXES = new Set([
   'pte', 'ltd', 'limited', 'inc', 'incorporated', 'corp', 'corporation',
@@ -53,7 +54,8 @@ function extractSearchTerms(rawQuery: string) {
   const trimmed = rawQuery.trim();
   const withoutAnnotations = trimmed.split(/\s*(?:—|–|\s+-\s+)\s*/)[0].trim();
   const normalized = withoutAnnotations.replace(/[-_/]/g, ' ').toLowerCase();
-  const words = normalized.replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  const rawWords = normalized.replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  const words = rawWords.map((w) => autoCorrectB2BWord(w).corrected);
   const cleanTokens = words.filter((w) => !GENERAL_STOP_WORDS.has(w) && !CORPORATE_LEGAL_SUFFIXES.has(w));
   const effectiveTokens = cleanTokens.length > 0 ? cleanTokens : words.filter((w) => !GENERAL_STOP_WORDS.has(w));
   const cleanPhrase = effectiveTokens.join(' ');

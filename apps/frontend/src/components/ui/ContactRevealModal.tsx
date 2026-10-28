@@ -7,7 +7,6 @@ import {
   Check,
   ExternalLink,
   ShieldCheck,
-  Rocket,
   MessageSquare,
   Unlock,
   Sparkles,
@@ -42,7 +41,7 @@ export const ContactRevealModal: React.FC<ContactRevealModalProps> = ({
   isOpen,
   onClose,
   opportunity,
-  dealRoomId,
+  dealRoomId: _dealRoomId,
 }) => {
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
@@ -226,21 +225,13 @@ export const ContactRevealModal: React.FC<ContactRevealModalProps> = ({
           </div>
 
           {/* Direct CTA Buttons */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
-            <Link
-              to={dealRoomId ? `/app/deal-rooms/${dealRoomId}` : '/app/deal-rooms'}
-              className="w-full sm:flex-1 py-3 px-4 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-sm transition-all"
-            >
-              <Rocket className="w-4 h-4 text-emerald-400" />
-              <span>Launch Bilateral Deal Room</span>
-            </Link>
-
+          <div className="pt-2 flex items-center justify-center">
             <Link
               to="/app/messages"
-              className="w-full sm:w-auto py-3 px-4 bg-surface hover:bg-bg text-navy border border-border rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition-colors"
+              className="w-full py-3 px-4 bg-navy hover:bg-neutral-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-sm transition-all"
             >
-              <MessageSquare className="w-4 h-4 text-blue-600" />
-              <span>Send Message</span>
+              <MessageSquare className="w-4 h-4 text-emerald-400" />
+              <span>Send Direct Message</span>
             </Link>
           </div>
         </div>

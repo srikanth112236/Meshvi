@@ -66,8 +66,8 @@ export const CompanyLoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-navy flex flex-col justify-center items-center px-4 py-12">
-      <div className="max-w-md w-full bg-surface border border-indigo-200/80 rounded-2xl p-8 shadow-xl space-y-6">
+    <div className="min-h-screen bg-bg text-navy flex flex-col justify-center items-center px-3 sm:px-4 py-6 sm:py-12">
+      <div className="max-w-md w-full bg-surface border border-indigo-200/80 rounded-2xl p-5 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <Link to="/" className="inline-block">

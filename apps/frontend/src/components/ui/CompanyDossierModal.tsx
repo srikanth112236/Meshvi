@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronRight,
   Building2,
-  ArrowRight,
   Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -32,7 +31,7 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
   onClose,
   companyId,
   onSelectPersonForConnect,
-  onSelectCompanyForProposal,
+  onSelectCompanyForProposal: _onSelectCompanyForProposal,
 }) => {
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -690,29 +689,6 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
               >
                 Close
               </button>
-
-              <div className="flex items-center space-x-2">
-                {onSelectCompanyForProposal && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const firstLeader = roster[0]?.user?.profile;
-                      onSelectCompanyForProposal({
-                        companyId: company.id,
-                        companyName: company.name,
-                        recipientProfileId: firstLeader?.id || company.id,
-                        executiveName: firstLeader?.displayName || `${company.name} Executive Office`,
-                        executiveTitle: firstLeader?.currentTitle || 'Corporate Inbound Desk',
-                      });
-                      onClose();
-                    }}
-                    className="px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl shadow-sm transition-colors flex items-center space-x-1.5"
-                  >
-                    <span>Submit Proposal to Company</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
             </div>
           )}
         </div>

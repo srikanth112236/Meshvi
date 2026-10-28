@@ -51,6 +51,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const isInitialLoadRef = useRef(true);
   const seenIdsRef = useRef<Set<string>>(new Set());
+  const lastToastTimeRef = useRef<number>(0);
 
   // Load seen notifications from localStorage on mount
   useEffect(() => {
@@ -79,23 +80,31 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const message = toast.message || toast.body || toast.text || toast.description || '';
     if (!title && !message) return; // Prevent empty blank toasts
 
-    // Play executive chime sound
-    playExecutiveNotificationSound();
+    // Throttle audio chime so rapid consecutive notifications within 3 seconds don't spam audio
+    const now = Date.now();
+    if (now - lastToastTimeRef.current > 3000) {
+      playExecutiveNotificationSound();
+      lastToastTimeRef.current = now;
+    }
 
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [
-      ...prev,
-      {
-        id,
-        title,
-        message,
-        type: toast.type || 'opportunity',
-        actionUrl: toast.actionUrl,
-      },
-    ]);
+    setToasts((prev) => {
+      // Limit to at most 3 simultaneous toasts on screen to prevent visual clutter
+      const trimmed = prev.slice(-2);
+      return [
+        ...trimmed,
+        {
+          id,
+          title,
+          message,
+          type: toast.type || 'opportunity',
+          actionUrl: toast.actionUrl,
+        },
+      ];
+    });
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 6000);
+    }, 5000);
   }, []);
 
   const fetchNotifications = useCallback(async () => {
@@ -120,13 +129,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           saveSeenIds();
           isInitialLoadRef.current = false;
         } else {
-          // Subsequent background poll: only trigger toast for newly arrived unread notifications
+          // Subsequent background poll: only trigger toast for newly arrived unread notifications created recently
           fetchedList.forEach((notif) => {
             if (!seenIdsRef.current.has(notif.id)) {
               seenIdsRef.current.add(notif.id);
               saveSeenIds(notif.id);
 
-              if (!notif.read) {
+              const createdAtMs = notif.createdAt ? new Date(notif.createdAt).getTime() : 0;
+              const isRecent = createdAtMs > 0 ? (Date.now() - createdAtMs < 120000) : false;
+
+              if (!notif.read && isRecent) {
                 showToast({
                   title: notif.title,
                   message: notif.body,
@@ -208,12 +220,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
             setNotifications((prev) => [notifItem, ...prev.filter((n) => n.id !== notifItem.id)]);
             setUnreadCount((prev) => prev + 1);
-            showToast({
-              title: notifItem.title,
-              message: notifItem.body,
-              type: 'opportunity',
-              actionUrl: notifItem.actionUrl,
-            });
+
+            const createdAtMs = notifItem.createdAt ? new Date(notifItem.createdAt).getTime() : Date.now();
+            const isRecent = Date.now() - createdAtMs < 120000;
+            if (isRecent) {
+              showToast({
+                title: notifItem.title,
+                message: notifItem.body,
+                type: 'opportunity',
+                actionUrl: notifItem.actionUrl,
+              });
+            }
           }
         } catch {
           // JSON parse fallback
@@ -228,7 +245,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const interval = setInterval(() => {
       fetchNotifications();
-    }, 8000);
+    }, 30000);
 
     return () => {
       clearInterval(interval);

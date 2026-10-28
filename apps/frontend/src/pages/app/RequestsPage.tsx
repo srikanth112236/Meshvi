@@ -349,42 +349,42 @@ export const RequestsPage = () => {
   const pendingOutgoing = outgoing.filter((r) => r.status === 'PENDING');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-black flex items-center space-x-1.5">
+          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-black flex items-center space-x-1.5">
             <Mail className="w-3.5 h-3.5" />
             <span>Two-Way Bridge Inquiries (#27, #28)</span>
           </span>
-          <h1 className="text-2xl font-extrabold text-navy mt-1">Connection Requests & Cadence</h1>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-navy mt-1">Connection Requests & Cadence</h1>
           <p className="text-xs text-text-muted mt-0.5">
             Review incoming requests with stated business intent, schedule follow-up reminders, or re-route to colleagues.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center flex-wrap gap-2 shrink-0">
           <Link
             to="/company/pipeline"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all self-start sm:self-auto shadow-xs flex items-center space-x-1.5"
+            className="px-3.5 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center space-x-1.5"
           >
             <Building2 className="w-3.5 h-3.5" />
             <span>Company Pipeline &rarr;</span>
           </Link>
           <Link
             to="/app/connections"
-            className="px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-all self-start sm:self-auto shadow-xs"
+            className="px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs"
           >
-            View Active Connections &rarr;
+            Active Connections &rarr;
           </Link>
         </div>
       </div>
 
       {/* Corporate Inbound Pipeline Notice Banner */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center shrink-0">
-            <Building2 className="w-5 h-5 text-blue-400" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-black text-white flex items-center justify-center shrink-0">
+            <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
           </div>
           <div>
             <h4 className="text-xs font-black text-navy uppercase tracking-wider">
@@ -397,19 +397,19 @@ export const RequestsPage = () => {
         </div>
         <Link
           to="/company/pipeline"
-          className="px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-all shrink-0 flex items-center space-x-1.5 shadow-xs"
+          className="px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-all shrink-0 flex items-center space-x-1.5 shadow-xs"
         >
-          <span>Open Company Pipeline</span>
+          <span>Open Pipeline</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-border pb-3">
+      <div className="flex items-center space-x-1 sm:space-x-2 border-b border-border pb-3 overflow-x-auto max-w-full">
         <button
           type="button"
           onClick={() => setActiveTab('incoming')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 sm:space-x-2 transition-all shrink-0 ${
             activeTab === 'incoming'
               ? 'bg-black text-white shadow-xs'
               : 'bg-surface-muted text-text-muted hover:text-navy'
@@ -422,20 +422,20 @@ export const RequestsPage = () => {
         <button
           type="button"
           onClick={() => setActiveTab('deferred')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 sm:space-x-2 transition-all shrink-0 ${
             activeTab === 'deferred'
               ? 'bg-black text-white shadow-xs'
               : 'bg-surface-muted text-text-muted hover:text-navy'
           }`}
         >
           <CalendarClock className="w-3.5 h-3.5" />
-          <span>Deferred Cadence Queue ({deferredIncoming.length})</span>
+          <span>Deferred Queue ({deferredIncoming.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('outgoing')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 sm:space-x-2 transition-all shrink-0 ${
             activeTab === 'outgoing'
               ? 'bg-black text-white shadow-xs'
               : 'bg-surface-muted text-text-muted hover:text-navy'

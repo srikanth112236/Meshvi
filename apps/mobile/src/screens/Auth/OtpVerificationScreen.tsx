@@ -9,8 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -23,7 +23,11 @@ interface OtpVerificationScreenProps {
   onBack: () => void;
 }
 
-export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({ email, onSuccess, onBack }) => {
+export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
+  email,
+  onSuccess,
+  onBack,
+}) => {
   const insets = useSafeAreaInsets();
   const { verifyOtp } = useAuth();
   const [otp, setOtp] = useState('');
@@ -63,50 +67,68 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({ em
   };
 
   return (
-    <View style={[styles.container, { paddingTop: Math.max(insets.top, 16), paddingBottom: Math.max(insets.bottom, 16) }]}>
+    <View style={styles.container}>
+      <StatusBar style="light" />
+
+      {/* TOP GRADIENT HEADER */}
+      <LinearGradient
+        colors={['#071120', '#0B1D3A', '#0284C7']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.headerGradient, { paddingTop: Math.max(insets.top, 20) + 8 }]}
+      >
+        <View style={styles.topNavRow}>
+          <TouchableOpacity
+            onPress={onBack}
+            style={styles.backCircleBtn}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Feather name="chevron-left" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <View style={styles.timerPill}>
+            <Feather name="clock" size={13} color="#FFFFFF" style={{ marginRight: 5 }} />
+            <Text style={styles.timerText}>{formatTimer(secondsLeft)}</Text>
+          </View>
+        </View>
+
+        <View style={styles.brandTitleContainer}>
+          <Text style={styles.brandTitle}>Meshvi</Text>
+          <Text style={styles.brandSubtitle}>Two-Factor Security Clearance</Text>
+        </View>
+      </LinearGradient>
+
+      {/* BOTTOM WHITE CARD */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        style={styles.keyboardView}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={styles.cardScrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          bounces={false}
         >
-          {/* Top Bar */}
-          <View style={styles.headerBar}>
-            <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
-              <Feather name="arrow-left" size={18} color={COLORS.text} />
-            </TouchableOpacity>
-            <View style={styles.timerPill}>
-              <Feather name="clock" size={13} color={COLORS.primary} style={{ marginRight: 5 }} />
-              <Text style={styles.timerText}>{formatTimer(secondsLeft)}</Text>
+          <View style={[styles.mainCard, { paddingBottom: Math.max(insets.bottom, 20) + 24 }]}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Verify Your Email</Text>
+              <Text style={styles.cardSubtitle}>
+                Enter the 6-digit verification code dispatched to:
+              </Text>
+              <Text style={styles.emailHighlight}>{email || 'your-email@company.com'}</Text>
             </View>
-          </View>
-
-          <View style={styles.content}>
-            <Image
-              source={require('../../../assets/icon.png')}
-              style={{ width: 54, height: 54, borderRadius: 14, marginBottom: 14 }}
-              resizeMode="contain"
-            />
-
-            <Text style={styles.title}>Email OTP Verification</Text>
-            <Text style={styles.subtitle}>
-              We dispatched a 6-digit clearance code to:
-            </Text>
-            <Text style={styles.emailHighlight}>{email || 'your-email@company.com'}</Text>
 
             {error ? (
               <View style={styles.errorBanner}>
-                <Feather name="alert-circle" size={16} color={COLORS.rose} />
+                <Feather name="alert-circle" size={15} color={COLORS.rose} style={{ marginRight: 6 }} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
 
-            {/* 6-digit OTP Input Card */}
-            <View style={styles.otpCard}>
-              <Text style={styles.otpLabel}>ENTER 6-DIGIT VERIFICATION CODE</Text>
+            {/* OTP Input Card */}
+            <View style={styles.otpBox}>
+              <Text style={styles.otpLabel}>6-DIGIT VERIFICATION CODE</Text>
               <TextInput
                 style={styles.otpInput}
                 value={otp}
@@ -114,50 +136,41 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({ em
                 keyboardType="number-pad"
                 maxLength={6}
                 placeholder="• • • • • •"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor="#94A3B8"
                 autoFocus
               />
 
-              {/* Quick Demo Fill Pill */}
+              {/* Demo Auto-fill */}
               <TouchableOpacity
-                style={styles.demoPill}
+                style={styles.demoFillBtn}
                 onPress={() => setOtp('123456')}
                 activeOpacity={0.7}
               >
-                <Feather name="zap" size={12} color={COLORS.primary} style={{ marginRight: 4 }} />
-                <Text style={styles.demoPillText}>Auto-fill test code (123456)</Text>
+                <Feather name="zap" size={12} color="#0284C7" style={{ marginRight: 4 }} />
+                <Text style={styles.demoFillText}>Auto-fill test code (123456)</Text>
               </TouchableOpacity>
+            </View>
 
-              <TouchableOpacity
-                style={styles.verifyBtn}
-                onPress={handleVerify}
-                disabled={loading}
-                activeOpacity={0.88}
+            {/* Verify Button */}
+            <TouchableOpacity
+              onPress={handleVerify}
+              disabled={loading}
+              activeOpacity={0.85}
+              style={styles.submitBtnWrapper}
+            >
+              <LinearGradient
+                colors={['#0284C7', '#0369A1']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitBtnGradient}
               >
-                <LinearGradient
-                  colors={[COLORS.primary, '#0040D0']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.verifyGradient}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={COLORS.white} size="small" />
-                  ) : (
-                    <>
-                      <Text style={styles.verifyText}>Verify Code & Launch Onboarding</Text>
-                      <Feather name="arrow-right" size={18} color={COLORS.white} />
-                    </>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.resendRow}>
-              <Text style={styles.resendText}>Didn't receive the email? </Text>
-              <TouchableOpacity onPress={() => setSecondsLeft(600)}>
-                <Text style={styles.resendLink}>Resend Code</Text>
-              </TouchableOpacity>
-            </View>
+                {loading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.submitBtnText}>Verify & Enter Hub</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -168,189 +181,179 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({ em
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#071120',
   },
-  scrollContent: {
-    flexGrow: 1,
+  headerGradient: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 40,
+    minHeight: 200,
+    justifyContent: 'space-between',
   },
-  headerBar: {
+  topNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    marginBottom: 8,
   },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: COLORS.card,
+  backCircleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
   },
   timerPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   timerText: {
-    color: COLORS.primary,
     fontSize: 12,
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  content: {
+  brandTitleContainer: {
     alignItems: 'center',
-    paddingTop: 10,
-  },
-  iconCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: COLORS.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#DBEAFE',
-    marginBottom: 16,
-  },
-  title: {
-    color: COLORS.text,
-    fontSize: 24,
-    fontWeight: '900',
+    marginTop: 10,
     marginBottom: 6,
-    letterSpacing: -0.5,
   },
-  subtitle: {
-    color: COLORS.textSecondary,
+  brandTitle: {
+    fontSize: 34,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.6,
+  },
+  brandSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.75)',
+    marginTop: 2,
+    letterSpacing: 0.2,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  cardScrollContent: {
+    flexGrow: 1,
+  },
+  mainCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.4,
+  },
+  cardSubtitle: {
     fontSize: 13,
+    color: '#64748B',
+    marginTop: 6,
     textAlign: 'center',
   },
   emailHighlight: {
-    color: COLORS.primary,
     fontSize: 14,
     fontWeight: '800',
-    marginTop: 2,
-    marginBottom: 20,
+    color: '#0284C7',
+    marginTop: 4,
+    textAlign: 'center',
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF1F2',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderColor: '#FECDD3',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
     marginBottom: 16,
-    width: '100%',
   },
   errorText: {
-    color: COLORS.rose,
     fontSize: 12,
+    color: '#B91C1C',
     fontWeight: '600',
-    marginLeft: 8,
     flex: 1,
   },
-  otpCard: {
-    width: '100%',
-    backgroundColor: COLORS.card,
-    borderRadius: 20,
-    padding: 22,
+  otpBox: {
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    padding: 20,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
+    marginBottom: 20,
   },
   otpLabel: {
-    color: COLORS.textSecondary,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
+    color: '#64748B',
     letterSpacing: 1,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   otpInput: {
-    width: '100%',
-    height: 60,
-    backgroundColor: COLORS.cardAlt,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
-    color: COLORS.text,
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: 8,
     textAlign: 'center',
-    letterSpacing: 12,
-    marginBottom: 14,
+    paddingVertical: 8,
+    width: '100%',
   },
-  demoPill: {
+  demoFillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginBottom: 18,
+    backgroundColor: '#F0F9FF',
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: '#BAE6FD',
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginTop: 12,
   },
-  demoPillText: {
-    color: COLORS.primary,
+  demoFillText: {
     fontSize: 11,
     fontWeight: '700',
+    color: '#0284C7',
   },
-  verifyBtn: {
-    width: '100%',
-    borderRadius: 12,
+  submitBtnWrapper: {
+    borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  verifyGradient: {
-    flexDirection: 'row',
+  submitBtnGradient: {
+    paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
   },
-  verifyText: {
-    color: COLORS.white,
-    fontSize: 13,
+  submitBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '800',
-    marginRight: 6,
-  },
-  resendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 22,
-  },
-  resendText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-  },
-  resendLink: {
-    color: COLORS.primary,
-    fontSize: 13,
-    fontWeight: '800',
+    letterSpacing: 0.2,
   },
 });

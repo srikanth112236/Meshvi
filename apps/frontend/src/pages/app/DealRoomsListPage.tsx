@@ -109,9 +109,9 @@ export const DealRoomsListPage: React.FC = () => {
     : 0;
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 animate-in fade-in duration-200">
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 animate-in fade-in duration-200">
       {/* Top Banner & Header */}
-      <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
           <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-primary">
             <Handshake className="w-4 h-4" />
@@ -125,20 +125,20 @@ export const DealRoomsListPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-3 shrink-0">
+        <div className="flex items-center flex-wrap gap-2 shrink-0">
           <Link
             to="/app/connections"
-            className="px-4 py-2.5 bg-surface hover:bg-border text-navy text-xs font-bold rounded-xl border border-border transition-all flex items-center space-x-1.5 shadow-2xs"
+            className="px-3.5 sm:px-4 py-2 bg-surface hover:bg-border text-navy text-xs font-bold rounded-xl border border-border transition-all flex items-center space-x-1.5 shadow-2xs"
           >
-            <span>Connections Directory</span>
+            <span>Connections</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
           <Link
             to="/app/search"
-            className="px-4 py-2.5 bg-[#102A43] hover:bg-[#173B5E] text-white text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 shadow-xs"
+            className="px-3.5 sm:px-4 py-2 bg-[#102A43] hover:bg-[#173B5E] text-white text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 shadow-xs"
           >
             <Sparkles className="w-3.5 h-3.5 text-sky-300" />
-            <span>Find New Partners</span>
+            <span>Find Partners</span>
           </Link>
         </div>
       </div>

@@ -695,41 +695,41 @@ export const OnboardingPage: React.FC = () => {
   }
 
   return (
-    <div className="h-screen max-h-screen min-h-screen bg-bg flex flex-col justify-between p-3 sm:p-4 overflow-hidden select-none">
+    <div className="min-h-screen bg-bg flex flex-col justify-between p-2.5 sm:p-4 overflow-x-hidden md:h-screen md:max-h-screen md:overflow-hidden select-none">
       
       {/* ------------------------------------------------------------- */}
       {/* TOP COMPACT HEADER & STEPPER (Height: ~55px)                  */}
       {/* ------------------------------------------------------------- */}
-      <header className="max-w-5xl w-full mx-auto flex items-center justify-between pb-2 border-b border-border shrink-0">
-        <div className="flex items-center space-x-2.5">
+      <header className="max-w-5xl w-full mx-auto flex items-center justify-between pb-2 border-b border-border shrink-0 gap-2 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center space-x-2 sm:space-x-2.5">
           <img
             src="/meshvi-mark.png"
             alt="Meshvi"
-            className="w-8 h-8 object-contain shrink-0"
+            className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0"
           />
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-black text-navy leading-none">MESHVI</span>
-              <span className="px-2 py-0.2 bg-primary-soft text-primary text-[9px] font-extrabold uppercase rounded-full border border-primary/20">
-                Executive Onboarding
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <span className="text-xs sm:text-sm font-black text-navy leading-none">MESHVI</span>
+              <span className="px-2 py-0.2 bg-primary-soft text-primary text-[8.5px] sm:text-[9px] font-extrabold uppercase rounded-full border border-primary/20">
+                Onboarding
               </span>
             </div>
-            <p className="text-[10px] text-text-muted leading-tight mt-0.5">
-              Verified Intent Infrastructure &bull; Step {step} of 3
+            <p className="text-[9.5px] sm:text-[10px] text-text-muted leading-tight mt-0.5">
+              Step {step} of 3
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 sm:space-x-2">
           {step > 1 && (
             <button
               type="button"
               onClick={handleBack}
-              className="flex items-center space-x-1 px-2.5 py-1 bg-surface-muted hover:bg-surface text-navy rounded-lg text-xs font-bold border border-border shadow-2xs transition-colors cursor-pointer mr-1"
+              className="flex items-center space-x-1 px-2 sm:px-2.5 py-1 bg-surface-muted hover:bg-surface text-navy rounded-lg text-xs font-bold border border-border shadow-2xs transition-colors cursor-pointer mr-0.5"
               title="Go back to previous step"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-primary" />
-              <span>Back</span>
+              <span className="hidden xs:inline">Back</span>
             </button>
           )}
 
@@ -740,7 +740,7 @@ export const OnboardingPage: React.FC = () => {
               key={s.num}
               type="button"
               onClick={() => setStep(s.num)}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+              className={`flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
                 step === s.num
                   ? 'bg-navy text-white shadow-xs'
                   : step > s.num
@@ -767,12 +767,12 @@ export const OnboardingPage: React.FC = () => {
       </header>
 
       {/* ------------------------------------------------------------- */}
-      {/* MAIN VIEWPORT CARD CONTAINER (Fixed Height, Zero Scroll Steps 1-4) */}
+      {/* MAIN VIEWPORT CARD CONTAINER */}
       {/* ------------------------------------------------------------- */}
-      <main className="max-w-5xl w-full mx-auto flex-1 my-2 bg-surface border border-border rounded-2xl shadow-xs flex flex-col justify-between overflow-hidden">
+      <main className="max-w-5xl w-full mx-auto flex-1 my-1.5 sm:my-2 bg-surface border border-border rounded-xl sm:rounded-2xl shadow-xs flex flex-col justify-between overflow-hidden">
         
         {/* Inner Step Body: Scrollable with Clean Layout */}
-        <div className="p-4 sm:p-5 flex-1 flex flex-col justify-start overflow-y-auto max-h-[calc(100vh-140px)]">
+        <div className="p-3.5 sm:p-5 flex-1 flex flex-col justify-start overflow-y-auto md:max-h-[calc(100vh-140px)]">
 
           {/* ======================================================== */}
           {/* STEP 1: EXECUTIVE IDENTITY & PHOTO                       */}
@@ -798,17 +798,17 @@ export const OnboardingPage: React.FC = () => {
               </div>
 
               {/* Avatar Uploader Row */}
-              <div className="p-3 bg-surface-muted/50 border border-border rounded-xl flex items-center justify-between gap-4">
+              <div className="p-3 bg-surface-muted/50 border border-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center space-x-3.5">
                   <div className="relative group shrink-0">
                     {avatarUrl ? (
                       <img
                         src={avatarUrl}
                         alt="Avatar"
-                        className="w-14 h-14 rounded-xl object-cover border-2 border-primary/40 shadow-xs bg-white"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover border-2 border-primary/40 shadow-xs bg-white"
                       />
                     ) : (
-                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-navy to-slate-800 text-white font-black text-lg flex items-center justify-center shadow-xs">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-navy to-slate-800 text-white font-black text-base sm:text-lg flex items-center justify-center shadow-xs">
                         {displayName ? displayName[0]?.toUpperCase() : 'M'}
                       </div>
                     )}
@@ -823,13 +823,13 @@ export const OnboardingPage: React.FC = () => {
                       <Camera className="w-3 h-3 text-primary" />
                       <span>Executive Headshot</span>
                     </span>
-                    <p className="text-[11px] text-text-muted leading-snug mt-0.5">
+                    <p className="text-[10px] sm:text-[11px] text-text-muted leading-snug mt-0.5">
                       Upload your corporate photo (PNG, JPG, WEBP).
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center flex-wrap gap-1.5 sm:space-x-2">
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -841,7 +841,7 @@ export const OnboardingPage: React.FC = () => {
                     type="button"
                     disabled={uploadingAvatar}
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                    className="px-2.5 sm:px-3 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
                   >
                     <Upload className="w-3.5 h-3.5" />
                     <span>{uploadingAvatar ? 'Uploading...' : avatarUrl ? 'Change' : 'Upload'}</span>
@@ -1625,35 +1625,42 @@ export const OnboardingPage: React.FC = () => {
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* BOTTOM COMPACT ACTION BAR (Height: ~48px)                     */}
+        {/* BOTTOM COMPACT ACTION BAR */}
         {/* ------------------------------------------------------------- */}
-        <footer className="px-4 py-2.5 bg-surface-muted/60 border-t border-border flex items-center justify-between shrink-0">
-          <div>
+        <footer className="px-3 sm:px-4 py-2.5 bg-surface-muted/60 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
+          <div className="flex items-center justify-between sm:justify-start">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={handleBack}
-                className="px-3.5 py-1.5 bg-surface hover:bg-surface-muted border border-border text-navy rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs hover:border-slate-300"
+                className="px-3 py-1.5 bg-surface hover:bg-surface-muted border border-border text-navy rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs hover:border-slate-300"
               >
                 <ArrowLeft className="w-3.5 h-3.5 text-primary" />
-                <span>{step === 3 ? 'Back to Affiliation' : 'Back to Step 1'}</span>
+                <span>{step === 3 ? 'Back' : 'Back'}</span>
               </button>
             ) : (
               <div className="text-[11px] text-text-muted font-medium">
                 Step 1 of 3 &bull; Identity
               </div>
             )}
+
+            {saveSuccess && (
+              <span className="sm:hidden text-[10.5px] font-bold text-emerald-600 flex items-center space-x-1">
+                <Check className="w-3 h-3" />
+                <span>Draft Saved</span>
+              </span>
+            )}
           </div>
 
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-2 sm:space-x-2.5 justify-end">
             {saveSuccess && (
-              <span className="text-[11px] font-bold text-emerald-600 flex items-center space-x-1">
+              <span className="hidden sm:flex text-[11px] font-bold text-emerald-600 items-center space-x-1">
                 <Check className="w-3.5 h-3.5" />
                 <span>Draft Saved</span>
               </span>
             )}
             {error && (
-              <span className="text-[11px] font-bold text-rose-600 max-w-[200px] truncate" title={error}>
+              <span className="text-[10px] sm:text-[11px] font-bold text-rose-600 max-w-[150px] sm:max-w-[200px] truncate" title={error}>
                 {error}
               </span>
             )}
@@ -1662,17 +1669,17 @@ export const OnboardingPage: React.FC = () => {
               type="button"
               disabled={loading}
               onClick={() => saveProgress(false)}
-              className="px-3 py-1.5 border border-border hover:bg-surface text-text-muted hover:text-navy rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1 cursor-pointer"
+              className="px-2.5 sm:px-3 py-1.5 border border-border hover:bg-surface text-text-muted hover:text-navy rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1 cursor-pointer shrink-0"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>Save Draft</span>
+              <span className="hidden xs:inline">Save Draft</span>
             </button>
 
             {step < 3 ? (
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-5 py-1.5 bg-navy hover:bg-neutral-800 text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
+                className="flex-1 sm:flex-initial px-4 sm:px-5 py-1.5 bg-navy hover:bg-neutral-800 text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
               >
                 <span>Continue to Step {step + 1}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1682,9 +1689,10 @@ export const OnboardingPage: React.FC = () => {
                 type="button"
                 disabled={loading}
                 onClick={() => saveProgress(true)}
-                className="px-5 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
+                className="flex-1 sm:flex-initial px-4 sm:px-5 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
               >
-                <span>{loading ? 'Initializing...' : 'Authorize & Initialize Workspace (5s) →'}</span>
+                <span className="hidden sm:inline">{loading ? 'Initializing...' : 'Authorize & Initialize Workspace (5s) →'}</span>
+                <span className="sm:hidden">{loading ? 'Initializing...' : 'Authorize & Enter →'}</span>
               </button>
             )}
           </div>

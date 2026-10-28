@@ -13,10 +13,15 @@ import { ForCompaniesPage } from './pages/public/ForCompaniesPage';
 import { ForProfessionalsPage } from './pages/public/ForProfessionalsPage';
 import { UseCasesPage } from './pages/public/UseCasesPage';
 import { AboutPage } from './pages/public/AboutPage';
+import { WhyMeshviPage } from './pages/public/WhyMeshviPage';
+import { SearchShowcasePage } from './pages/public/SearchShowcasePage';
 import { ContactPage } from './pages/public/ContactPage';
 import { FaqPage } from './pages/public/FaqPage';
 import { PrivacyPage } from './pages/public/PrivacyPage';
 import { TermsPage } from './pages/public/TermsPage';
+import { LegalNoticePage } from './pages/public/LegalNoticePage';
+import { DataUsagePage } from './pages/public/DataUsagePage';
+import { CookiePolicyPage } from './pages/public/CookiePolicyPage';
 import { LoginPage } from './pages/public/LoginPage';
 import { RegisterPage } from './pages/public/RegisterPage';
 import { ForgotPasswordPage } from './pages/public/ForgotPasswordPage';
@@ -83,6 +88,8 @@ export default function App() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
+            <Route path="/search-showcase" element={<SearchShowcasePage />} />
+            <Route path="/why-meshvi" element={<WhyMeshviPage />} />
             <Route path="/for-companies" element={<ForCompaniesPage />} />
             <Route path="/for-professionals" element={<ForProfessionalsPage />} />
             <Route path="/use-cases" element={<UseCasesPage />} />
@@ -91,6 +98,9 @@ export default function App() {
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/legal" element={<LegalNoticePage />} />
+            <Route path="/data-usage" element={<DataUsagePage />} />
+            <Route path="/cookies" element={<CookiePolicyPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

@@ -202,31 +202,31 @@ export const IntroductionsPage = () => {
       : introductions;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-surface border border-border rounded-2xl p-6 sm:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center space-x-1.5">
+          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-primary flex items-center space-x-1.5">
             <Network className="w-3.5 h-3.5" />
             <span>Mutual Trust Protocol</span>
           </span>
-          <h1 className="text-2xl font-black text-navy mt-1 tracking-tight">Warm Introductions Hub</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-navy mt-1 tracking-tight">Warm Introductions Hub</h1>
           <p className="text-xs text-text-muted mt-0.5">
             Peer-brokered introductions, institutional endorsements, and facilitated warm deal channels.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center flex-wrap gap-2 shrink-0">
           <Link
             to="/app/connections"
-            className="px-4 py-2 bg-surface hover:bg-surface-muted text-navy text-xs font-bold rounded-xl border border-border transition-all flex items-center space-x-1.5"
+            className="px-3.5 sm:px-4 py-2 bg-surface hover:bg-surface-muted text-navy text-xs font-bold rounded-xl border border-border transition-all flex items-center space-x-1.5"
           >
-            <span>Connections Directory</span>
+            <span>Connections</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
           <Link
             to="/app/search"
-            className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center space-x-1.5"
+            className="px-3.5 sm:px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center space-x-1.5"
           >
             <Send className="w-3.5 h-3.5" />
             <span>Find Contacts</span>
@@ -312,18 +312,18 @@ export const IntroductionsPage = () => {
       </div>
 
       {/* Primary Tab Navigation */}
-      <div className="flex items-center justify-between border-b border-border pb-3 flex-wrap gap-2">
-        <div className="flex items-center space-x-2 bg-surface p-1 rounded-xl border border-border">
+      <div className="flex items-center justify-between border-b border-border pb-3 flex-wrap gap-2.5">
+        <div className="flex items-center space-x-1 sm:space-x-2 bg-surface p-1 rounded-xl border border-border overflow-x-auto max-w-full">
           <button
             type="button"
             onClick={() => setActiveTab('PENDING')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-2 transition-all ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 sm:space-x-2 transition-all shrink-0 ${
               activeTab === 'PENDING'
                 ? 'bg-navy text-white shadow-xs'
                 : 'text-text-muted hover:text-navy hover:bg-surface-muted'
             }`}
           >
-            <span>⏳ Pending Action</span>
+            <span>⏳ Pending</span>
             <span
               className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                 activeTab === 'PENDING'
@@ -340,13 +340,13 @@ export const IntroductionsPage = () => {
           <button
             type="button"
             onClick={() => setActiveTab('ACTIVE')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-2 transition-all ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 sm:space-x-2 transition-all shrink-0 ${
               activeTab === 'ACTIVE'
                 ? 'bg-navy text-white shadow-xs'
                 : 'text-text-muted hover:text-navy hover:bg-surface-muted'
             }`}
           >
-            <span>🤝 Active Bridges</span>
+            <span>🤝 Active</span>
             <span
               className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
                 activeTab === 'ACTIVE' ? 'bg-white/20 text-white' : 'bg-surface-muted text-text-muted'
@@ -359,13 +359,13 @@ export const IntroductionsPage = () => {
           <button
             type="button"
             onClick={() => setActiveTab('SENT')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-2 transition-all ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 sm:space-x-2 transition-all shrink-0 ${
               activeTab === 'SENT'
                 ? 'bg-navy text-white shadow-xs'
                 : 'text-text-muted hover:text-navy hover:bg-surface-muted'
             }`}
           >
-            <span>📤 Sent by Me</span>
+            <span>📤 Sent</span>
             <span
               className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
                 activeTab === 'SENT' ? 'bg-white/20 text-white' : 'bg-surface-muted text-text-muted'
@@ -378,7 +378,7 @@ export const IntroductionsPage = () => {
           <button
             type="button"
             onClick={() => setActiveTab('ALL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1 sm:space-x-1.5 transition-all shrink-0 ${
               activeTab === 'ALL'
                 ? 'bg-navy text-white shadow-xs'
                 : 'text-text-muted hover:text-navy hover:bg-surface-muted'
@@ -666,14 +666,6 @@ export const IntroductionsPage = () => {
                             ✓ Handed Over (+5 Rep)
                           </span>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => navigate('/app/deal-rooms')}
-                          className="px-3 py-1.5 bg-white border border-border hover:bg-surface-muted text-navy rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center space-x-1"
-                        >
-                          <Handshake className="w-3.5 h-3.5 text-sky-600" />
-                          <span>Deal Room</span>
-                        </button>
                         <button
                           type="button"
                           onClick={() => {

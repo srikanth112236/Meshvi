@@ -9,15 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS, MeshviColors } from '../../theme/colors';
+import { COLORS } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleAuthModal } from '../../components/GoogleAuthModal';
-import { launchGoogleOAuth } from '../../services/googleAuth';
 
 interface RegisterScreenProps {
   onLogin: (email?: string) => void;
@@ -39,8 +38,8 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
   const [mobile, setMobile] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState('');
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [existingAccountInfo, setExistingAccountInfo] = useState<{
@@ -91,244 +90,222 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
     }
   };
 
-  const handleQuickDemo = async () => {
-    setDemoLoading(true);
-    await quickDemoLogin();
-    setDemoLoading(false);
-  };
-
   return (
-    <View style={[styles.container, { paddingTop: Math.max(insets.top, 16), paddingBottom: Math.max(insets.bottom, 16) }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+    <View style={styles.container}>
+      <StatusBar style="light" />
+
+      {/* TOP GRADIENT HEADER (Matching Reference UI) */}
+      <LinearGradient
+        colors={['#071120', '#0B1D3A', '#0284C7']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.headerGradient, { paddingTop: Math.max(insets.top, 20) + 8 }]}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Top Bar */}
-          <View style={styles.headerBar}>
-            <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
-              <Feather name="arrow-left" size={18} color={COLORS.text} />
-            </TouchableOpacity>
-            <View style={styles.headerBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.headerBadgeText}>MESHVI Organization Gateway</Text>
-            </View>
-          </View>
+        {/* Top Action Row: Back Button & "Already have an account? Sign In" */}
+        <View style={styles.topNavRow}>
+          <TouchableOpacity
+            onPress={onBack}
+            style={styles.backCircleBtn}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Feather name="chevron-left" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
 
-          {/* Title */}
-          <View style={styles.titleSection}>
-            <Image
-              source={require('../../../assets/icon.png')}
-              style={{ width: 54, height: 54, borderRadius: 14, marginBottom: 12 }}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>Register Organization</Text>
-            <Text style={styles.subtitle}>
-              A 6-digit real-time verification OTP will be dispatched to your corporate work email.
-            </Text>
-          </View>
-
-          {/* Graceful Existing Account Alert Card */}
-          {existingAccountInfo ? (
-            <View style={styles.existingAccountCard}>
-              <View style={styles.existingAccountHeader}>
-                <View style={styles.existingAccountIconBox}>
-                  <Feather name="user-check" size={18} color="#D97706" />
-                </View>
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.existingAccountTitle}>Email Already Registered</Text>
-                  <Text style={styles.existingAccountMessage}>
-                    {existingAccountInfo.message}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.existingAccountActions}>
-                <TouchableOpacity
-                  style={styles.signInDirectlyBtn}
-                  onPress={() => onLogin(existingAccountInfo.email)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.signInDirectlyText}>Sign In to Account</Text>
-                  <Feather name="arrow-right" size={14} color="#FFFFFF" style={{ marginLeft: 6 }} />
-                </TouchableOpacity>
-                {onForgotPassword ? (
-                  <TouchableOpacity
-                    style={styles.resetPasswordBtn}
-                    onPress={() => onForgotPassword(existingAccountInfo.email)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.resetPasswordText}>Reset Password</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            </View>
-          ) : error ? (
-            <View style={styles.errorBanner}>
-              <Feather name="alert-circle" size={16} color={COLORS.rose} />
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : null}
-
-          <View style={styles.formCard}>
-            {/* Google OAuth Quick Sign Up */}
+          <View style={styles.loginPromptRow}>
+            <Text style={styles.loginPromptText}>Already have an account?</Text>
             <TouchableOpacity
-              style={styles.googleBtn}
-              onPress={handleGoogleRegister}
-              disabled={loading}
+              onPress={() => onLogin(email)}
+              style={styles.signInPill}
               activeOpacity={0.8}
             >
-              <MaterialCommunityIcons name="google" size={18} color="#EA4335" style={{ marginRight: 8 }} />
-              <Text style={styles.googleBtnText}>Sign up with Google</Text>
+              <Text style={styles.signInPillText}>Sign In</Text>
             </TouchableOpacity>
+          </View>
+        </View>
 
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or register with details</Text>
-              <View style={styles.dividerLine} />
+        {/* Center Brand Title */}
+        <View style={styles.brandTitleContainer}>
+          <Text style={styles.brandTitle}>Meshvi</Text>
+          <Text style={styles.brandSubtitle}>Create Executive Account</Text>
+        </View>
+      </LinearGradient>
+
+      {/* BOTTOM FLOATING WHITE CARD (Matching Reference UI) */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.cardScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={[styles.mainCard, { paddingBottom: Math.max(insets.bottom, 20) + 20 }]}>
+            {/* Header Titles */}
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Create Account</Text>
+              <Text style={styles.cardSubtitle}>Enter your details below</Text>
             </View>
 
-            {/* Full Name */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Executive Full Name *</Text>
-              <View style={styles.inputContainer}>
-                <Feather name="user" size={16} color={COLORS.textMuted} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Rajiv Menon"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={name}
-                  onChangeText={setName}
-                />
+            {/* Error Message */}
+            {error ? (
+              <View style={styles.errorBanner}>
+                <Feather name="alert-circle" size={15} color={COLORS.rose} style={{ marginRight: 6 }} />
+                <Text style={styles.errorText}>{error}</Text>
               </View>
-            </View>
+            ) : null}
 
-            {/* Corporate Email */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Corporate Work Email *</Text>
-              <View style={styles.inputContainer}>
-                <Feather name="mail" size={16} color={COLORS.textMuted} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="name@organization.com"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={email}
-                  onChangeText={(val) => {
-                    setEmail(val);
-                    if (existingAccountInfo) setExistingAccountInfo(null);
-                  }}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
+            {/* Existing Account Notice */}
+            {existingAccountInfo ? (
+              <View style={styles.existingAccountCard}>
+                <View style={styles.existingAccountHeader}>
+                  <Feather name="user-check" size={16} color="#D97706" style={{ marginRight: 8, marginTop: 2 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.existingAccountTitle}>Email Already Registered</Text>
+                    <Text style={styles.existingAccountMessage}>
+                      {existingAccountInfo.message}
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  onPress={() => onLogin(existingAccountInfo.email)}
+                  style={styles.existingAccountBtn}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.existingAccountBtnText}>Sign In with this email &rarr;</Text>
+                </TouchableOpacity>
               </View>
+            ) : null}
+
+            {/* Field 1: Full Name */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>Full Name</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholder="Dr. Rajesh Sharma"
+                placeholderTextColor="#94A3B8"
+                value={name}
+                onChangeText={setName}
+                autoCorrect={false}
+              />
             </View>
 
-            {/* Mobile */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Direct Corporate Phone *</Text>
-              <View style={styles.inputContainer}>
-                <Feather name="phone" size={16} color={COLORS.textMuted} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="+65 9123 4567"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={mobile}
-                  onChangeText={setMobile}
-                  keyboardType="phone-pad"
-                />
-              </View>
+            {/* Field 2: Work Email Address */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>Email Address</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholder="name@company.com"
+                placeholderTextColor="#94A3B8"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoCorrect={false}
+              />
             </View>
 
-            {/* Company Name */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Company / Organization</Text>
-              <View style={styles.inputContainer}>
-                <Feather name="briefcase" size={16} color={COLORS.textMuted} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Acme Global Logistics"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={companyName}
-                  onChangeText={setCompanyName}
-                />
-              </View>
+            {/* Field 3: Mobile Number */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>Mobile Number</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholder="+91 98765 43210"
+                placeholderTextColor="#94A3B8"
+                value={mobile}
+                onChangeText={setMobile}
+                keyboardType="phone-pad"
+              />
             </View>
 
-            {/* Password */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Create Password *</Text>
-              <View style={styles.inputContainer}>
-                <Feather name="lock" size={16} color={COLORS.textMuted} style={styles.inputIcon} />
+            {/* Field 4: Company / Organization Name */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>Company Name (Optional)</Text>
+              <TextInput
+                style={styles.inputField}
+                placeholder="Vanguard Capital / Self-Employed"
+                placeholderTextColor="#94A3B8"
+                value={companyName}
+                onChangeText={setCompanyName}
+              />
+            </View>
+
+            {/* Field 5: Password */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>Password</Text>
+              <View style={styles.inputRow}>
                 <TextInput
-                  style={styles.input}
-                  placeholder="At least 8 characters"
-                  placeholderTextColor={COLORS.textMuted}
+                  style={[styles.inputField, { flex: 1, paddingRight: 8 }]}
+                  placeholder="••••••••••••"
+                  placeholderTextColor="#94A3B8"
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeToggleBtn}
+                  activeOpacity={0.7}
+                >
+                  <Feather
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={18}
+                    color="#64748B"
+                  />
+                </TouchableOpacity>
               </View>
             </View>
 
+            {/* Register Primary CTA Button (LinearGradient) */}
             <TouchableOpacity
-              style={styles.submitBtn}
               onPress={handleRegister}
-              disabled={loading || demoLoading}
-              activeOpacity={0.88}
+              disabled={loading}
+              activeOpacity={0.85}
+              style={styles.submitBtnWrapper}
             >
               <LinearGradient
-                colors={[MeshviColors.primary, MeshviColors.accent]}
+                colors={['#0284C7', '#0369A1']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.submitGradient}
+                style={styles.submitBtnGradient}
               >
                 {loading ? (
-                  <ActivityIndicator color={COLORS.white} size="small" />
+                  <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <>
-                    <Text style={styles.submitText}>Dispatch Verification OTP</Text>
-                    <Feather name="arrow-right" size={18} color={COLORS.white} />
-                  </>
+                  <Text style={styles.submitBtnText}>Create Account</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Quick Demo Access Bypass */}
-            <TouchableOpacity
-              onPress={handleQuickDemo}
-              disabled={loading || demoLoading}
-              style={styles.quickDemoBtn}
-              activeOpacity={0.78}
-            >
-              {demoLoading ? (
-                <ActivityIndicator color={MeshviColors.accent} size="small" />
-              ) : (
-                <>
-                  <MaterialCommunityIcons name="lightning-bolt" size={16} color={MeshviColors.accent} style={{ marginRight: 6 }} />
-                  <Text style={styles.quickDemoText}>Instant Preview: Demo Executive Login</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+            {/* Divider: Or register with */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>Or register with</Text>
+              <View style={styles.dividerLine} />
+            </View>
 
-          <View style={styles.loginPrompt}>
-            <Text style={styles.loginPromptText}>Already have an enterprise account? </Text>
-            <TouchableOpacity onPress={() => onLogin()} activeOpacity={0.7}>
-              <Text style={styles.loginLink}>Sign In</Text>
+            {/* Single Google OAuth Button (No Facebook) */}
+            <TouchableOpacity
+              onPress={handleGoogleRegister}
+              disabled={loading}
+              style={styles.googleOAuthBtn}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons name="google" size={19} color="#EA4335" style={{ marginRight: 8 }} />
+              <Text style={styles.googleOAuthBtnText}>Google</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Google Authentication Modal */}
+      {/* Google OAuth Modal */}
       <GoogleAuthModal
         visible={showGoogleModal}
         onClose={() => setShowGoogleModal(false)}
-        defaultEmail={email}
-        defaultName={name}
       />
     </View>
   );
@@ -337,127 +314,209 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#071120',
   },
-  scrollContent: {
+  headerGradient: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 40,
+    minHeight: 200,
+    justifyContent: 'space-between',
   },
-  headerBar: {
+  topNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    marginBottom: 8,
   },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: COLORS.card,
+  backCircleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
   },
-  headerBadge: {
+  loginPromptRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primaryLight,
+  },
+  loginPromptText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginRight: 8,
+    fontWeight: '500',
+  },
+  signInPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
+    paddingVertical: 6,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
   },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.emerald,
-    marginRight: 6,
+  signInPillText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
-  headerBadgeText: {
-    color: COLORS.primary,
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  titleSection: {
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  title: {
-    color: COLORS.text,
-    fontSize: 24,
-    fontWeight: '900',
+  brandTitleContainer: {
+    alignItems: 'center',
+    marginTop: 10,
     marginBottom: 6,
-    letterSpacing: -0.5,
   },
-  subtitle: {
-    color: COLORS.textSecondary,
+  brandTitle: {
+    fontSize: 34,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.6,
+  },
+  brandSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.75)',
+    marginTop: 2,
+    letterSpacing: 0.2,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  cardScrollContent: {
+    flexGrow: 1,
+  },
+  mainCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 24,
+    paddingTop: 30,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.4,
+  },
+  cardSubtitle: {
     fontSize: 13,
-    lineHeight: 18,
+    color: '#64748B',
+    marginTop: 4,
+    fontWeight: '500',
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF1F2',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderColor: '#FECDD3',
-    marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginBottom: 14,
   },
   errorText: {
-    color: COLORS.rose,
     fontSize: 12,
+    color: '#B91C1C',
     fontWeight: '600',
-    marginLeft: 8,
     flex: 1,
   },
-  formCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 20,
-    padding: 20,
+  existingAccountCard: {
+    backgroundColor: '#FFFBEB',
     borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
+    borderColor: '#FDE68A',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 14,
   },
-  googleBtn: {
+  existingAccountHeader: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  existingAccountTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  existingAccountMessage: {
+    fontSize: 11,
+    color: '#B45309',
+    marginTop: 2,
+  },
+  existingAccountBtn: {
+    marginTop: 8,
+    backgroundColor: '#D97706',
+    borderRadius: 10,
+    paddingVertical: 6,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
+  },
+  existingAccountBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  fieldContainer: {
+    borderWidth: 1.2,
     borderColor: '#E2E8F0',
     borderRadius: 14,
-    paddingVertical: 12,
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    paddingTop: 8,
+    paddingBottom: 6,
+    marginBottom: 12,
   },
-  googleBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
+  fieldLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+    textTransform: 'capitalize',
+    marginBottom: 2,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputField: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0F172A',
+    paddingVertical: 2,
+  },
+  eyeToggleBtn: {
+    padding: 6,
+  },
+  submitBtnWrapper: {
+    marginTop: 6,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  submitBtnGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 14,
+    marginVertical: 18,
   },
   dividerLine: {
     flex: 1,
@@ -465,165 +524,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
   },
   dividerText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 12,
     color: '#94A3B8',
-    textTransform: 'uppercase',
-    paddingHorizontal: 10,
-    letterSpacing: 0.5,
-  },
-  fieldGroup: {
-    marginBottom: 14,
-  },
-  label: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.cardAlt,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
     paddingHorizontal: 12,
-    height: 46,
+    fontWeight: '500',
   },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    color: COLORS.text,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  submitBtn: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 8,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  submitGradient: {
+  googleOAuthBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-  },
-  submitText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '800',
-    marginRight: 6,
-  },
-  quickDemoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: MeshviColors.surfaceMint,
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 118, 110, 0.25)',
-  },
-  quickDemoText: {
-    color: MeshviColors.accent,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  loginPrompt: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  loginPromptText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-  },
-  loginLink: {
-    color: COLORS.primary,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  existingAccountCard: {
-    backgroundColor: '#FEF3C7',
-    borderWidth: 1,
-    borderColor: '#FCD34D',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 16,
-    shadowColor: '#D97706',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  existingAccountHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  existingAccountIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: '#FDE68A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  existingAccountTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#92400E',
-  },
-  existingAccountMessage: {
-    fontSize: 12,
-    color: '#B45309',
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  existingAccountActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 8,
-  },
-  signInDirectlyBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.navy,
-    borderRadius: 10,
-    paddingVertical: 10,
-  },
-  signInDirectlyText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  resetPasswordBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#FCD34D',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  resetPasswordText: {
-    color: '#92400E',
-    fontSize: 12,
+  googleOAuthBtnText: {
+    fontSize: 14,
     fontWeight: '700',
+    color: '#1E293B',
   },
 });

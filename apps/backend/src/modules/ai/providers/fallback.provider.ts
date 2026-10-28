@@ -24,6 +24,10 @@ export class FallbackAiProvider implements AiProviderInterface {
     // Normalize common B2B search typos before classification
     let normalized = text
       .replace(/\bloking\b/g, 'looking')
+      .replace(/\bfro\b/g, 'for')
+      .replace(/\bairpotrt\b|\bairprot\b|\bairprt\b|\baiport\b|\bairpot\b|\barport\b/g, 'airport')
+      .replace(/\bseking\b|\bskeing\b|\bseeeking\b/g, 'seeking')
+      .replace(/\blonge\b|\bluonge\b|\blounj\b/g, 'lounge')
       .replace(/\bprocurmenet\b|\bprocurment\b|\bprocur\b|\bpurchesing\b/g, 'procurement')
       .replace(/\bpatnership\b|\bpatner\b|\bpartenr\b|\bpatners\b/g, 'partnership')
       .replace(/\bdistributer\b|\bdistributon\b/g, 'distribution')
@@ -41,7 +45,7 @@ export class FallbackAiProvider implements AiProviderInterface {
 
     if (normalized.includes('logistic') || normalized.includes('supply chain') || normalized.includes('cold-chain') || normalized.includes('storage') || normalized.includes('warehouse')) {
       targetIndustry = 'Supply Chain & Logistics';
-    } else if (normalized.includes('beverage') || normalized.includes('food') || normalized.includes('fmcg') || normalized.includes('organic') || normalized.includes('agro') || normalized.includes('dairy')) {
+    } else if (normalized.includes('beverage') || normalized.includes('food') || normalized.includes('fmcg') || normalized.includes('organic') || normalized.includes('agro') || normalized.includes('dairy') || normalized.includes('airport') || normalized.includes('lounge')) {
       targetIndustry = 'FMCG & Consumer Goods';
     } else if (normalized.includes('cloud') || normalized.includes('saas') || normalized.includes('software') || /\bai\b/i.test(normalized) || normalized.includes('artificial intelligence')) {
       targetIndustry = 'Enterprise Software & AI';

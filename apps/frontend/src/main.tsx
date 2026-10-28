@@ -3,13 +3,14 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-// Automatically route relative API and upload requests to backend in production / Render
+// Automatically route relative API and upload requests to backend in development / production
 const rawApiUrl = (import.meta as any).env?.VITE_API_URL as string | undefined;
-let backendOrigin = 'https://meshvi.onrender.com';
+let backendOrigin = '';
 
 if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-  backendOrigin = ''; // Use local Vite proxy during local development
-} else if (rawApiUrl && !rawApiUrl.includes('setu-backend')) {
+  // Local development: keep relative URL to use local Vite dev proxy -> http://localhost:3500
+  backendOrigin = '';
+} else if (rawApiUrl) {
   backendOrigin = rawApiUrl.replace(/\/api\/v1\/?$/, '');
 } else {
   backendOrigin = 'https://meshvi.onrender.com';

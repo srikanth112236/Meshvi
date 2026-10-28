@@ -891,22 +891,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateTab 
               </View>
               <Feather name="chevron-right" size={16} color={MeshviColors.textMuted} />
             </TouchableOpacity>
-
-            {/* 6. Deal Rooms */}
-            <TouchableOpacity
-              style={styles.toolkitItem}
-              onPress={() => onNavigateTab('dealrooms')}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.toolkitIconCircle, { backgroundColor: '#FFFBEB' }]}>
-                <Feather name="shield" size={15} color="#D97706" />
-              </View>
-              <View style={styles.toolkitMeta}>
-                <Text style={styles.toolkitItemTitle}>Deal Rooms</Text>
-                <Text style={styles.toolkitItemSub}>Confidential bilateral negotiation & deal rooms</Text>
-              </View>
-              <Feather name="chevron-right" size={16} color={MeshviColors.textMuted} />
-            </TouchableOpacity>
           </View>
         </View>
 

@@ -38,7 +38,7 @@ export const PersonDossierDrawer: React.FC<PersonDossierDrawerProps> = ({
   onClose,
   profileId,
   onOpenConnect,
-  onOpenProposal,
+  onOpenProposal: _onOpenProposal,
   onOpenCompanyDossier,
 }) => {
   const { token } = useAuth();
@@ -866,24 +866,6 @@ export const PersonDossierDrawer: React.FC<PersonDossierDrawerProps> = ({
                       : 'Signal Mutual Intent'}
                   </span>
                 </button>
-
-                {onOpenProposal && profile.company && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onOpenProposal({
-                        companyName: profile.company.name,
-                        recipientProfileId: profile.id,
-                        executiveName: profile.displayName,
-                        executiveTitle: profile.currentTitle,
-                      });
-                      onClose();
-                    }}
-                    className="px-4 py-2 bg-surface hover:bg-border text-navy border border-border text-xs font-bold rounded-xl transition-colors"
-                  >
-                    Submit Proposal
-                  </button>
-                )}
 
                 {onOpenConnect && (
                   <>

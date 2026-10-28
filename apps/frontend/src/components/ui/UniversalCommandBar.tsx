@@ -12,7 +12,6 @@ import {
   X,
   Command,
   FileText,
-  Handshake,
   User,
   ShieldCheck,
 } from 'lucide-react';
@@ -156,13 +155,6 @@ export const UniversalCommandBar: React.FC<UniversalCommandBarProps> = ({
       action: () => navigate('/app/rfps'),
     },
     {
-      id: 'nav-deal-rooms',
-      title: 'Deal Rooms & Bilateral Agreements (m-NDA)',
-      category: 'Member Hub',
-      icon: Handshake,
-      action: () => navigate('/app/deal-rooms'),
-    },
-    {
       id: 'nav-introductions',
       title: 'Warm Introductions Network',
       category: 'Member Hub',
@@ -272,11 +264,11 @@ export const UniversalCommandBar: React.FC<UniversalCommandBarProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-navy/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-6 sm:pt-20 p-2 sm:p-4 bg-navy/60 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="bg-surface border border-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+        className="bg-surface border border-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Command Search Bar Header */}

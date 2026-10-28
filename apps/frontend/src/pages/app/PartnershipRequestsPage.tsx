@@ -232,13 +232,13 @@ export const PartnershipRequestsPage: React.FC = () => {
         </div>
 
         {/* Status Filter Pills */}
-        <div className="flex items-center space-x-2 pt-1 border-t border-border/70 text-xs">
-          <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Status:</span>
+        <div className="flex items-center gap-1.5 pt-1 border-t border-border/70 text-xs overflow-x-auto max-w-full pb-1">
+          <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider shrink-0 mr-1">Status:</span>
           {['ALL', 'PENDING', 'IN_DISCUSSION', 'ACCEPTED', 'DECLINED'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border transition-colors ${
+              className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border transition-colors shrink-0 ${
                 statusFilter === st
                   ? 'bg-navy text-white border-navy shadow-2xs'
                   : 'bg-surface border-border text-text-muted hover:text-navy'

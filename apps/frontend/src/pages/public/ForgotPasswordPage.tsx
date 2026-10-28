@@ -136,8 +136,8 @@ export const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-surface-muted/30">
-      <div className="max-w-md w-full bg-surface p-8 sm:p-10 rounded-3xl border border-border shadow-xl space-y-6 animate-fade-in">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-6 sm:py-12 px-3 sm:px-6 lg:px-8 bg-surface-muted/30">
+      <div className="max-w-md w-full bg-surface p-5 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl border border-border shadow-xl space-y-5 sm:space-y-6 animate-fade-in">
         {/* Brand Icon & Heading */}
         <div className="text-center space-y-2">
           <img

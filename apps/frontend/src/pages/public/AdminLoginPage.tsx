@@ -55,8 +55,8 @@ export const AdminLoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-navy text-white flex flex-col justify-center items-center px-4 py-12">
-      <div className="max-w-md w-full bg-slate-900 border border-amber-500/30 rounded-2xl p-8 shadow-2xl space-y-6">
+    <div className="min-h-screen bg-navy text-white flex flex-col justify-center items-center px-3 sm:px-4 py-6 sm:py-12">
+      <div className="max-w-md w-full bg-slate-900 border border-amber-500/30 rounded-2xl p-5 sm:p-8 shadow-2xl space-y-5 sm:space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <Link to="/" className="inline-block">

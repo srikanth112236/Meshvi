@@ -820,15 +820,6 @@ export const IntroductionsScreen: React.FC<IntroductionsScreenProps> = ({
                         )}
 
                         <TouchableOpacity
-                          style={styles.dealRoomBtn}
-                          onPress={() => onNavigateTab ? onNavigateTab('dealrooms') : null}
-                          activeOpacity={0.8}
-                        >
-                          <Feather name="briefcase" size={11} color="#0369A1" style={{ marginRight: 3 }} />
-                          <Text style={styles.dealRoomBtnText}>Deal Room</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
                           style={styles.openChatBtn}
                           onPress={() => {
                             if (onNavigateToMessages) {
@@ -1366,18 +1357,6 @@ export const IntroductionsScreen: React.FC<IntroductionsScreenProps> = ({
                           >
                             <Feather name="message-square" size={14} color={MeshviColors.white} style={{ marginRight: 6 }} />
                             <Text style={styles.modalChatActionBtnText}>Open Secure Chat</Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={styles.modalDealRoomActionBtn}
-                            onPress={() => {
-                              setDetailModalIntro(null);
-                              if (onNavigateTab) onNavigateTab('dealrooms');
-                            }}
-                            activeOpacity={0.8}
-                          >
-                            <Feather name="briefcase" size={13} color="#0369A1" style={{ marginRight: 6 }} />
-                            <Text style={styles.modalDealRoomActionBtnText}>Open Deal Room</Text>
                           </TouchableOpacity>
 
                           {dIsIntermediary && !steppedAsideIds.includes(detailModalIntro.id) && (

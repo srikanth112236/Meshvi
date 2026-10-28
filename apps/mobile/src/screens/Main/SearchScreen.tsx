@@ -23,6 +23,7 @@ import { useModal } from '../../context/ModalContext';
 import { apiRequest } from '../../services/api';
 import { SearchCardSkeleton, SkeletonBox } from '../../components/SkeletonLoader';
 import { getSavedProfiles, toggleSavedProfile, SavedProfileItem } from '../../services/savedProfilesStorage';
+import { autoCorrectQuery } from '../../utils/typoCorrection';
 
 const { width } = Dimensions.get('window');
 
@@ -769,6 +770,14 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
       return;
     }
 
+    // Instant client-side typo auto-correction (0ms)
+    const clientCorrection = autoCorrectQuery(trimmed);
+    if (clientCorrection.hasCorrection) {
+      setSuggestedCorrection(clientCorrection.correctedQuery);
+    } else {
+      setSuggestedCorrection(null);
+    }
+
     const timer = setTimeout(async () => {
       // 1. Try backend suggest API
       try {
@@ -794,6 +803,8 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
           }
           if (res.data.hasCorrection && res.data.correctedQuery) {
             setSuggestedCorrection(res.data.correctedQuery);
+          } else if (clientCorrection.hasCorrection) {
+            setSuggestedCorrection(clientCorrection.correctedQuery);
           } else {
             setSuggestedCorrection(null);
           }
@@ -807,13 +818,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
       const qLower = trimmed.toLowerCase();
       const localMatches: Array<{ text: string; subtitle: string; type: 'COMPANY' | 'EXECUTIVE'; badge: string }> = [];
 
-      // Check typo suggestions
-      if (qLower === 'nestel' || qLower === 'nestlle') {
-        setSuggestedCorrection('Nestle');
-      } else if (qLower === 'logistcs' || qLower === 'logistc') {
-        setSuggestedCorrection('Logistics');
-      } else if (qLower === 'singapor' || qLower === 'singapur') {
-        setSuggestedCorrection('Singapore');
+      // Check typo suggestions with full client engine
+      if (clientCorrection.hasCorrection) {
+        setSuggestedCorrection(clientCorrection.correctedQuery);
       } else {
         setSuggestedCorrection(null);
       }
@@ -983,10 +990,15 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
     try {
       if (mode === 'DECISION_MAKERS') {
         const params = new URLSearchParams();
-        const cleanQuery = debouncedQuery.startsWith('#')
+        const rawClean = debouncedQuery.startsWith('#')
           ? debouncedQuery.slice(1).trim()
           : debouncedQuery.trim();
+        const clientCorrection = autoCorrectQuery(rawClean);
+        const cleanQuery = clientCorrection.hasCorrection ? clientCorrection.correctedQuery : rawClean;
         if (cleanQuery) params.append('q', cleanQuery);
+        if (clientCorrection.hasCorrection) {
+          setSuggestedCorrection(clientCorrection.correctedQuery);
+        }
         if (selectedFunction !== 'All Functions') params.append('function', selectedFunction);
         if (selectedIndustry !== 'All Industries') params.append('industry', selectedIndustry);
         if (selectedSeniority !== 'All Seniorities') params.append('seniority', selectedSeniority);
@@ -1087,10 +1099,15 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
         }
       } else if (mode === 'ENTERPRISES') {
         const params = new URLSearchParams();
-        const cleanQuery = debouncedQuery.startsWith('#')
+        const rawClean = debouncedQuery.startsWith('#')
           ? debouncedQuery.slice(1).trim()
           : debouncedQuery.trim();
+        const clientCorrection = autoCorrectQuery(rawClean);
+        const cleanQuery = clientCorrection.hasCorrection ? clientCorrection.correctedQuery : rawClean;
         if (cleanQuery) params.append('q', cleanQuery);
+        if (clientCorrection.hasCorrection) {
+          setSuggestedCorrection(clientCorrection.correctedQuery);
+        }
         if (selectedCountry !== 'ALL') params.append('countryCode', selectedCountry);
         if (selectedIndustry !== 'All Industries') params.append('industry', selectedIndustry);
         params.append('page', String(targetPage));
@@ -1614,11 +1631,18 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
               {/* Typo / Suggested Query Auto-Correction Banner */}
               {suggestedCorrection && !loading && (
                 <View style={styles.queryCorrectionBanner}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                    <MaterialCommunityIcons name="star-four-points" size={14} color="#D97706" style={{ marginRight: 6 }} />
-                    <Text style={styles.queryCorrectionText}>
-                      Showing results for <Text style={styles.queryCorrectionHighlight}>"{suggestedCorrection}"</Text>
-                    </Text>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <MaterialCommunityIcons name="star-four-points" size={13} color="#D97706" style={{ marginRight: 5 }} />
+                      <Text style={styles.queryCorrectionText} numberOfLines={1}>
+                        Showing results for <Text style={styles.queryCorrectionHighlight}>"{suggestedCorrection}"</Text>
+                      </Text>
+                    </View>
+                    {query !== suggestedCorrection && (
+                      <Text style={styles.queryCorrectionSubText} numberOfLines={1}>
+                        Auto-corrected from "{query}"
+                      </Text>
+                    )}
                   </View>
                   {query !== suggestedCorrection && (
                     <TouchableOpacity
@@ -1627,6 +1651,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
                         setQuery(suggestedCorrection);
                         setDebouncedQuery(suggestedCorrection);
                       }}
+                      activeOpacity={0.8}
                     >
                       <Text style={styles.queryCorrectionBtnText}>⚡ Update</Text>
                     </TouchableOpacity>
@@ -1889,15 +1914,6 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
                         >
                           <Feather name="bookmark" size={13} color={isSaved ? MeshviColors.accent : MeshviColors.textSecondary} />
                         </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={styles.webSayHiBtn}
-                          onPress={() => setProposalModalTarget(ent)}
-                          activeOpacity={0.85}
-                        >
-                          <Feather name="send" size={11} color="#FFFFFF" style={{ marginRight: 4 }} />
-                          <Text style={styles.webSayHiBtnText}>Submit Proposal</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                   </View>
@@ -1989,7 +2005,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
                       <View style={styles.corridorMetricDivider} />
                       <View style={styles.corridorMetricBox}>
                         <Text style={styles.corridorMetricVal}>{c.activeDealCount} Deals</Text>
-                        <Text style={styles.corridorMetricLabel}>Deal Rooms</Text>
+                        <Text style={styles.corridorMetricLabel}>Active Deals</Text>
                       </View>
                       <View style={styles.corridorMetricDivider} />
                       <View style={styles.corridorMetricBox}>
@@ -2590,26 +2606,11 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
             {/* Bottom Actions */}
             <View style={[styles.modalActionRow, { marginTop: 16 }]}>
               <TouchableOpacity
-                style={styles.modalSecondaryBtn}
+                style={[styles.modalSecondaryBtn, { flex: 1 }]}
                 onPress={() => setCompanyDossierTarget(null)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.modalSecondaryBtnText}>Close</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalPrimaryBtn}
-                onPress={() => {
-                  const target = companyDossierTarget;
-                  setCompanyDossierTarget(null);
-                  if (target) {
-                    setProposalModalTarget(target);
-                  }
-                }}
-                activeOpacity={0.85}
-              >
-                <Feather name="file-text" size={14} color={MeshviColors.white} style={{ marginRight: 6 }} />
-                <Text style={styles.modalPrimaryBtnText}>Submit Proposal</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -2796,14 +2797,14 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
                   onPress={() => {
                     const corr = corridorDetailTarget;
                     setCorridorDetailTarget(null);
-                    setToastMessage(`Initiating bilateral corridor deal room for ${corr.originCountry} ➔ ${corr.destCountry}...`);
+                    setToastMessage(`Initiating bilateral corridor connection for ${corr.originCountry} ➔ ${corr.destCountry}...`);
                     setTimeout(() => setToastMessage(null), 3500);
                   }}
                   activeOpacity={0.85}
                 >
                   <Feather name="zap" size={15} color="#FFFFFF" style={{ marginRight: 6 }} />
                   <Text style={[styles.webSayHiBtnText, { fontSize: 13, fontWeight: '800' }]}>
-                    Initiate Bilateral Deal Room
+                    Initiate Bilateral Corridor
                   </Text>
                 </TouchableOpacity>
               </>
@@ -5287,6 +5288,12 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: '#92400E',
     fontWeight: '500',
+  },
+  queryCorrectionSubText: {
+    fontSize: 10,
+    color: '#B45309',
+    marginTop: 2,
+    fontStyle: 'italic',
   },
   queryCorrectionHighlight: {
     fontWeight: '800',

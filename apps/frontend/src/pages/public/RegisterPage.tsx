@@ -286,77 +286,19 @@ export const RegisterPage = () => {
 
   return (
     <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-4rem)]">
-      {/* LEFT COLUMN: HERO SHOWCASE */}
-      <div className="lg:col-span-5 xl:col-span-6 bg-gradient-to-br from-[#0B1528] via-[#102A43] to-[#0A192F] text-white p-8 sm:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 space-y-6">
-          <Link to="/" className="inline-block">
-            <img
-              src="/meshvi-logo-white.png"
-              alt="Meshvi"
-              className="h-10 object-contain"
-            />
-          </Link>
-
-          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-emerald-300 text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Join 25,000+ Verified Decision-Makers</span>
-          </div>
-
-          <div className="space-y-3 max-w-xl">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-              Direct Connections, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Simplified</span>.
-            </h1>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Create your professional profile in under 30 seconds. Connect with verified business leaders, say hi, and unlock warm introductions through trusted bilateral channels.
-            </p>
-          </div>
-
-          <div className="space-y-3 pt-4 max-w-md">
-            <div className="flex items-center space-x-3 text-sm text-slate-200">
-              <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <span>Single 1-page registration for all professionals</span>
-            </div>
-            <div className="flex items-center space-x-3 text-sm text-slate-200">
-              <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <span>No corporate domain gate — personal or work email accepted</span>
-            </div>
-            <div className="flex items-center space-x-3 text-sm text-slate-200">
-              <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <span>Create, claim, and delegate company pages whenever you want</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative z-10 pt-8 border-t border-white/10 text-xs text-slate-400">
-          <span>Already have an account? </span>
-          <Link to="/login" className="text-emerald-400 hover:text-emerald-300 font-bold underline">
-            Sign In here
-          </Link>
-        </div>
-      </div>
-
-      {/* RIGHT COLUMN: FAST REGISTRATION FORM */}
-      <div className="lg:col-span-7 xl:col-span-6 bg-surface p-6 sm:p-10 lg:p-14 flex flex-col justify-center overflow-y-auto">
-        <div className="max-w-lg w-full mx-auto space-y-5">
+      {/* FORM COLUMN (FIRST ON MOBILE FOR IMMEDIATE ACTION, RIGHT ON DESKTOP) */}
+      <div className="order-1 lg:order-2 lg:col-span-7 xl:col-span-6 bg-surface p-4 sm:p-8 lg:p-12 xl:p-14 flex flex-col justify-center overflow-y-auto">
+        <div className="max-w-lg w-full mx-auto space-y-4 sm:space-y-5">
           <div>
             <img
               src="/meshvi-mark.png"
               alt="Meshvi"
-              className="w-12 h-12 object-contain mb-3 drop-shadow-xs"
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain mb-2 sm:mb-3 drop-shadow-xs"
             />
-            <h2 className="text-2xl font-black text-navy tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-navy tracking-tight">
               {authStep === 'DETAILS' ? 'Create your Meshvi account' : 'Verify your email'}
             </h2>
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-text-muted mt-1 leading-relaxed">
               {authStep === 'DETAILS'
                 ? 'Join in 30 seconds. All work and company details can be customized later.'
                 : `Enter the 6-digit verification code dispatched to ${formData.email}`}
@@ -707,10 +649,68 @@ export const RegisterPage = () => {
         </div>
       </div>
 
+      {/* SHOWCASE COLUMN (BOTTOM ON MOBILE, LEFT ON DESKTOP) */}
+      <div className="order-2 lg:order-1 lg:col-span-5 xl:col-span-6 bg-gradient-to-br from-[#0B1528] via-[#102A43] to-[#0A192F] text-white p-5 sm:p-8 lg:p-12 xl:p-16 flex flex-col justify-between relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 sm:w-96 h-72 sm:h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 space-y-4 sm:space-y-6">
+          <Link to="/" className="inline-block">
+            <img
+              src="/meshvi-logo-white.png"
+              alt="Meshvi"
+              className="h-8 sm:h-10 object-contain"
+            />
+          </Link>
+
+          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-emerald-300 text-[11px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>Join 25,000+ Verified Decision-Makers</span>
+          </div>
+
+          <div className="space-y-2 sm:space-y-3 max-w-xl">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight text-white leading-tight">
+              Direct Connections, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Simplified</span>.
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Create your professional profile in under 30 seconds. Connect with verified business leaders, say hi, and unlock warm introductions through trusted bilateral channels.
+            </p>
+          </div>
+
+          <div className="space-y-2.5 sm:space-y-3 pt-2 sm:pt-4 max-w-md">
+            <div className="flex items-center space-x-2.5 sm:space-x-3 text-xs sm:text-sm text-slate-200">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </div>
+              <span>Single 1-page registration for all professionals</span>
+            </div>
+            <div className="flex items-center space-x-2.5 sm:space-x-3 text-xs sm:text-sm text-slate-200">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </div>
+              <span>No corporate domain gate — personal or work email accepted</span>
+            </div>
+            <div className="flex items-center space-x-2.5 sm:space-x-3 text-xs sm:text-sm text-slate-200">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </div>
+              <span>Create, claim, and delegate company pages whenever you want</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10 pt-6 sm:pt-8 border-t border-white/10 text-xs text-slate-400 mt-6 lg:mt-0">
+          <span>Already have an account? </span>
+          <Link to="/login" className="text-emerald-400 hover:text-emerald-300 font-bold underline">
+            Sign In here
+          </Link>
+        </div>
+      </div>
+
       {/* Google OAuth Configuration & Registration Setup Modal */}
       {showGoogleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-surface border border-border rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl relative space-y-4 sm:space-y-5 max-h-[92vh] overflow-y-auto">
             <button
               onClick={() => setShowGoogleModal(false)}
               className="absolute top-4 right-4 text-text-muted hover:text-navy p-1 rounded-lg hover:bg-surface-muted transition-colors"

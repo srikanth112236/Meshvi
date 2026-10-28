@@ -851,8 +851,12 @@ export class AuthService {
    */
   getGoogleAuthUrl(state?: string, redirectUri?: string) {
     const clientId = process.env.GOOGLE_CLIENT_ID || '';
+    const defaultRedirect =
+      process.env.NODE_ENV === 'production'
+        ? 'https://meshvi-1.onrender.com/auth/google/callback'
+        : 'http://localhost:3100/auth/google/callback';
     const effectiveRedirectUri =
-      redirectUri || (process.env.GOOGLE_REDIRECT_URI || 'https://meshvi-1.onrender.com/auth/google/callback');
+      redirectUri || process.env.GOOGLE_REDIRECT_URI || defaultRedirect;
     const effectiveState = state || Math.random().toString(36).substring(2, 15);
 
     const url = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
@@ -873,8 +877,12 @@ export class AuthService {
   async handleGoogleCallback(code: string, state?: string, redirectUri?: string) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const defaultRedirect =
+      process.env.NODE_ENV === 'production'
+        ? 'https://meshvi-1.onrender.com/auth/google/callback'
+        : 'http://localhost:3100/auth/google/callback';
     const effectiveRedirectUri =
-      redirectUri || process.env.GOOGLE_REDIRECT_URI || 'https://meshvi-1.onrender.com/auth/google/callback';
+      redirectUri || process.env.GOOGLE_REDIRECT_URI || defaultRedirect;
 
     // If sandbox or credentials not set, fallback gracefully
     if (!clientId || !clientSecret || clientId.trim() === '' || clientId.includes('placeholder')) {
@@ -941,8 +949,12 @@ export class AuthService {
    */
   getLinkedInAuthUrl(state?: string, redirectUri?: string) {
     const clientId = process.env.LINKEDIN_CLIENT_ID || 'setu_linkedin_dev_app';
+    const defaultRedirect =
+      process.env.NODE_ENV === 'production'
+        ? 'https://meshvi-1.onrender.com/auth/linkedin/callback'
+        : 'http://localhost:3100/auth/linkedin/callback';
     const effectiveRedirectUri =
-      redirectUri || process.env.LINKEDIN_REDIRECT_URI || 'https://meshvi-1.onrender.com/auth/linkedin/callback';
+      redirectUri || process.env.LINKEDIN_REDIRECT_URI || defaultRedirect;
     const effectiveState = state || Math.random().toString(36).substring(2, 15);
 
     const url = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
@@ -963,8 +975,12 @@ export class AuthService {
   async handleLinkedInCallback(code: string, state?: string, redirectUri?: string) {
     const clientId = process.env.LINKEDIN_CLIENT_ID;
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
+    const defaultRedirect =
+      process.env.NODE_ENV === 'production'
+        ? 'https://meshvi-1.onrender.com/auth/linkedin/callback'
+        : 'http://localhost:3100/auth/linkedin/callback';
     const effectiveRedirectUri =
-      redirectUri || process.env.LINKEDIN_REDIRECT_URI || 'https://meshvi-1.onrender.com/auth/linkedin/callback';
+      redirectUri || process.env.LINKEDIN_REDIRECT_URI || defaultRedirect;
 
     // If sandbox / placeholder credentials, fall back gracefully to high-fidelity test OIDC handshake
     if (

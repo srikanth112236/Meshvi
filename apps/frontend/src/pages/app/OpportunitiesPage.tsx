@@ -1025,19 +1025,8 @@ export const OpportunitiesPage: React.FC = () => {
                   <div className="pt-2 border-t border-border flex items-center justify-between">
                     <span className="text-[11px] text-emerald-700 font-semibold flex items-center space-x-1">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Deal Room Active</span>
+                      <span>Opportunity Active</span>
                     </span>
-
-                    {req.dealRoomId && (
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/app/deal-rooms/${req.dealRoomId}`)}
-                        className="px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white font-bold text-xs rounded-xl flex items-center space-x-1.5"
-                      >
-                        <span>Open Deal Room</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}

@@ -51,29 +51,29 @@ export const SettingsPage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6 pb-12">
       <div>
-        <h1 className="text-2xl font-black text-navy">Account & Security Settings</h1>
-        <p className="text-xs text-text-muted mt-1">
+        <h1 className="text-xl sm:text-2xl font-black text-navy">Account & Security Settings</h1>
+        <p className="text-xs text-text-muted mt-0.5">
           Manage your credentials, cryptographic domain attestation, and access preferences.
         </p>
       </div>
 
       {/* Account Info */}
-      <div className="p-6 bg-surface rounded-3xl border border-border space-y-4 shadow-2xs">
-        <h2 className="text-base font-bold text-navy flex items-center space-x-2">
+      <div className="p-4 sm:p-6 bg-surface rounded-2xl sm:rounded-3xl border border-border space-y-4 shadow-2xs">
+        <h2 className="text-sm sm:text-base font-bold text-navy flex items-center space-x-2">
           <Building2 className="w-4 h-4 text-primary" />
           <span>Identity & Login Credentials</span>
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div className="p-4 bg-surface-muted rounded-2xl border border-border">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
+          <div className="p-3.5 sm:p-4 bg-surface-muted rounded-xl sm:rounded-2xl border border-border">
             <span className="text-text-muted block mb-1">Account Email</span>
-            <span className="font-semibold text-navy flex items-center">
-              <Mail className="w-3.5 h-3.5 text-primary mr-1.5" />
-              {user?.email}
+            <span className="font-semibold text-navy flex items-center truncate">
+              <Mail className="w-3.5 h-3.5 text-primary mr-1.5 shrink-0" />
+              <span className="truncate">{user?.email}</span>
             </span>
           </div>
-          <div className="p-4 bg-surface-muted rounded-2xl border border-border">
+          <div className="p-3.5 sm:p-4 bg-surface-muted rounded-xl sm:rounded-2xl border border-border">
             <span className="text-text-muted block mb-1">Assigned Role</span>
             <span className="font-semibold text-navy">
               {user?.roles?.join(', ') || 'USER'}
@@ -83,7 +83,7 @@ export const SettingsPage = () => {
       </div>
 
       {/* Cryptographic DNS TXT Handshake Section (Moved from Onboarding to Profile Settings) */}
-      <div className="p-6 bg-surface rounded-3xl border border-border space-y-5 shadow-2xs">
+      <div className="p-4 sm:p-6 bg-surface rounded-2xl sm:rounded-3xl border border-border space-y-4 sm:space-y-5 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-border">
           <div>
             <div className="flex items-center space-x-2">

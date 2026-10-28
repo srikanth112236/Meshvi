@@ -350,13 +350,6 @@ export const RootNavigator: React.FC = () => {
       color: '#059669',
     },
     {
-      id: 'dealrooms',
-      title: 'Deal Rooms',
-      description: 'Confidential bilateral rooms, mandates & active proposals',
-      icon: 'shield',
-      color: '#0284C7',
-    },
-    {
       id: 'messages',
       title: 'Direct Messages',
       description: 'Encrypted executive messaging & direct bilateral chat',

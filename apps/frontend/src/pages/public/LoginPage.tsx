@@ -170,107 +170,17 @@ export const LoginPage = () => {
 
   return (
     <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-4rem)]">
-      {/* LEFT COLUMN: APPLICATION SHOWCASE */}
-      <div className="lg:col-span-6 xl:col-span-7 bg-gradient-to-br from-[#0B1528] via-[#102A43] to-[#0A192F] text-white p-8 sm:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden">
-        {/* Subtle background glow effect */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 space-y-6">
-          <Link to="/" className="inline-block">
-            <img
-              src="/meshvi-logo-white.png"
-              alt="Meshvi"
-              className="h-10 object-contain"
-            />
-          </Link>
-
-          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-sky-300 text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
-            <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
-            <span>Verified B2B Intent Infrastructure</span>
-          </div>
-
-          <div className="space-y-3 max-w-xl">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-              Where Executive Relationships Are Built on Purpose, <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-teal-300">Not Spam</span>.
-            </h1>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              MESHVI replaces transactional cold outreach with cryptographically verified corporate profiles, mutual business intent, and high-trust warm introductions.
-            </p>
-          </div>
-
-          {/* Showcase Feature Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 max-w-2xl">
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-2 hover:bg-white/10 transition-colors">
-              <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-white">Bilateral Intent Protocol</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Every outreach requires explicit business context and mutual agenda agreement before connecting.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-2 hover:bg-white/10 transition-colors">
-              <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center">
-                <Building2 className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-white">DNS Domain Cryptography</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Corporate domains verified via DNS TXT handshake ensuring zero impersonation or shadow accounts.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-2 hover:bg-white/10 transition-colors">
-              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center">
-                <Network className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-white">3-Way Warm Bridges</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Facilitated introductions brokered by mutual peers with attested institutional endorsement badges.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-2 hover:bg-white/10 transition-colors">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
-                <Handshake className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-white">Collaborative Deal Rooms</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Private virtual spaces equipped with milestones, shared objectives, and deal execution tracking.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Metrics Strip */}
-        <div className="relative z-10 pt-8 border-t border-white/10 grid grid-cols-3 gap-4 max-w-xl">
-          <div>
-            <div className="text-2xl font-black text-white">99.4%</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Executive Response</div>
-          </div>
-          <div>
-            <div className="text-2xl font-black text-white">100%</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Verified Domains</div>
-          </div>
-          <div>
-            <div className="text-2xl font-black text-white">Zero</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Cold InMail Waste</div>
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT COLUMN: LOGIN FORM */}
-      <div className="lg:col-span-6 xl:col-span-5 bg-surface p-8 sm:p-12 lg:p-16 flex flex-col justify-center">
-        <div className="max-w-md w-full mx-auto space-y-6">
+      {/* FORM COLUMN (FIRST ON MOBILE FOR INSTANT ACCESS, RIGHT ON DESKTOP) */}
+      <div className="order-1 lg:order-2 lg:col-span-6 xl:col-span-5 bg-surface p-4 sm:p-6 lg:p-8 xl:p-10 flex flex-col justify-center">
+        <div className="max-w-md w-full mx-auto space-y-4 sm:space-y-4.5">
           <div>
             <img
               src="/meshvi-mark.png"
               alt="Meshvi"
-              className="w-12 h-12 object-contain mb-3 drop-shadow-xs"
+              className="w-10 h-10 sm:w-11 sm:h-11 object-contain mb-2 sm:mb-2.5 drop-shadow-xs"
             />
-            <h2 className="text-2xl font-black text-navy tracking-tight">Welcome back</h2>
-            <p className="text-xs text-text-muted mt-1">
+            <h2 className="text-xl sm:text-2xl font-black text-navy tracking-tight">Welcome back</h2>
+            <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
               Sign in to access your MESHVI Discovery Hub, active deal rooms, and network bridges.
             </p>
           </div>
@@ -418,10 +328,100 @@ export const LoginPage = () => {
         </div>
       </div>
 
+      {/* SHOWCASE COLUMN (BOTTOM ON MOBILE, LEFT ON DESKTOP) */}
+      <div className="order-2 lg:order-1 lg:col-span-6 xl:col-span-7 bg-gradient-to-br from-[#0B1528] via-[#102A43] to-[#0A192F] text-white p-5 sm:p-8 lg:p-12 xl:p-16 flex flex-col justify-between relative overflow-hidden">
+        {/* Subtle background glow effect */}
+        <div className="absolute top-0 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 sm:w-96 h-72 sm:h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 space-y-4 sm:space-y-6">
+          <Link to="/" className="inline-block">
+            <img
+              src="/meshvi-logo-white.png"
+              alt="Meshvi"
+              className="h-8 sm:h-10 object-contain"
+            />
+          </Link>
+
+          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-sky-300 text-[11px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+            <span>Verified B2B Intent Infrastructure</span>
+          </div>
+
+          <div className="space-y-2 sm:space-y-3 max-w-xl">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight text-white leading-tight">
+              Where Executive Relationships Are Built on Purpose, <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-teal-300">Not Spam</span>.
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              MESHVI replaces transactional cold outreach with cryptographically verified corporate profiles, mutual business intent, and high-trust warm introductions.
+            </p>
+          </div>
+
+          {/* Showcase Feature Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2 sm:pt-4 max-w-2xl">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-1.5 sm:space-y-2 hover:bg-white/10 transition-colors">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white">Bilateral Intent Protocol</h3>
+              <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
+                Every outreach requires explicit business context and mutual agenda agreement before connecting.
+              </p>
+            </div>
+
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-1.5 sm:space-y-2 hover:bg-white/10 transition-colors">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center">
+                <Building2 className="w-4 h-4" />
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white">DNS Domain Cryptography</h3>
+              <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
+                Corporate domains verified via DNS TXT handshake ensuring zero impersonation or shadow accounts.
+              </p>
+            </div>
+
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-1.5 sm:space-y-2 hover:bg-white/10 transition-colors">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center">
+                <Network className="w-4 h-4" />
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white">3-Way Warm Bridges</h3>
+              <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
+                Facilitated introductions brokered by mutual peers with attested institutional endorsement badges.
+              </p>
+            </div>
+
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-1.5 sm:space-y-2 hover:bg-white/10 transition-colors">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
+                <Handshake className="w-4 h-4" />
+              </div>
+              <h3 className="text-xs sm:text-sm font-bold text-white">Collaborative Deal Rooms</h3>
+              <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
+                Private virtual spaces equipped with milestones, shared objectives, and deal execution tracking.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Metrics Strip */}
+        <div className="relative z-10 pt-6 sm:pt-8 border-t border-white/10 grid grid-cols-3 gap-2 sm:gap-4 max-w-xl mt-6 lg:mt-0">
+          <div>
+            <div className="text-xl sm:text-2xl font-black text-white">99.4%</div>
+            <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Executive Response</div>
+          </div>
+          <div>
+            <div className="text-xl sm:text-2xl font-black text-white">100%</div>
+            <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Verified Domains</div>
+          </div>
+          <div>
+            <div className="text-xl sm:text-2xl font-black text-white">Zero</div>
+            <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Cold InMail Waste</div>
+          </div>
+        </div>
+      </div>
+
       {/* Google OAuth Configuration & Identity Setup Modal */}
       {showGoogleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-surface border border-border rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl relative space-y-4 sm:space-y-5 max-h-[92vh] overflow-y-auto">
             <button
               onClick={() => setShowGoogleModal(false)}
               className="absolute top-4 right-4 text-text-muted hover:text-navy p-1 rounded-lg hover:bg-surface-muted transition-colors"

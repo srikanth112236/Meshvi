@@ -652,10 +652,10 @@ export const PartnershipsPage: React.FC = () => {
         </div>
 
         {/* Action Group: Requests Tracker Page + Post Button */}
-        <div className="flex items-center gap-2.5 shrink-0 z-10">
+        <div className="flex items-center flex-wrap gap-2 shrink-0 z-10 w-full sm:w-auto">
           <Link
             to="/app/partnerships/requests"
-            className="px-3.5 py-2.5 bg-surface hover:bg-surface-muted text-navy font-bold text-xs rounded-xl border border-border transition-colors flex items-center space-x-1.5 shadow-2xs"
+            className="px-3 sm:px-3.5 py-2 bg-surface hover:bg-surface-muted text-navy font-bold text-xs rounded-xl border border-border transition-colors flex items-center space-x-1.5 shadow-2xs"
           >
             <Inbox className="w-4 h-4 text-primary" />
             <span>Requests Tracker</span>
@@ -669,7 +669,7 @@ export const PartnershipsPage: React.FC = () => {
           {/* Info / Guidelines Modal Button */}
           <button
             onClick={() => setIsGuidelinesOpen(true)}
-            className="px-3 py-2.5 bg-surface hover:bg-surface-muted text-navy font-bold text-xs rounded-xl border border-border hover:border-primary/40 transition-colors flex items-center space-x-1.5 shadow-2xs cursor-pointer"
+            className="px-2.5 sm:px-3 py-2 bg-surface hover:bg-surface-muted text-navy font-bold text-xs rounded-xl border border-border hover:border-primary/40 transition-colors flex items-center space-x-1.5 shadow-2xs cursor-pointer"
             title="Partnership Mandate Guidelines & Standards"
           >
             <HelpCircle className="w-4 h-4 text-primary" />
@@ -678,10 +678,11 @@ export const PartnershipsPage: React.FC = () => {
 
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="px-4 py-2.5 bg-primary hover:bg-primary-dark text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center space-x-2"
+            className="px-3.5 sm:px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center space-x-1.5"
           >
             <Plus className="w-4 h-4" />
-            <span>Post Partnership Request</span>
+            <span className="hidden sm:inline">Post Partnership Request</span>
+            <span className="sm:hidden">Post Request</span>
           </button>
         </div>
       </div>

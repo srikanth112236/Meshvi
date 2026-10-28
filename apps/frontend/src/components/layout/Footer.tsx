@@ -23,10 +23,20 @@ export const Footer = () => {
           {/* Navigation Links */}
           <div>
             <h3 className="text-xs font-bold text-navy uppercase tracking-wider mb-4">Platform</h3>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2 text-xs sm:text-sm">
               <li>
                 <Link to="/how-it-works" className="text-text-muted hover:text-navy transition-colors">
                   How it works
+                </Link>
+              </li>
+              <li>
+                <Link to="/search-showcase" className="text-primary hover:text-primary-hover font-semibold transition-colors">
+                  Search Showcase &rarr;
+                </Link>
+              </li>
+              <li>
+                <Link to="/why-meshvi" className="text-text-muted hover:text-navy transition-colors">
+                  Why Meshvi
                 </Link>
               </li>
               <li>
@@ -46,7 +56,7 @@ export const Footer = () => {
               </li>
               <li>
                 <Link to="/faq" className="text-text-muted hover:text-navy transition-colors">
-                  Frequently asked questions
+                  FAQ
                 </Link>
               </li>
             </ul>
@@ -54,26 +64,41 @@ export const Footer = () => {
 
           {/* Company & Legal */}
           <div>
-            <h3 className="text-xs font-bold text-navy uppercase tracking-wider mb-4">Company & Legal</h3>
-            <ul className="space-y-2.5 text-sm">
+            <h3 className="text-xs font-bold text-navy uppercase tracking-wider mb-4">Governance & Legal</h3>
+            <ul className="space-y-2 text-xs sm:text-sm">
               <li>
                 <Link to="/about" className="text-text-muted hover:text-navy transition-colors">
                   About Meshvi
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-text-muted hover:text-navy transition-colors">
-                  Contact us
-                </Link>
-              </li>
-              <li>
                 <Link to="/privacy" className="text-text-muted hover:text-navy transition-colors">
-                  Privacy policy
+                  Privacy policy (GDPR)
                 </Link>
               </li>
               <li>
                 <Link to="/terms" className="text-text-muted hover:text-navy transition-colors">
                   Terms of service
+                </Link>
+              </li>
+              <li>
+                <Link to="/legal" className="text-text-muted hover:text-navy transition-colors">
+                  Legal notice
+                </Link>
+              </li>
+              <li>
+                <Link to="/data-usage" className="text-emerald-700 hover:text-emerald-900 font-semibold transition-colors">
+                  How we use data
+                </Link>
+              </li>
+              <li>
+                <Link to="/cookies" className="text-text-muted hover:text-navy transition-colors">
+                  Cookie policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-text-muted hover:text-navy transition-colors">
+                  Contact us
                 </Link>
               </li>
             </ul>

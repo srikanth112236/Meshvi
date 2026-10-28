@@ -13,7 +13,6 @@ import {
   MessageSquare,
   Calendar,
   ExternalLink,
-  Handshake,
   ShieldCheck,
   Download,
   Inbox,
@@ -331,14 +330,6 @@ export const ConnectionsPage = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/app/deal-rooms')}
-            className="p-1.5 text-text-muted hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
-            title="Open Deal Rooms"
-          >
-            <Handshake className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
             onClick={() => {
               const partner = item.partner;
               const pId = partner.userId;
@@ -373,24 +364,24 @@ export const ConnectionsPage = () => {
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* Header Card */}
-      <div className="bg-surface border border-border rounded-2xl p-6 sm:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center space-x-1.5">
+          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-primary flex items-center space-x-1.5">
             <Users className="w-3.5 h-3.5" />
             <span>Professional Network Directory</span>
           </span>
-          <h1 className="text-2xl font-black text-navy mt-1 tracking-tight">Connections Hub</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-navy mt-1 tracking-tight">Connections Hub</h1>
           <p className="text-xs text-text-muted mt-0.5">
             Verified direct connections, inbound executive proposals, and relationship channels.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center space-x-2.5 shrink-0">
           <Link
             to="/app/search"
-            className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center space-x-1.5"
+            className="px-3.5 sm:px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center space-x-1.5"
           >
             <Send className="w-3.5 h-3.5" />
             <span>Find Contacts</span>
@@ -518,19 +509,19 @@ export const ConnectionsPage = () => {
       </div>
 
       {/* Primary Tab Switcher */}
-      <div className="flex items-center justify-between border-b border-border pb-3 flex-wrap gap-3">
-        <div className="flex items-center space-x-2 bg-surface p-1 rounded-xl border border-border">
+      <div className="flex items-center justify-between border-b border-border pb-3 flex-wrap gap-2.5">
+        <div className="flex items-center space-x-1 sm:space-x-2 bg-surface p-1 rounded-xl border border-border overflow-x-auto max-w-full">
           <button
             type="button"
             onClick={() => setActiveTab('CONNECTIONS')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-2 transition-all ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 sm:space-x-2 transition-all shrink-0 ${
               activeTab === 'CONNECTIONS'
                 ? 'bg-navy text-white shadow-xs'
                 : 'text-text-muted hover:text-navy hover:bg-surface-muted'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>Active Connections</span>
+            <span>Connections</span>
             <span
               className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
                 activeTab === 'CONNECTIONS' ? 'bg-white/20 text-white' : 'bg-surface-muted text-text-muted'
@@ -543,14 +534,14 @@ export const ConnectionsPage = () => {
           <button
             type="button"
             onClick={() => setActiveTab('INCOMING')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-2 transition-all ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 sm:space-x-2 transition-all shrink-0 ${
               activeTab === 'INCOMING'
                 ? 'bg-navy text-white shadow-xs'
                 : 'text-text-muted hover:text-navy hover:bg-surface-muted'
             }`}
           >
             <Inbox className="w-3.5 h-3.5" />
-            <span>Pending Inbound</span>
+            <span>Inbound</span>
             {incomingRequests.length > 0 && (
               <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-500 text-white animate-pulse">
                 {incomingRequests.length}
@@ -561,7 +552,7 @@ export const ConnectionsPage = () => {
           <button
             type="button"
             onClick={() => setActiveTab('OUTGOING')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-2 transition-all ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 sm:space-x-2 transition-all shrink-0 ${
               activeTab === 'OUTGOING'
                 ? 'bg-navy text-white shadow-xs'
                 : 'text-text-muted hover:text-navy hover:bg-surface-muted'
@@ -581,19 +572,19 @@ export const ConnectionsPage = () => {
 
         {/* View mode toggle (active only on Connections tab) */}
         {activeTab === 'CONNECTIONS' && (
-          <div className="flex items-center space-x-2">
-            <div className="relative">
+          <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="relative flex-1 sm:flex-initial">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
                 placeholder="Filter connections..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 bg-surface border border-border rounded-xl text-xs text-navy placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary w-48 sm:w-60"
+                className="pl-8 pr-3 py-1.5 bg-surface border border-border rounded-xl text-xs text-navy placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-56"
               />
             </div>
 
-            <div className="flex items-center space-x-1 bg-surface border border-border p-1 rounded-xl shadow-xs">
+            <div className="flex items-center space-x-1 bg-surface border border-border p-1 rounded-xl shadow-xs shrink-0">
               <button
                 type="button"
                 onClick={() => setViewMode('table')}
@@ -704,14 +695,6 @@ export const ConnectionsPage = () => {
                       title="vCard"
                     >
                       <Download className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/app/deal-rooms')}
-                      className="p-1 text-text-muted hover:text-sky-700"
-                      title="Deal Room"
-                    >
-                      <Handshake className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
@@ -1194,28 +1177,6 @@ export const ConnectionsPage = () => {
                 className="px-3.5 py-1.5 bg-primary text-white font-bold rounded-xl text-xs shadow-xs hover:bg-primary-hover flex items-center space-x-1"
               >
                 <span>Chat</span>
-                <ExternalLink className="w-3 h-3 ml-1" />
-              </button>
-            </div>
-
-            {/* Meshvi Deal Room Card */}
-            <div className="p-4 bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-200 rounded-2xl flex items-center justify-between">
-              <div>
-                <div className="font-bold text-sky-900 flex items-center gap-1.5">
-                  <Handshake className="w-4 h-4 text-sky-600" />
-                  <span>Meshvi Deal Room</span>
-                </div>
-                <div className="text-sky-700/80 text-[11px]">Milestones, mutual goals & deal closing</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedConnection(null);
-                  navigate('/app/deal-rooms');
-                }}
-                className="px-3.5 py-1.5 bg-[#102A43] text-white font-bold rounded-xl text-xs hover:bg-[#173B5E] flex items-center space-x-1"
-              >
-                <span>Deal Room</span>
                 <ExternalLink className="w-3 h-3 ml-1" />
               </button>
             </div>

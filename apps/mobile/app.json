@@ -28,12 +28,17 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Meshvi requires camera access to take an executive selfie for corporate identity verification.",
         "NSPhotoLibraryUsageDescription": "Meshvi requires access to your photo library to select executive avatars and corporate mandate credentials.",
-        "NSPhotoLibraryAddUsageDescription": "Meshvi requires access to save bilateral agreement receipts and verified documents."
+        "NSPhotoLibraryAddUsageDescription": "Meshvi requires access to save bilateral agreement receipts and verified documents.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsLocalNetworking": true
+        }
       }
     },
     "android": {
       "package": "com.vedasynk.meshvi",
       "versionCode": 1,
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#0B1528"

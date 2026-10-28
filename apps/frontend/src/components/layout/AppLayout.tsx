@@ -216,23 +216,24 @@ export const AppLayout = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-border px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+        <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-border px-3 sm:px-6 h-13 sm:h-14 flex items-center justify-between">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
               className="p-1.5 text-text-muted hover:text-navy md:hidden rounded-lg hover:bg-surface-muted"
+              aria-label="Open navigation menu"
             >
-              <Menu className="w-4 h-4" />
+              <Menu className="w-5 h-5" />
             </button>
-            <div className="hidden sm:flex items-center space-x-2 text-xs">
-              <span className="font-bold text-navy">Member Hub</span>
-              <span className="text-text-muted">&bull;</span>
-              <span className="text-text-muted text-[11px]">B2B Relationship Discovery & Commerce</span>
+            <div className="flex items-center space-x-1.5 sm:space-x-2 text-xs">
+              <span className="font-bold text-navy text-xs sm:text-sm">Member Hub</span>
+              <span className="text-text-muted hidden sm:inline">&bull;</span>
+              <span className="text-text-muted text-[11px] hidden sm:inline">B2B Relationship Discovery & Commerce</span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5">
             {/* Quick Command Bar Trigger */}
             <button
               type="button"
@@ -265,20 +266,48 @@ export const AppLayout = () => {
               )}
             </button>
 
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary-soft text-primary border border-primary/20">
-              <Shield className="w-3 h-3 mr-1" />
-              Member Plane
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary-soft text-primary border border-primary/20 shrink-0">
+              <Shield className="w-3 h-3 mr-1 shrink-0" />
+              <span className="hidden xs:inline">Member Plane</span>
             </span>
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 pb-[max(6rem,calc(5rem+env(safe-area-inset-bottom)))] md:pb-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
 
-        <footer className="border-t border-border bg-surface py-3 text-center text-[11px] text-text-muted">
+        <footer className="border-t border-border bg-surface py-3 text-center text-[10px] sm:text-[11px] text-text-muted hidden md:block">
           MESHVI &bull; Member Hub Security Partition &bull; 256-Bit Encrypted Session
         </footer>
+
+        {/* Mobile Persistent Bottom Navigation Bar (iOS Home-Indicator Safe) */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-border px-1 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-lg flex items-center justify-around">
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all ${
+                  active
+                    ? 'text-primary font-bold'
+                    : 'text-text-muted hover:text-navy'
+                }`}
+              >
+                <div className="relative">
+                  <item.icon className={`w-5 h-5 ${active ? 'text-primary stroke-[2.5]' : 'text-text-muted stroke-[1.75]'}`} />
+                  {item.href === '/app/messages' && unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 bg-primary rounded-full ring-2 ring-surface animate-pulse" />
+                  )}
+                </div>
+                <span className={`text-[10px] mt-0.5 tracking-tight ${active ? 'font-black text-primary' : 'font-medium'}`}>
+                  {item.name}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
       {/* Feature #48: Universal Command Bar Modal */}

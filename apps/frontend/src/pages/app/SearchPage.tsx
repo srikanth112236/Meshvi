@@ -38,6 +38,7 @@ import { PersonDossierDrawer } from '../../components/ui/PersonDossierDrawer';
 import { OpportunityQualificationModal } from '../../components/ui/OpportunityQualificationModal';
 import { SearchGuideModal } from '../../components/ui/SearchGuideModal';
 import { WhyThisMatchModal } from '../../components/ui/WhyThisMatchModal';
+import { autoCorrectQuery } from '../../utils/typoCorrection';
 
 type SearchMode = 'DECISION_MAKERS' | 'ENTERPRISES' | 'OPPORTUNITY_GRAPH' | 'MARKET_CORRIDOR';
 
@@ -656,7 +657,14 @@ export const SearchPage = () => {
   };
 
   const handleFreshSearch = (overrideQueryText?: string, targetMode?: SearchMode) => {
-    const q = overrideQueryText !== undefined ? overrideQueryText : query;
+    let q = overrideQueryText !== undefined ? overrideQueryText : query;
+    if (overrideQueryText === undefined) {
+      const correction = autoCorrectQuery(q);
+      if (correction.hasCorrection) {
+        q = correction.correctedQuery;
+        setQuery(correction.correctedQuery);
+      }
+    }
     const mode = targetMode || searchMode;
     if (q.trim()) {
       setSearchParams({ q: q.trim() }, { replace: true });
@@ -849,6 +857,15 @@ export const SearchPage = () => {
       setSuggestedCorrection(null);
       return;
     }
+
+    // Instant client-side typo correction (0ms latency)
+    const clientCorrection = autoCorrectQuery(trimmed);
+    if (clientCorrection.hasCorrection) {
+      setSuggestedCorrection(clientCorrection.correctedQuery);
+    } else {
+      setSuggestedCorrection(null);
+    }
+
     const t = setTimeout(() => {
       fetch(`/api/v1/search/suggest?q=${encodeURIComponent(trimmed)}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -858,7 +875,11 @@ export const SearchPage = () => {
           if (data.success && data.data) {
             setSuggestions(data.data.suggestions || []);
             setCategorizedSuggestions(data.data.categorized || []);
-            setSuggestedCorrection(data.data.hasCorrection ? data.data.correctedQuery : null);
+            if (data.data.hasCorrection && data.data.correctedQuery) {
+              setSuggestedCorrection(data.data.correctedQuery);
+            } else if (clientCorrection.hasCorrection) {
+              setSuggestedCorrection(clientCorrection.correctedQuery);
+            }
           }
         })
         .catch(() => {});
@@ -2138,27 +2159,39 @@ export const SearchPage = () => {
 
           {/* Query Typo / Auto-Correction Notice Banner */}
           {resultsData?.queryCorrection?.hasCorrection && !loading && (
-            <div className="p-2.5 bg-neutral-100 border border-neutral-200 rounded-xl flex items-center justify-between gap-3 text-xs text-neutral-900 animate-in fade-in">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span>
-                  Showing results for{' '}
-                  <strong className="font-bold text-black underline decoration-amber-500">
-                    &quot;{resultsData.queryCorrection.correctedQuery}&quot;
-                  </strong>
-                </span>
+            <div className="p-3 bg-amber-50/90 border border-amber-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-neutral-900 shadow-xs animate-in fade-in">
+              <div className="flex items-start sm:items-center space-x-2.5">
+                <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 font-bold">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                </div>
+                <div>
+                  <div className="text-[12.5px] leading-snug">
+                    Showing results for{' '}
+                    <strong className="font-extrabold text-navy underline decoration-amber-500 underline-offset-2">
+                      &quot;{resultsData.queryCorrection.correctedQuery}&quot;
+                    </strong>
+                  </div>
+                  {resultsData.queryCorrection.originalQuery && resultsData.queryCorrection.originalQuery !== resultsData.queryCorrection.correctedQuery && (
+                    <div className="text-[11px] text-neutral-500 mt-0.5">
+                      Auto-corrected typo from <span className="line-through italic text-neutral-400">&quot;{resultsData.queryCorrection.originalQuery}&quot;</span>
+                    </div>
+                  )}
+                </div>
               </div>
+
               {query !== resultsData.queryCorrection.correctedQuery && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery(resultsData.queryCorrection.correctedQuery);
-                    handleSearch(resultsData.queryCorrection.correctedQuery);
-                  }}
-                  className="px-2 py-1 bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-300 font-bold rounded-lg text-[10.5px] transition-colors shrink-0"
-                >
-                  ⚡ Update Search
-                </button>
+                <div className="flex items-center space-x-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery(resultsData.queryCorrection.correctedQuery);
+                      handleSearch(resultsData.queryCorrection.correctedQuery);
+                    }}
+                    className="px-3 py-1.5 bg-navy hover:bg-neutral-800 text-white font-bold rounded-xl text-xs transition-colors shadow-2xs flex items-center space-x-1"
+                  >
+                    <span>⚡ Update Input</span>
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -2348,24 +2381,7 @@ export const SearchPage = () => {
                       <span>Company Dossier</span>
                     </button>
 
-                    {hasDecisionMakers ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProposalModalTarget({
-                            companyName: companyName,
-                            companyId: resultsData.matchedCompany.id,
-                            executiveName: candidateResults[0]?.profile?.displayName || 'Executive Leadership',
-                            executiveTitle: candidateResults[0]?.profile?.currentTitle || 'Managing Director',
-                            recipientProfileId: candidateResults[0]?.profile?.id,
-                          });
-                        }}
-                        className="px-3.5 py-1.5 bg-white text-black hover:bg-neutral-200 rounded-xl text-xs font-black transition-colors flex items-center space-x-1.5 shadow-xs"
-                      >
-                        <Building2 className="w-3.5 h-3.5 text-black" />
-                        <span>Submit Proposal</span>
-                      </button>
-                    ) : (
+                    {!hasDecisionMakers && !isVerified && (
                       <button
                         type="button"
                         onClick={() => {

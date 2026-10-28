@@ -402,7 +402,7 @@ export const AppHomePage = () => {
         </div>
 
         {/* Compact Quick Actions */}
-        <div className="flex items-center gap-2 relative z-10 shrink-0 self-end md:self-center">
+        <div className="flex items-center gap-2 relative z-10 shrink-0 self-start sm:self-center mt-2 sm:mt-0">
           <Link
             to="/app/profile"
             className="px-3 py-1.5 bg-surface hover:bg-surface-muted border border-border text-navy font-bold text-xs rounded-lg transition-colors shadow-2xs"
@@ -535,9 +535,10 @@ export const AppHomePage = () => {
 
           <button
             type="submit"
-            className="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs transition-colors shrink-0 flex items-center space-x-1.5"
+            className="px-3.5 sm:px-4 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs transition-colors shrink-0 flex items-center space-x-1.5"
           >
-            <span>Search Directory</span>
+            <span className="hidden sm:inline">Search Directory</span>
+            <span className="sm:hidden">Search</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </form>

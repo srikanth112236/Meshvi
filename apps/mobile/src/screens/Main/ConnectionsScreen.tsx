@@ -928,14 +928,6 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                          style={styles.iconMiniBtn}
-                          onPress={() => onNavigateTab ? onNavigateTab('dealrooms') : null}
-                          activeOpacity={0.7}
-                        >
-                          <Feather name="briefcase" size={12} color="#0284C7" />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
                           style={styles.chatActionBtn}
                           onPress={() => handleOpenChat(partner)}
                           activeOpacity={0.85}
@@ -1336,27 +1328,6 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
                   </View>
                 </View>
               </View>
-
-              {/* Meshvi Deal Room Card */}
-              <TouchableOpacity
-                style={styles.dealRoomPromoCard}
-                onPress={() => {
-                  setSelectedConnection(null);
-                  if (onNavigateTab) onNavigateTab('dealrooms');
-                }}
-                activeOpacity={0.85}
-              >
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Feather name="briefcase" size={13} color="#0369A1" style={{ marginRight: 5 }} />
-                    <Text style={styles.dealRoomPromoTitle}>SETU Deal Room</Text>
-                  </View>
-                  <Text style={styles.dealRoomPromoSub}>
-                    Milestones, mutual goals & deal closing
-                  </Text>
-                </View>
-                <Feather name="arrow-up-right" size={15} color="#0369A1" />
-              </TouchableOpacity>
             </ScrollView>
 
             {/* Bottom Footer Actions */}
