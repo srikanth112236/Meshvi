@@ -72,15 +72,7 @@ jobs:
             sudo docker rm meshvi-backend 2>/dev/null || true
 
             echo "==== 6. Configuring Caddyfile for SSL reverse proxy ===="
-            cat << 'EOF' | sudo tee /etc/caddy/Caddyfile
-api.meshvi.org {
-    reverse_proxy 127.0.0.1:3500
-}
-
-meshvi.org {
-    redir https://www.meshvi.org{uri} permanent
-}
-EOF
+            sudo bash -c 'printf "api.meshvi.org {\n    reverse_proxy 127.0.0.1:3500\n}\n\nmeshvi.org {\n    redir https://www.meshvi.org{uri} permanent\n}\n" > /etc/caddy/Caddyfile'
 
             echo "==== 7. Restarting Caddy with Automatic SSL ===="
             sudo systemctl enable caddy
