@@ -1,6 +1,6 @@
 {
   "name": "@setu/frontend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Project Setu Frontend Web App (Vite on Port 3100)",
   "type": "module",
