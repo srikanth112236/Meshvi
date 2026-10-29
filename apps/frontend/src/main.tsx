@@ -10,10 +10,13 @@ let backendOrigin = '';
 if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
   // Local development: keep relative URL to use local Vite dev proxy -> http://localhost:3500
   backendOrigin = '';
+} else if (typeof window !== 'undefined' && (window.location.hostname === 'meshvi.org' || window.location.hostname.endsWith('meshvi.org'))) {
+  // Production Azure custom domain: always route to api.meshvi.org
+  backendOrigin = 'https://api.meshvi.org';
 } else if (rawApiUrl) {
   backendOrigin = rawApiUrl.replace(/\/api\/v1\/?$/, '').replace(/https?:\/\/setu-backend\.onrender\.com/g, 'https://meshvi.onrender.com');
 } else {
-  backendOrigin = 'https://meshvi.onrender.com';
+  backendOrigin = 'https://api.meshvi.org';
 }
 
 const sanitizeUrl = (url: string): string => {
@@ -21,9 +24,12 @@ const sanitizeUrl = (url: string): string => {
   if (backendOrigin && (target.startsWith('/api') || target.startsWith('/uploads'))) {
     target = `${backendOrigin}${target}`;
   }
-  // Enforce redirection from legacy setu-backend to live meshvi backend
+  // Enforce redirection from legacy setu-backend or render host when running on meshvi.org
   if (target.includes('setu-backend.onrender.com')) {
-    target = target.replace(/https?:\/\/setu-backend\.onrender\.com/g, 'https://meshvi.onrender.com');
+    target = target.replace(/https?:\/\/setu-backend\.onrender\.com/g, 'https://api.meshvi.org');
+  }
+  if (typeof window !== 'undefined' && (window.location.hostname === 'meshvi.org' || window.location.hostname.endsWith('meshvi.org'))) {
+    target = target.replace(/https?:\/\/meshvi\.onrender\.com/g, 'https://api.meshvi.org');
   }
   return target;
 };
