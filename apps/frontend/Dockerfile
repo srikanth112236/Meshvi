@@ -20,7 +20,7 @@ RUN npm ci
 COPY apps/frontend ./apps/frontend
 
 # Build for production with production API URL
-ARG VITE_API_URL=https://api.projectsetu.org/api/v1
+ARG VITE_API_URL=https://api.meshvi.org/api/v1
 ARG VITE_GOOGLE_CLIENT_ID=1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com
 
 ENV VITE_API_URL=$VITE_API_URL

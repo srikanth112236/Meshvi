@@ -41,7 +41,7 @@ jobs:
 
       - name: Verify Frontend Build
         env:
-          VITE_API_URL: https://api.projectsetu.org/api/v1
+          VITE_API_URL: https://api.meshvi.org/api/v1
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         run: npm run build --workspace=@setu/frontend
 
@@ -83,9 +83,9 @@ jobs:
           context: .
           file: apps/backend/Dockerfile
           push: true
-          tags: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:${{ github.sha }},${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:latest
-          cache-from: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:buildcache
-          cache-to: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:buildcache,mode=max
+          tags: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:${{ github.sha }},${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:latest
+          cache-from: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:buildcache
+          cache-to: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:buildcache,mode=max
 
       - name: Run Prisma Database Migrations
         env:
@@ -98,15 +98,15 @@ jobs:
       - name: Deploy Backend Container to Azure Container Apps
         uses: azure/container-apps-deploy-action@v2
         with:
-          imageToDeploy: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/setu-backend:${{ github.sha }}
-          containerAppName: ${{ secrets.AZURE_BACKEND_APP_NAME || 'setu-backend-api' }}
-          resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP || 'rg-projectsetu-prod' }}
+          imageToDeploy: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:${{ github.sha }}
+          containerAppName: ${{ secrets.AZURE_BACKEND_APP_NAME || 'meshvi-backend' }}
+          resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP || 'rg-meshvi-prod' }}
 
   # ============================================================================
   # STEP 3: Build & Deploy Frontend (Azure Static Web Apps)
   # ============================================================================
   deploy-frontend:
-    name: Deploy Frontend (projectsetu.org)
+    name: Deploy Frontend (meshvi.org)
     needs: verify
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
@@ -125,5 +125,5 @@ jobs:
           app_build_command: "npm run build --workspace=@setu/frontend"
           output_location: "apps/frontend/dist"
         env:
-          VITE_API_URL: https://api.projectsetu.org/api/v1
+          VITE_API_URL: https://api.meshvi.org/api/v1
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
