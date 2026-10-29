@@ -1,151 +1,90 @@
-name: Production CI/CD Pipeline - Azure Auto-Deploy
+name: Deploy Backend to Azure VM
 
 on:
   push:
     branches:
       - main
+      - master
   workflow_dispatch:
 
-permissions:
-  contents: read
-  id-token: write # Required for Azure Workload Identity Federation (OIDC)
-
 jobs:
-  # ============================================================================
-  # STEP 1: Test, Lint & Verify Workspaces
-  # ============================================================================
-  verify:
-    name: Test & Lint Codebase
+  build-and-deploy:
+    name: Build, Push to ACR and Deploy to Azure VM
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install Monorepo Dependencies
-        run: npm ci
-
-      - name: Generate Prisma Client
-        run: |
-          cd apps/backend
-          npx prisma generate
-
-      - name: Verify Backend Build
-        run: npm run build --workspace=@setu/backend
-
-      - name: Verify Frontend Build
-        env:
-          VITE_API_URL: https://api.meshvi.org/api/v1
-          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-        run: npm run build --workspace=@setu/frontend
-
-  # ============================================================================
-  # STEP 2: Build & Deploy Backend (Azure Container Apps)
-  # ============================================================================
-  deploy-backend:
-    name: Deploy Backend to Azure
-    needs: verify
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      # Log in to Azure using Workload Identity Federation (OIDC) or Service Principal
-      - name: Log in to Azure (Workload Identity / OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Azure Container Registry (ACR)
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
-          username: ${{ secrets.AZURE_ACR_USERNAME }}
-          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+          registry: ${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME || secrets.AZURE_ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD || secrets.AZURE_ACR_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build and Push Backend Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/backend/Dockerfile
-          push: true
-          tags: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:${{ github.sha }},${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:latest
-          cache-from: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:buildcache
-          cache-to: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:buildcache,mode=max
-
-      - name: Run Prisma Database Migrations
-        env:
-          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
         run: |
-          npm ci
-          cd apps/backend
-          npx prisma db push --skip-generate
+          ACR_SERVER="${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER }}"
+          IMAGE_TAG="${{ github.sha }}"
+          
+          docker build \
+            -t ${ACR_SERVER}/meshvi-backend:${IMAGE_TAG} \
+            -t ${ACR_SERVER}/meshvi-backend:latest \
+            -f apps/backend/Dockerfile .
+            
+          docker push ${ACR_SERVER}/meshvi-backend:${IMAGE_TAG}
+          docker push ${ACR_SERVER}/meshvi-backend:latest
 
-      - name: Deploy Backend Container to Azure Container Apps
-        uses: azure/container-apps-deploy-action@v2
+      - name: Deploy to Azure VM via SSH
+        uses: appleboy/ssh-action@v1.0.0
         with:
-          imageToDeploy: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-backend:${{ github.sha }}
-          containerAppName: ${{ secrets.AZURE_BACKEND_APP_NAME || 'meshvi-backend' }}
-          resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP || 'rg-meshvi-prod' }}
+          host: ${{ secrets.VM_IP }}
+          username: ${{ secrets.VM_USER || 'azureuser' }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            ACR_SERVER="${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER }}"
+            ACR_USER="${{ secrets.ACR_USERNAME || secrets.AZURE_ACR_USERNAME }}"
+            ACR_PASS="${{ secrets.ACR_PASSWORD || secrets.AZURE_ACR_PASSWORD }}"
+            
+            echo "==== Logging into ACR on VM ===="
+            echo "$ACR_PASS" | sudo docker login $ACR_SERVER -u $ACR_USER --password-stdin
 
-  # ============================================================================
-  # STEP 3: Build & Deploy Frontend (Azure Container Apps)
-  # ============================================================================
-  deploy-frontend:
-    name: Deploy Frontend (meshvi.org)
-    needs: verify
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+            echo "==== Pulling latest backend image ===="
+            sudo docker pull ${ACR_SERVER}/meshvi-backend:latest
 
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+            echo "==== Ensuring persistent data directory exists ===="
+            mkdir -p /home/${{ secrets.VM_USER || 'azureuser' }}/meshvi-data/uploads
 
-      - name: Log in to Azure (Workload Identity / Service Principal)
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+            echo "==== Stopping previous container ===="
+            sudo docker stop meshvi-backend || true
+            sudo docker rm meshvi-backend || true
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+            echo "==== Running updated backend container on VM ===="
+            sudo docker run -d \
+              --name meshvi-backend \
+              -p 3500:3500 \
+              -p 80:3500 \
+              --restart unless-stopped \
+              -v /home/${{ secrets.VM_USER || 'azureuser' }}/meshvi-data/uploads:/app/apps/backend/uploads \
+              -e NODE_ENV=production \
+              -e PORT=3500 \
+              -e DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}" \
+              -e FRONTEND_URL="https://meshvi.org" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET || 'meshvi_prod_secret_jwt_key_2026_azure_vm_secure!' }}" \
+              -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              -e GOOGLE_REDIRECT_URI="https://meshvi.org/auth/google/callback" \
+              -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+              -e AI_PRIMARY_PROVIDER="gemini" \
+              -e GEMINI_MODEL="gemini-2.5-flash" \
+              ${ACR_SERVER}/meshvi-backend:latest
 
-      - name: Log in to Azure Container Registry (ACR)
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}
-          username: ${{ secrets.AZURE_ACR_USERNAME }}
-          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+            echo "==== Cleaning up unused images ===="
+            sudo docker image prune -f
 
-      - name: Build and Push Frontend Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/frontend/Dockerfile
-          push: true
-          build-args: |
-            VITE_API_URL=https://api.meshvi.org/api/v1
-            VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-          tags: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-frontend:${{ github.sha }},${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-frontend:latest
-          cache-from: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-frontend:buildcache
-          cache-to: type=registry,ref=${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-frontend:buildcache,mode=max
-
-      - name: Deploy Frontend Container to Azure Container Apps
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          imageToDeploy: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/meshvi-frontend:${{ github.sha }}
-          containerAppName: ${{ secrets.AZURE_FRONTEND_APP_NAME || 'meshvi-frontend' }}
-          resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP || 'rg-meshvi-prod' }}
+            echo "==== Verifying running container ===="
+            sudo docker ps --filter "name=meshvi-backend"
