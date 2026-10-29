@@ -43,28 +43,53 @@ jobs:
           username: azureuser
           key: ${{ secrets.SSH_KEY }}
           script: |
+            set -e
             ACR_SERVER="meshviacr5435.azurecr.io"
             ACR_USER="meshviacr5435"
             ACR_PASS="${{ secrets.ACR_PASSWORD }}"
-            
-            echo "==== Logging into ACR on VM ===="
+
+            echo "==== 1. Installing Caddy for Automatic HTTPS SSL ===="
+            if ! command -v caddy &> /dev/null; then
+              sudo apt-get update -y
+              sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl
+              curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg --yes || true
+              curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+              sudo apt-get update -y
+              sudo apt-get install -y caddy
+            fi
+
+            echo "==== 2. Logging into ACR on VM ===="
             echo "$ACR_PASS" | sudo docker login $ACR_SERVER -u $ACR_USER --password-stdin
 
-            echo "==== Pulling latest backend image ===="
+            echo "==== 3. Pulling latest backend image ===="
             sudo docker pull $ACR_SERVER/meshvi-backend:latest
 
-            echo "==== Ensuring persistent data directory exists ===="
+            echo "==== 4. Ensuring persistent data directory exists ===="
             mkdir -p /home/azureuser/meshvi-data/uploads
 
-            echo "==== Stopping previous container ===="
-            sudo docker stop meshvi-backend || true
-            sudo docker rm meshvi-backend || true
+            echo "==== 5. Stopping previous container ===="
+            sudo docker stop meshvi-backend 2>/dev/null || true
+            sudo docker rm meshvi-backend 2>/dev/null || true
 
-            echo "==== Running updated backend container on VM ===="
+            echo "==== 6. Configuring Caddyfile for SSL reverse proxy ===="
+            cat << 'EOF' | sudo tee /etc/caddy/Caddyfile
+api.meshvi.org {
+    reverse_proxy 127.0.0.1:3500
+}
+
+meshvi.org {
+    redir https://www.meshvi.org{uri} permanent
+}
+EOF
+
+            echo "==== 7. Restarting Caddy with Automatic SSL ===="
+            sudo systemctl enable caddy
+            sudo systemctl restart caddy
+
+            echo "==== 8. Running updated backend container on VM on port 3500 ===="
             sudo docker run -d \
               --name meshvi-backend \
-              -p 3500:3500 \
-              -p 80:3500 \
+              -p 127.0.0.1:3500:3500 \
               --restart unless-stopped \
               -v /home/azureuser/meshvi-data/uploads:/app/apps/backend/uploads \
               -e NODE_ENV=production \
@@ -80,8 +105,6 @@ jobs:
               -e GEMINI_MODEL="gemini-2.5-flash" \
               $ACR_SERVER/meshvi-backend:latest
 
-            echo "==== Cleaning up unused images ===="
-            sudo docker image prune -f
-
-            echo "==== Verifying running container ===="
+            echo "==== 9. Verifying running container and Caddy ===="
             sudo docker ps --filter "name=meshvi-backend"
+            sudo systemctl status caddy --no-pager || true
