@@ -11,34 +11,32 @@ if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' |
   // Local development: keep relative URL to use local Vite dev proxy -> http://localhost:3500
   backendOrigin = '';
 } else if (rawApiUrl) {
-  backendOrigin = rawApiUrl.replace(/\/api\/v1\/?$/, '');
+  backendOrigin = rawApiUrl.replace(/\/api\/v1\/?$/, '').replace(/https?:\/\/setu-backend\.onrender\.com/g, 'https://meshvi.onrender.com');
 } else {
   backendOrigin = 'https://meshvi.onrender.com';
 }
 
+const sanitizeUrl = (url: string): string => {
+  let target = url;
+  if (backendOrigin && (target.startsWith('/api') || target.startsWith('/uploads'))) {
+    target = `${backendOrigin}${target}`;
+  }
+  // Enforce redirection from legacy setu-backend to live meshvi backend
+  if (target.includes('setu-backend.onrender.com')) {
+    target = target.replace(/https?:\/\/setu-backend\.onrender\.com/g, 'https://meshvi.onrender.com');
+  }
+  return target;
+};
+
 const nativeFetch = window.fetch;
 window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
   if (typeof input === 'string') {
-    let targetUrl = input;
-    // Replace any legacy or cached setu-backend references
-    if (targetUrl.includes('setu-backend.onrender.com')) {
-      targetUrl = targetUrl.replace(/https?:\/\/setu-backend\.onrender\.com/, 'https://meshvi.onrender.com');
-    }
-    if (backendOrigin && (targetUrl.startsWith('/api') || targetUrl.startsWith('/uploads'))) {
-      targetUrl = `${backendOrigin}${targetUrl}`;
-    }
-    return nativeFetch(targetUrl, init);
+    return nativeFetch(sanitizeUrl(input), init);
   } else if (input instanceof Request) {
-    let reqUrl = input.url;
-    if (reqUrl.includes('setu-backend.onrender.com')) {
-      reqUrl = reqUrl.replace(/https?:\/\/setu-backend\.onrender\.com/, 'https://meshvi.onrender.com');
-    }
+    let reqUrl = sanitizeUrl(input.url);
     const parsed = new URL(reqUrl, window.location.origin);
-    if (backendOrigin && (parsed.pathname.startsWith('/api') || parsed.pathname.startsWith('/uploads'))) {
-      const redirected = new Request(`${backendOrigin}${parsed.pathname}${parsed.search}`, input);
-      return nativeFetch(redirected, init);
-    }
-    return nativeFetch(new Request(reqUrl, input), init);
+    const finalUrl = sanitizeUrl(parsed.href);
+    return nativeFetch(new Request(finalUrl, input), init);
   }
   return nativeFetch(input, init);
 };

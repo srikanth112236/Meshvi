@@ -1,7 +1,7 @@
 /**
  * Project Setu - Automated End-to-End Connection & Introduction Verification Script
  *
- * This script runs against the running backend (default https://setu-backend.onrender.com/api/v1)
+ * This script runs against the running backend (default https://meshvi.onrender.com/api/v1)
  * to verify the entire connection lifecycle, voice memos, agenda deliverables,
  * clarification loops, deal room triggers, real-time messaging, and 3-way warm introductions.
  *
@@ -9,7 +9,7 @@
  *   npm run test:flow
  */
 
-const API_BASE = process.env.API_BASE || 'https://setu-backend.onrender.com/api/v1';
+const API_BASE = process.env.API_BASE || 'https://meshvi.onrender.com/api/v1';
 
 const colors = {
   reset: '\x1b[0m',

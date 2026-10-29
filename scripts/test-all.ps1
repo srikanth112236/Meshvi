@@ -28,11 +28,14 @@ if ($jestExitCode -ne 0) {
 }
 
 Write-Host ""
-Write-Host "[2/2] Checking if Backend API server is active on https://setu-backend.onrender.com..." -ForegroundColor Yellow
+Write-Host "[2/2] Checking if Backend API server is active on https://meshvi.onrender.com or localhost:3500..." -ForegroundColor Yellow
 
 $backendRunning = $false
 try {
-    $healthCheck = Invoke-RestMethod -Uri "https://setu-backend.onrender.com/api/v1/health" -Method Get -TimeoutSec 2 -ErrorAction SilentlyContinue
+    $healthCheck = Invoke-RestMethod -Uri "https://meshvi.onrender.com/api/v1/health" -Method Get -TimeoutSec 3 -ErrorAction SilentlyContinue
+    if (-not $healthCheck) {
+        $healthCheck = Invoke-RestMethod -Uri "http://localhost:3500/api/v1/health" -Method Get -TimeoutSec 2 -ErrorAction SilentlyContinue
+    }
     if ($healthCheck -and ($healthCheck.data.status -eq "READY" -or $healthCheck.status -eq "READY")) {
         $backendRunning = $true
     }
@@ -44,7 +47,7 @@ if ($backendRunning) {
     Write-Host "✓ Backend server detected online. Running End-to-End Flow Verifier..." -ForegroundColor Green
     npx ts-node --project apps/backend/tsconfig.json scripts/test-connections-flow.ts
 } else {
-    Write-Host "ℹ Backend is not running on https://setu-backend.onrender.com." -ForegroundColor Yellow
+    Write-Host "ℹ Backend is not running on https://meshvi.onrender.com or localhost:3500." -ForegroundColor Yellow
     Write-Host "  To run the End-to-End Live Flow Verifier:" -ForegroundColor Cyan
     Write-Host "    Terminal 1: npm run dev:backend" -ForegroundColor White
     Write-Host "    Terminal 2: npm run test:flow" -ForegroundColor White
