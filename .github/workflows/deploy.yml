@@ -27,17 +27,14 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and Push Backend Docker Image
-        run: |
-          ACR_SERVER="${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER || 'meshviacr5435.azurecr.io' }}"
-          IMAGE_TAG="${{ github.sha }}"
-          
-          docker build \
-            -t ${ACR_SERVER}/meshvi-backend:${IMAGE_TAG} \
-            -t ${ACR_SERVER}/meshvi-backend:latest \
-            -f apps/backend/Dockerfile .
-            
-          docker push ${ACR_SERVER}/meshvi-backend:${IMAGE_TAG}
-          docker push ${ACR_SERVER}/meshvi-backend:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER || 'meshviacr5435.azurecr.io' }}/meshvi-backend:${{ github.sha }}
+            ${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER || 'meshviacr5435.azurecr.io' }}/meshvi-backend:latest
 
       - name: Deploy to Azure VM via SSH
         uses: appleboy/ssh-action@v1.0.0
