@@ -19,9 +19,9 @@ jobs:
       - name: Log in to Azure Container Registry (ACR)
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER || 'meshviacr5435.azurecr.io' }}
-          username: ${{ secrets.ACR_USERNAME || secrets.AZURE_ACR_USERNAME || 'meshviacr5435' }}
-          password: ${{ secrets.ACR_PASSWORD || secrets.AZURE_ACR_PASSWORD || secrets.ACR_PASS }}
+          registry: meshviacr5435.azurecr.io
+          username: meshviacr5435
+          password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -33,28 +33,28 @@ jobs:
           file: apps/backend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER || 'meshviacr5435.azurecr.io' }}/meshvi-backend:${{ github.sha }}
-            ${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER || 'meshviacr5435.azurecr.io' }}/meshvi-backend:latest
+            meshviacr5435.azurecr.io/meshvi-backend:${{ github.sha }}
+            meshviacr5435.azurecr.io/meshvi-backend:latest
 
       - name: Deploy to Azure VM via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.VM_IP || '20.212.196.191' }}
-          username: ${{ secrets.VM_USER || 'azureuser' }}
-          key: ${{ secrets.SSH_KEY || secrets.AZURE_SSH_KEY || secrets.VM_SSH_KEY }}
+          host: 20.212.196.191
+          username: azureuser
+          key: ${{ secrets.SSH_KEY }}
           script: |
-            ACR_SERVER="${{ secrets.AZURE_REGISTRY || secrets.AZURE_ACR_LOGIN_SERVER || 'meshviacr5435.azurecr.io' }}"
-            ACR_USER="${{ secrets.ACR_USERNAME || secrets.AZURE_ACR_USERNAME || 'meshviacr5435' }}"
-            ACR_PASS="${{ secrets.ACR_PASSWORD || secrets.AZURE_ACR_PASSWORD || secrets.ACR_PASS }}"
+            ACR_SERVER="meshviacr5435.azurecr.io"
+            ACR_USER="meshviacr5435"
+            ACR_PASS="${{ secrets.ACR_PASSWORD }}"
             
             echo "==== Logging into ACR on VM ===="
             echo "$ACR_PASS" | sudo docker login $ACR_SERVER -u $ACR_USER --password-stdin
 
             echo "==== Pulling latest backend image ===="
-            sudo docker pull ${ACR_SERVER}/meshvi-backend:latest
+            sudo docker pull $ACR_SERVER/meshvi-backend:latest
 
             echo "==== Ensuring persistent data directory exists ===="
-            mkdir -p /home/${{ secrets.VM_USER || 'azureuser' }}/meshvi-data/uploads
+            mkdir -p /home/azureuser/meshvi-data/uploads
 
             echo "==== Stopping previous container ===="
             sudo docker stop meshvi-backend || true
@@ -66,7 +66,7 @@ jobs:
               -p 3500:3500 \
               -p 80:3500 \
               --restart unless-stopped \
-              -v /home/${{ secrets.VM_USER || 'azureuser' }}/meshvi-data/uploads:/app/apps/backend/uploads \
+              -v /home/azureuser/meshvi-data/uploads:/app/apps/backend/uploads \
               -e NODE_ENV=production \
               -e PORT=3500 \
               -e DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}" \
@@ -78,7 +78,7 @@ jobs:
               -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
               -e AI_PRIMARY_PROVIDER="gemini" \
               -e GEMINI_MODEL="gemini-2.5-flash" \
-              ${ACR_SERVER}/meshvi-backend:latest
+              $ACR_SERVER/meshvi-backend:latest
 
             echo "==== Cleaning up unused images ===="
             sudo docker image prune -f
