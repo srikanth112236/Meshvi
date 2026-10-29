@@ -29,13 +29,16 @@ API_DOMAIN="${API_DOMAIN:-api.meshvi.org}"
 FRONTEND_URL="${FRONTEND_URL:-https://meshvi.org}"
 
 # Prompt for ACR and RG if not already loaded
-read -rp "Resource Group [$RESOURCE_GROUP]: " INPUT_RG
+printf "Resource Group [%s]: " "$RESOURCE_GROUP"
+read -r INPUT_RG || true
 RESOURCE_GROUP="${INPUT_RG:-$RESOURCE_GROUP}"
 
-read -rp "Container Registry (ACR) Name [$ACR_NAME]: " INPUT_ACR
+printf "Container Registry (ACR) Name [%s]: " "$ACR_NAME"
+read -r INPUT_ACR || true
 ACR_NAME="${INPUT_ACR:-$ACR_NAME}"
 
-read -rp "Container Apps Environment [$CONTAINERAPPS_ENV]: " INPUT_CAE
+printf "Container Apps Environment [%s]: " "$CONTAINERAPPS_ENV"
+read -r INPUT_CAE || true
 CONTAINERAPPS_ENV="${INPUT_CAE:-$CONTAINERAPPS_ENV}"
 
 # Prompt for database connection string (required by Prisma)
@@ -45,9 +48,11 @@ DEFAULT_DB="${DATABASE_URL:-}"
 if [ -z "$DEFAULT_DB" ]; then
   echo "Enter your PostgreSQL connection URL (Azure Database for PostgreSQL, Supabase, Neon, or Render DB)."
   echo "Example: postgresql://username:password@your-db-host:5432/meshvi_db?schema=project_setu&sslmode=require"
-  read -rp "DATABASE_URL: " DATABASE_URL
+  printf "DATABASE_URL: "
+  read -r DATABASE_URL || true
 else
-  read -rp "DATABASE_URL [$DEFAULT_DB]: " INPUT_DB
+  printf "DATABASE_URL [%s]: " "$DEFAULT_DB"
+  read -r INPUT_DB || true
   DATABASE_URL="${INPUT_DB:-$DEFAULT_DB}"
 fi
 
@@ -57,16 +62,16 @@ if [ -z "$DATABASE_URL" ]; then
 fi
 
 # JWT Secret
-DEFAULT_JWT_SECRET="${JWT_SECRET:-meshvi_secret_jwt_prod_key_$(head -c 24 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')}"
+DEFAULT_JWT_SECRET="${JWT_SECRET:-meshvi_secret_jwt_prod_key_$(date +%s)_$RANDOM}"
 JWT_SECRET="${JWT_SECRET:-$DEFAULT_JWT_SECRET}"
 
 # Google OAuth
-GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com}"
-GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-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}"
+GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
+GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
 GOOGLE_REDIRECT_URI="https://meshvi.org/auth/google/callback"
 
 # AI Provider Key
-GEMINI_API_KEY="${GEMINI_API_KEY:-AQ.Ab8RN6IAmJzU4OpT7BacXqbAG8XE23OuyUX4WJllOvxPopeMhg}"
+GEMINI_API_KEY="${GEMINI_API_KEY:-}"
 
 echo ""
 echo "==> Step 1: Building Backend Docker image via Azure ACR Cloud Build..."

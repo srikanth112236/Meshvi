@@ -27,21 +27,26 @@ CONTAINERAPPS_ENV="${CONTAINERAPPS_ENV:-cae-meshvi-prod}"
 FRONTEND_APP_NAME="${FRONTEND_APP_NAME:-meshvi-frontend}"
 DOMAIN="${DOMAIN:-meshvi.org}"
 API_URL="${API_URL:-https://api.meshvi.org/api/v1}"
-GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com}"
+GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
 
-read -rp "Resource Group [$RESOURCE_GROUP]: " INPUT_RG
+printf "Resource Group [%s]: " "$RESOURCE_GROUP"
+read -r INPUT_RG || true
 RESOURCE_GROUP="${INPUT_RG:-$RESOURCE_GROUP}"
 
-read -rp "Container Registry (ACR) Name [$ACR_NAME]: " INPUT_ACR
+printf "Container Registry (ACR) Name [%s]: " "$ACR_NAME"
+read -r INPUT_ACR || true
 ACR_NAME="${INPUT_ACR:-$ACR_NAME}"
 
-read -rp "Container Apps Environment [$CONTAINERAPPS_ENV]: " INPUT_CAE
+printf "Container Apps Environment [%s]: " "$CONTAINERAPPS_ENV"
+read -r INPUT_CAE || true
 CONTAINERAPPS_ENV="${INPUT_CAE:-$CONTAINERAPPS_ENV}"
 
-read -rp "Frontend Primary Domain [$DOMAIN]: " INPUT_DOMAIN
+printf "Frontend Primary Domain [%s]: " "$DOMAIN"
+read -r INPUT_DOMAIN || true
 DOMAIN="${INPUT_DOMAIN:-$DOMAIN}"
 
-read -rp "Backend API URL [$API_URL]: " INPUT_API
+printf "Backend API URL [%s]: " "$API_URL"
+read -r INPUT_API || true
 API_URL="${INPUT_API:-$API_URL}"
 
 echo ""

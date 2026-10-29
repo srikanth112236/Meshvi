@@ -15,20 +15,25 @@ LOCATION="${LOCATION:-southeastasia}"
 CONTAINERAPPS_ENV="${CONTAINERAPPS_ENV:-cae-meshvi-prod}"
 
 # ACR names must be globally unique, alphanumeric only, 5-50 chars
-DEFAULT_ACR_NAME="acrmeshvi$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 5 | head -n 1 2>/dev/null || echo $RANDOM)"
+RANDOM_SUFFIX=$((10000 + RANDOM % 90000))
+DEFAULT_ACR_NAME="acrmeshvi${RANDOM_SUFFIX}"
 ACR_NAME="${ACR_NAME:-$DEFAULT_ACR_NAME}"
 
-# Prompt for confirmation or customization
-read -rp "Azure Resource Group [$RESOURCE_GROUP]: " INPUT_RG
+# Prompt for confirmation or customization (with safe defaults on Enter)
+printf "Azure Resource Group [%s]: " "$RESOURCE_GROUP"
+read -r INPUT_RG || true
 RESOURCE_GROUP="${INPUT_RG:-$RESOURCE_GROUP}"
 
-read -rp "Azure Region / Location [$LOCATION]: " INPUT_LOC
+printf "Azure Region / Location [%s]: " "$LOCATION"
+read -r INPUT_LOC || true
 LOCATION="${INPUT_LOC:-$LOCATION}"
 
-read -rp "Container Registry (ACR) Name [$ACR_NAME]: " INPUT_ACR
+printf "Container Registry (ACR) Name [%s]: " "$ACR_NAME"
+read -r INPUT_ACR || true
 ACR_NAME="${INPUT_ACR:-$ACR_NAME}"
 
-read -rp "Container Apps Environment Name [$CONTAINERAPPS_ENV]: " INPUT_CAE
+printf "Container Apps Environment Name [%s]: " "$CONTAINERAPPS_ENV"
+read -r INPUT_CAE || true
 CONTAINERAPPS_ENV="${INPUT_CAE:-$CONTAINERAPPS_ENV}"
 
 echo ""

@@ -61,7 +61,7 @@ az staticwebapp appsettings set \
   --resource-group "$RESOURCE_GROUP" \
   --setting-names \
     VITE_API_URL="$API_URL" \
-    VITE_GOOGLE_CLIENT_ID="1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com" \
+    VITE_GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}" \
   --output table
 
 SWA_DEFAULT_HOSTNAME=$(az staticwebapp show --name "$SWA_NAME" --resource-group "$RESOURCE_GROUP" --query defaultHostname -o tsv)

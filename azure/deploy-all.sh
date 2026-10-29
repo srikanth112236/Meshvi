@@ -18,7 +18,8 @@ echo "  [2/3] Build & Deploy Backend API (api.meshvi.org on port 3500)"
 echo "  [3/3] Build & Deploy Frontend Web App (meshvi.org on port 80)"
 echo ""
 
-read -rp "Do you want to proceed with full Azure deployment? (y/N): " CONFIRM
+printf "Do you want to proceed with full Azure deployment? (y/N): "
+read -r CONFIRM || true
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
   echo "Deployment aborted."
   exit 0

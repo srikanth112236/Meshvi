@@ -32,33 +32,27 @@ chmod +x azure/*.sh
 
 ## 🛠️ Deployment Options
 
-### Option A: Complete One-Click Automated Deployment
-Run the orchestrator script which provisions infrastructure and deploys both backend and frontend in order:
+You can run these scripts either in **PowerShell (PS)** or **Bash**:
+
+### Mode 1: If using PowerShell (`PS /home/...>`)
+```powershell
+# One-Click Full Deployment:
+./azure/deploy-all.ps1
+
+# OR run workloads individually:
+./azure/01-setup-infra.ps1
+./azure/02-deploy-backend.ps1
+./azure/03-deploy-frontend.ps1
+```
+
+### Mode 2: If using Bash (`user@azure:~$`)
 ```bash
+# One-Click Full Deployment:
 ./azure/deploy-all.sh
-```
 
----
-
-### Option B: Deploy Workloads Individually
-
-#### Step 1: Provision Core Infrastructure (Resource Group, ACR & Container Apps Env)
-```bash
+# OR run workloads individually:
 ./azure/01-setup-infra.sh
-```
-*Creates Resource Group (`rg-meshvi-prod`), Azure Container Registry, and Container Apps Environment (`cae-meshvi-prod`). Configuration is saved to `.azure-env`.*
-
-#### Step 2: Deploy Backend API Individually (`api.meshvi.org`)
-```bash
 ./azure/02-deploy-backend.sh
-```
-* Prompts for your PostgreSQL `DATABASE_URL`.
-* Builds the backend Docker image directly inside Azure ACR (no local Docker needed).
-* Creates / updates the Container App `meshvi-backend` listening on port `3500`.
-* Outputs the default Azure FQDN (e.g. `meshvi-backend.xxxx.southeastasia.azurecontainerapps.io`).
-
-#### Step 3: Deploy Frontend Web Application Individually (`meshvi.org`)
-```bash
 ./azure/03-deploy-frontend.sh
 ```
 * Injects `VITE_API_URL=https://api.meshvi.org/api/v1` and Google OAuth credentials.
