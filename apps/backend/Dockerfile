@@ -48,12 +48,14 @@ RUN apt-get update -y && \
     apt-get install -y --no-install-recommends openssl wget ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+# Ensure uploads directory exists and is owned by node user
+RUN mkdir -p /app/apps/backend/uploads && chown -R node:node /app
+
 # Create non-root node user for container security
 USER node
 
 # Copy built application, generated Prisma client, and production dependencies
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
-COPY --chown=node:node --from=builder /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY --chown=node:node --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --chown=node:node --from=builder /app/apps/backend/prisma ./apps/backend/prisma
 COPY --chown=node:node --from=builder /app/prisma ./prisma
