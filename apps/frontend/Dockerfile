@@ -4,7 +4,7 @@
 # ==============================================================================
 
 # Stage 1: Build Vite React App
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 
 # Copy package manifests
@@ -14,7 +14,7 @@ COPY apps/backend/package*.json ./apps/backend/
 COPY apps/mobile/package*.json ./apps/mobile/
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --no-audit --engine-strict=false
 
 # Copy frontend source
 COPY apps/frontend ./apps/frontend

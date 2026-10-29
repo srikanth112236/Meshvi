@@ -52,6 +52,10 @@ az acr build `
     --build-arg "VITE_API_URL=$ApiUrl" `
     --build-arg "VITE_GOOGLE_CLIENT_ID=$GoogleClientId" `
     --file apps/frontend/Dockerfile .
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Docker build failed in Azure ACR. Please review the build error above."
+    exit 1
+}
 
 Write-Host "==> Step 2: Retrieving ACR Admin credentials..." -ForegroundColor Yellow
 $AcrLoginServer = (az acr show --name $AcrName --resource-group $ResourceGroup --query loginServer -o tsv).Trim()

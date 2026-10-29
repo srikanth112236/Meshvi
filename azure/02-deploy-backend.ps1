@@ -65,6 +65,10 @@ $GeminiApiKey = $env:GEMINI_API_KEY
 Write-Host ""
 Write-Host "==> Step 1: Building Backend Docker image via Azure ACR Cloud Build..." -ForegroundColor Yellow
 az acr build --registry $AcrName --image meshvi-backend:latest --file apps/backend/Dockerfile .
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Docker build failed in Azure ACR. Please review the build error above."
+    exit 1
+}
 
 Write-Host "==> Step 2: Retrieving ACR Admin credentials..." -ForegroundColor Yellow
 $AcrLoginServer = (az acr show --name $AcrName --resource-group $ResourceGroup --query loginServer -o tsv).Trim()
