@@ -119,9 +119,9 @@ export const AppHomePage = () => {
   const firstName = profile?.displayName?.split(' ')[0] || 'Srikanth';
 
   return (
-    <div className="w-full space-y-6 pb-10 animate-in fade-in duration-300">
+    <div className="w-full space-y-4 pb-8 animate-in fade-in duration-300">
       {/* 1. PROFILE HEADER — JUST ONE SLEEK LINE (AS REQUESTED) */}
-      <div className="w-full bg-white border border-slate-200/90 rounded-2xl px-4 py-2.5 sm:py-3 shadow-xs flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+      <div className="w-full bg-white border border-slate-200/90 rounded-2xl px-4 py-2 sm:py-2.5 shadow-2xs hover:shadow-xs transition-shadow flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
         <div className="flex items-center space-x-3 min-w-0">
           <div className="relative shrink-0">
             {profile?.avatarUrl ? (
@@ -129,15 +129,15 @@ export const AppHomePage = () => {
                 src={profile.avatarUrl}
                 alt={profile.displayName || 'Executive'}
                 referrerPolicy="no-referrer"
-                className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-2xs bg-white"
+                className="w-8 h-8 rounded-xl object-cover border border-slate-200 shadow-2xs bg-white"
               />
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-navy via-slate-800 to-primary text-white font-black text-xs flex items-center justify-center shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-navy via-slate-800 to-primary text-white font-black text-xs flex items-center justify-center shadow-2xs">
                 {firstName[0]?.toUpperCase() || 'S'}
               </div>
             )}
             <div
-              className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white text-[7.5px] font-black"
+              className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white text-[7px] font-black"
               title="Verified Corporate Profile"
             >
               ✓
@@ -146,18 +146,18 @@ export const AppHomePage = () => {
 
           {/* Single Horizontal Row: Name + Badges + Headline in 1 line */}
           <div className="flex items-center space-x-2 min-w-0 truncate text-xs">
-            <span className="font-black text-navy text-sm truncate">
+            <span className="font-extrabold text-navy text-xs sm:text-sm truncate">
               {greeting}, {firstName}
             </span>
-            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9.5px] font-bold uppercase tracking-wider shrink-0">
+            <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9px] font-bold uppercase tracking-wider shrink-0">
               <UserCheck className="w-2.5 h-2.5 text-emerald-600" />
               <span>Verified Executive</span>
             </span>
-            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 text-[9.5px] font-bold shrink-0">
+            <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 text-[9px] font-bold shrink-0">
               <ShieldCheck className="w-2.5 h-2.5 text-sky-600" />
               <span>Bilateral Intent Protected</span>
             </span>
-            <span className="text-text-muted truncate hidden lg:inline">
+            <span className="text-text-muted truncate hidden lg:inline text-[11px]">
               • {profile?.headline || profile?.summary || 'Verified executive focused on Consumer Goods & Retail and Commercial & Partnerships.'}
             </span>
           </div>
@@ -167,14 +167,14 @@ export const AppHomePage = () => {
         <div className="flex items-center space-x-2 shrink-0 ml-auto sm:ml-0">
           <Link
             to="/app/profile"
-            className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-navy font-bold text-xs rounded-xl transition-colors shadow-2xs hover:shadow-xs"
+            className="px-3 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-navy font-bold text-xs rounded-xl transition-colors shadow-2xs hover:shadow-xs"
           >
             My Profile
           </Link>
           <button
             type="button"
             onClick={() => setIsPartnershipModalOpen(true)}
-            className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-xs hover:shadow-primary/20 transition-all flex items-center space-x-1.5 cursor-pointer"
+            className="px-3.5 py-1 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-xs hover:shadow-primary/20 transition-all flex items-center space-x-1.5 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-white" />
             <span>Post Partnership</span>
@@ -182,35 +182,35 @@ export const AppHomePage = () => {
         </div>
       </div>
 
-      {/* 2. CHAT & MAIN PAGE HERO — "HEY! 👋, WHAT'S ON YOUR MIND NOW?" (LIKE GIVEN IMAGE) */}
+      {/* 2. CHAT & MAIN PAGE HERO — "HEY! 👋, WHAT'S ON YOUR MIND NOW?" (COMPACT & MODERN) */}
       <div
         ref={searchCardRef}
-        className={`w-full py-8 sm:py-12 px-4 rounded-3xl transition-all duration-300 relative overflow-hidden text-center space-y-6 ${
+        className={`w-full py-4 sm:py-6 px-4 rounded-3xl transition-all duration-300 relative overflow-hidden text-center space-y-3.5 ${
           searchHighlighted
             ? 'ring-4 ring-[#38BDF8]/40 bg-gradient-to-b from-sky-50/50 via-white to-transparent'
             : 'bg-transparent'
         }`}
       >
         {/* Modern Typography Header (Matching Image 3) */}
-        <div className="space-y-1.5">
-          <p className="text-base sm:text-lg font-bold text-slate-800 flex items-center justify-center gap-1.5">
+        <div className="space-y-1">
+          <p className="text-sm sm:text-base font-bold text-slate-800 flex items-center justify-center gap-1.5">
             <span>Hey! 👋, {firstName}</span>
           </p>
-          <h1 className="text-4xl sm:text-6xl font-black text-[#38BDF8] tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-black text-[#38BDF8] tracking-tight leading-tight">
             What’s on your mind Now?
           </h1>
-          <div className="pt-1">
-            <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-slate-100 text-[10.5px] font-semibold text-slate-500 border border-slate-200">
+          <div className="pt-0.5">
+            <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-[10px] font-semibold text-slate-500 border border-slate-200">
               <span className="uppercase text-[9px] font-bold text-slate-400">Monthly Quota:</span>
               <strong className="text-navy">{stats.quotaUsed} / {stats.quotaLimit}</strong>
-              <span>Searches Used</span>
+              <span>Used</span>
             </span>
           </div>
         </div>
 
         {/* Sleek Floating Pill Input Bar (Matching Image 3) */}
         <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto w-full">
-          <div className="relative flex items-center bg-white border border-slate-200 hover:border-slate-300 focus-within:border-[#38BDF8] focus-within:ring-4 focus-within:ring-[#38BDF8]/15 rounded-full shadow-lg hover:shadow-xl transition-all p-1.5 pl-4 sm:pl-5 pr-2">
+          <div className="relative flex items-center bg-white border border-slate-200 hover:border-slate-300 focus-within:border-[#38BDF8] focus-within:ring-4 focus-within:ring-[#38BDF8]/15 rounded-full shadow-md hover:shadow-lg transition-all p-1.5 pl-4 sm:pl-5 pr-2">
             <button
               type="button"
               onClick={() => searchInputRef.current?.focus()}
@@ -243,7 +243,7 @@ export const AppHomePage = () => {
             {/* Circular Blue Send Button (Matching Image 3) */}
             <button
               type="submit"
-              className="w-10 h-10 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
               title="Search Directory"
             >
               <Send className="w-4 h-4 -rotate-45 -ml-0.5" />
@@ -252,8 +252,8 @@ export const AppHomePage = () => {
         </form>
 
         {/* Suggested Mandate Chips */}
-        <div className="flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto pt-1">
-          <span className="text-slate-400 text-[10.5px] font-bold uppercase tracking-wider mr-1">Suggested mandates:</span>
+        <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-2xl mx-auto pt-0.5">
+          <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mr-1">Suggested mandates:</span>
           {[
             'Airport Retail Concessions',
             'Cold Brew Beverage Sourcing',
@@ -265,7 +265,7 @@ export const AppHomePage = () => {
               key={term}
               type="button"
               onClick={() => handleChipClick(term)}
-              className="px-3.5 py-1.5 bg-white hover:bg-sky-50 text-slate-700 hover:text-primary rounded-full text-xs font-semibold border border-slate-200/90 hover:border-primary/40 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
+              className="px-3 py-1 bg-white hover:bg-sky-50 text-slate-700 hover:text-primary rounded-full text-[11px] font-semibold border border-slate-200/90 hover:border-primary/40 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
             >
               {term}
             </button>

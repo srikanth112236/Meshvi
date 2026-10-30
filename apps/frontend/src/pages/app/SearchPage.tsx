@@ -1136,7 +1136,7 @@ export const SearchPage = () => {
           className="flex flex-col sm:flex-row gap-2 pt-1 relative"
         >
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-text-muted absolute left-3.5 top-3" />
+            <Search className="w-4 h-4 text-primary absolute left-3.5 top-3.5" />
             <input
               type="text"
               value={query}
@@ -1171,13 +1171,13 @@ export const SearchPage = () => {
                       ? 'Filter trade corridors by partner keyword or category...'
                       : 'Describe your commercial goal to map buying committees...'
               }
-              className="w-full pl-10 pr-10 py-2.5 bg-bg border border-border rounded-xl text-xs text-navy focus:outline-none focus:ring-2 focus:ring-black/20"
+              className="w-full pl-10 pr-10 py-3 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200/90 focus:border-primary focus:ring-2 focus:ring-primary/15 rounded-xl text-xs sm:text-sm text-navy placeholder:text-slate-400 font-medium transition-all shadow-inner/10"
             />
             {query && (
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute right-3 top-2.5 text-neutral-400 hover:text-neutral-700 p-0.5 rounded"
+                className="absolute right-3 top-3 text-slate-400 hover:text-navy p-0.5 rounded transition-colors cursor-pointer"
                 title="Clear search and reset filters"
               >
                 <X className="w-4 h-4" />
@@ -1283,20 +1283,20 @@ export const SearchPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center space-x-2 shrink-0 disabled:opacity-50"
+            className="px-5 py-3 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-primary/20 transition-all flex items-center justify-center space-x-2 shrink-0 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>{loading ? 'Searching...' : 'Search'}</span>
+            <Sparkles className="w-3.5 h-3.5 text-white" />
+            <span>{loading ? 'Searching...' : 'Search Directory'}</span>
           </button>
         </form>
 
         {/* Positive Filters Bar */}
-        <div className="pt-2.5 border-t border-border flex flex-wrap items-center gap-2 text-xs">
-          <div className="flex items-center space-x-1.5 text-xs text-text-muted font-bold mr-1">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-black" />
-            <span>Data Filters:</span>
+        <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center space-x-1.5 text-xs text-slate-500 font-bold mr-1">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
+            <span>Filters:</span>
             {activeFiltersCount > 0 && (
-              <span className="px-2 py-0.5 bg-black text-white text-[9.5px] font-black rounded-full uppercase tracking-wider">
+              <span className="px-2 py-0.5 bg-primary text-white text-[9.5px] font-black rounded-full uppercase tracking-wider">
                 {activeFiltersCount} Active
               </span>
             )}
@@ -2761,33 +2761,42 @@ export const SearchPage = () => {
           ) : (
             <>
               {(() => {
-                const renderCandidateCard = (r: any, idx: number) => (
+                const renderCandidateCard = (r: any, idx: number) => {
+                  const matchScore = r.score ? Math.round(r.score > 1 ? r.score : r.score * 100) : null;
+                  return (
                   <div
                     key={r.profile?.id || idx}
-                    className="p-3 sm:px-4 sm:py-3 bg-surface border border-border rounded-xl shadow-xs hover:border-black/40 hover:shadow-sm transition-all space-y-2 relative"
+                    className="p-3.5 sm:p-4 bg-white border border-slate-200/90 hover:border-primary/40 rounded-2xl shadow-xs hover:shadow-md transition-all space-y-2 relative group"
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                       {/* Left Column: Avatar + Profile Name + Role + Company */}
-                      <div className="flex items-center space-x-3 min-w-0 flex-1">
-                        <div className="w-8 h-8 rounded-lg bg-black text-white text-xs font-black flex items-center justify-center shrink-0 shadow-xs">
+                      <div className="flex items-center space-x-3.5 min-w-0 flex-1">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-navy via-slate-800 to-primary text-white text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">
                           {r.profile.displayName?.[0] || 'U'}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-xs sm:text-sm font-bold text-navy truncate">
-                            {r.profile.displayName}
-                          </h3>
-                          <div className="text-[11px] sm:text-xs text-neutral-600 flex flex-wrap items-center gap-1.5 pt-0.5">
-                            <span className="text-neutral-900 font-semibold">{r.profile.currentTitle || 'Professional'}</span>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-xs sm:text-sm font-black text-navy truncate group-hover:text-primary transition-colors">
+                              {r.profile.displayName}
+                            </h3>
+                            {matchScore && (
+                              <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold shrink-0">
+                                {matchScore}% Match
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] sm:text-xs text-slate-600 flex flex-wrap items-center gap-1.5 pt-0.5">
+                            <span className="text-slate-900 font-semibold">{r.profile.currentTitle || 'Professional'}</span>
                             {Boolean(r.profile.companyName || r.profile.company?.name) && (
                               <>
-                                <span className="text-neutral-400">&bull;</span>
-                                <span className="text-neutral-700">{r.profile.companyName || r.profile.company?.name}</span>
+                                <span className="text-slate-300">&bull;</span>
+                                <span className="text-slate-700 font-medium">{r.profile.companyName || r.profile.company?.name}</span>
                               </>
                             )}
                             {Boolean(r.profile.city || r.profile.countryCode) && (
                               <>
-                                <span className="text-neutral-400">&bull;</span>
-                                <span className="text-neutral-500">
+                                <span className="text-slate-300">&bull;</span>
+                                <span className="text-slate-500">
                                   {[r.profile.city, r.profile.countryCode].filter(Boolean).join(', ')}
                                 </span>
                               </>
@@ -2801,7 +2810,7 @@ export const SearchPage = () => {
                                 {r.profile.phoneNumber && <span>📞 {r.profile.phoneNumber}</span>}
                               </div>
                             ) : (
-                              <span className="text-neutral-400 font-medium flex items-center space-x-1">
+                              <span className="text-slate-400 font-medium flex items-center space-x-1">
                                 <span>🔒</span>
                                 <span>Phone & email unlocked after connecting</span>
                               </span>
@@ -2820,7 +2829,7 @@ export const SearchPage = () => {
                             </span>
                             <Link
                               to={`/app/messages?profileId=${r.profile.id}`}
-                              className="px-3 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1 bg-black hover:bg-neutral-800 text-white shadow-xs transition-all"
+                              className="px-3.5 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1 bg-primary hover:bg-primary-hover text-white shadow-xs transition-all hover:scale-[1.02] cursor-pointer"
                               title="Send Message"
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
@@ -2828,7 +2837,7 @@ export const SearchPage = () => {
                             </Link>
                           </div>
                         ) : (r.profile.connectionStatus === 'PENDING' || connectionRequested === r.profile.id) ? (
-                          <div className="relative group inline-block">
+                          <div className="relative group/pending inline-block">
                             <button
                               type="button"
                               className="px-3 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1 bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs"
@@ -2838,7 +2847,7 @@ export const SearchPage = () => {
                               <span>Pending</span>
                             </button>
                             {r.profile.connectionId && (
-                              <div className="hidden group-hover:block absolute right-0 top-full mt-1 w-44 bg-surface border border-border shadow-xl rounded-xl p-1 z-30 animate-fade-in">
+                              <div className="hidden group-hover/pending:block absolute right-0 top-full mt-1 w-44 bg-surface border border-border shadow-xl rounded-xl p-1 z-30 animate-fade-in">
                                 <button
                                   type="button"
                                   onClick={() => handleWithdraw(r.profile.connectionId, r.profile.displayName)}
@@ -2865,7 +2874,7 @@ export const SearchPage = () => {
                                 initialMode: 'DIRECT',
                               });
                             }}
-                            className="px-4 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1 bg-black hover:bg-neutral-800 text-white shadow-xs transition-all"
+                            className="px-4 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1.5 bg-primary hover:bg-primary-hover text-white shadow-xs hover:shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                             title="Say Hi and connect"
                           >
                             <Send className="w-3.5 h-3.5" />
@@ -2875,7 +2884,8 @@ export const SearchPage = () => {
                       </div>
                     </div>
                   </div>
-                );
+                  );
+                };
 
                 const isDirectSupplier = (item: any) => Boolean(item.isDirectSupplier || item.matchCategory === 'DIRECT_SUPPLIER');
                 const directSuppliersList = candidateResults.filter(isDirectSupplier);
