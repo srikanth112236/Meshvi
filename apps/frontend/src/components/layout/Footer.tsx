@@ -97,6 +97,11 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/delete-account" className="text-danger hover:text-danger/80 transition-colors font-medium">
+                  Delete account
+                </Link>
+              </li>
+              <li>
                 <Link to="/contact" className="text-text-muted hover:text-navy transition-colors">
                   Contact us
                 </Link>

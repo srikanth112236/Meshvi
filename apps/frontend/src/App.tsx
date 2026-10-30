@@ -22,6 +22,7 @@ import { TermsPage } from './pages/public/TermsPage';
 import { LegalNoticePage } from './pages/public/LegalNoticePage';
 import { DataUsagePage } from './pages/public/DataUsagePage';
 import { CookiePolicyPage } from './pages/public/CookiePolicyPage';
+import { DeleteAccountPage } from './pages/public/DeleteAccountPage';
 import { LoginPage } from './pages/public/LoginPage';
 import { RegisterPage } from './pages/public/RegisterPage';
 import { ForgotPasswordPage } from './pages/public/ForgotPasswordPage';
@@ -101,6 +102,7 @@ export default function App() {
             <Route path="/legal" element={<LegalNoticePage />} />
             <Route path="/data-usage" element={<DataUsagePage />} />
             <Route path="/cookies" element={<CookiePolicyPage />} />
+            <Route path="/delete-account" element={<DeleteAccountPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

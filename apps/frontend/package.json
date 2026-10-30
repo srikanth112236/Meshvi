@@ -16,6 +16,7 @@
     "@radix-ui/react-dropdown-menu": "^2.1.2",
     "@radix-ui/react-tabs": "^1.1.1",
     "@types/canvas-confetti": "^1.9.0",
+    "axios": "^1.21.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",

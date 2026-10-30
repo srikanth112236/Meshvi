@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { HealthModule } from './modules/health/health.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -17,6 +18,7 @@ import { DealRoomsModule } from './modules/deal-rooms/deal-rooms.module';
 import { TriggersModule } from './modules/triggers/triggers.module';
 import { ReputationModule } from './modules/reputation/reputation.module';
 import { OpportunitiesModule } from './modules/opportunities/opportunities.module';
+import { AccountDeletionModule } from './modules/account-deletion/account-deletion.module';
 import { PrismaService } from './database/prisma.service';
 
 @Module({
@@ -25,6 +27,7 @@ import { PrismaService } from './database/prisma.service';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    ScheduleModule.forRoot(),
     HealthModule,
     ContactModule,
     AuthModule,
@@ -44,6 +47,8 @@ import { PrismaService } from './database/prisma.service';
     ReputationModule,
     // Gap 1: Mutual Opportunity Matching
     OpportunitiesModule,
+    // Google Play Store Deletion Policy Compliance
+    AccountDeletionModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],
