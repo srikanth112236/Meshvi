@@ -14,8 +14,10 @@ import {
   Cpu,
   BarChart3,
   Users,
+  Play,
 } from 'lucide-react';
 import { MotionContainer, MotionStagger, MotionItem } from '../../components/ui/MotionSection';
+import { ProductDemoPlayer } from '../../components/ui/ProductDemoPlayer';
 
 interface SimulationScenario {
   id: string;
@@ -186,6 +188,8 @@ export const SearchShowcasePage = () => {
   const [activeScenario, setActiveScenario] = useState<SimulationScenario>(scenarios[0]);
   const [customQuery, setCustomQuery] = useState('');
   const [isSimulating, setIsSimulating] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoChapter, setDemoChapter] = useState(1);
 
   const handleSimulate = (scenario: SimulationScenario) => {
     setIsSimulating(true);
@@ -231,6 +235,17 @@ export const SearchShowcasePage = () => {
               <span>Explore Verified Directory</span>
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setDemoChapter(1);
+                setDemoOpen(true);
+              }}
+              className="w-full sm:w-auto px-6 py-3.5 bg-white hover:bg-slate-50 text-navy font-bold rounded-xl border-2 border-primary/30 hover:border-primary shadow-xs transition-all flex items-center justify-center text-sm space-x-2 cursor-pointer"
+            >
+              <Play className="w-3.5 h-3.5 text-primary fill-primary" />
+              <span>Watch Search Demo (0:15)</span>
+            </button>
             <Link
               to="/why-meshvi"
               className="w-full sm:w-auto px-6 py-3.5 bg-surface hover:bg-surface-muted text-navy font-bold rounded-xl border border-border shadow-xs hover:border-slate-300 transition-all flex items-center justify-center text-sm"
@@ -658,6 +673,14 @@ export const SearchShowcasePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Interactive Search Product Demo Player */}
+      <ProductDemoPlayer
+        open={demoOpen}
+        initialChapter={demoChapter}
+        mode="single"
+        onClose={() => setDemoOpen(false)}
+      />
     </div>
   );
 };

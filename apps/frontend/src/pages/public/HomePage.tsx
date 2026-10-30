@@ -17,12 +17,27 @@ import {
   XCircle,
   FileText,
   BadgeCheck,
-  ArrowUpRight,
   ChevronRight,
+  Play,
+  Film,
+  Clock,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { MotionContainer } from '../../components/ui/MotionSection';
+import { ProductDemoPlayer } from '../../components/ui/ProductDemoPlayer';
 
 export const HomePage = () => {
+  // Interactive Product Demo Modal State
+  const [demoPlayerOpen, setDemoPlayerOpen] = useState(false);
+  const [demoChapter, setDemoChapter] = useState(0);
+  const [demoMode, setDemoMode] = useState<'single' | 'full'>('full');
+
+  const launchDemo = (chapter: number, mode: 'single' | 'full' = 'single') => {
+    setDemoChapter(chapter);
+    setDemoMode(mode);
+    setDemoPlayerOpen(true);
+  };
+
   // Active Workspace Route Tour Tab
   const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<
     'home' | 'partnerships' | 'search' | 'connections' | 'introductions' | 'messages'
@@ -229,7 +244,7 @@ export const HomePage = () => {
       {/* SECTION 1: HERO SECTION - WHERE HIGH-STAKES PARTNERSHIPS CLOSE */}
       {/* ========================================================================= */}
       <section className="relative pt-12 md:pt-20 overflow-hidden bg-grid-pattern">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 blur-[130px] rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-primary/10 blur-[130px] rounded-full pointer-events-none -z-10" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <MotionContainer>
@@ -259,22 +274,27 @@ export const HomePage = () => {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
               <Link
                 to="/register"
-                className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all flex items-center justify-center group text-base"
+                className="w-full sm:w-auto px-7 py-3.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all flex items-center justify-center group text-base cursor-pointer"
               >
                 <span>Enter Workspace Free</span>
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
+              <button
+                type="button"
+                onClick={() => launchDemo(0, 'full')}
+                className="w-full sm:w-auto px-6 py-3.5 bg-white/95 hover:bg-white text-navy font-bold border-2 border-primary/30 hover:border-primary rounded-xl transition-all shadow-md flex items-center justify-center space-x-2 text-base cursor-pointer group"
+              >
+                <span className="w-6 h-6 rounded-full bg-primary/10 group-hover:bg-primary text-primary group-hover:text-white flex items-center justify-center transition-colors">
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                </span>
+                <span>Watch Interactive Tour</span>
+                <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-primary-soft text-primary font-mono">1:30</span>
+              </button>
               <Link
                 to="/search-showcase"
-                className="w-full sm:w-auto px-6 py-4 bg-primary/10 hover:bg-primary/20 text-primary font-bold border border-primary/30 rounded-xl transition-all shadow-xs flex items-center justify-center text-base"
+                className="w-full sm:w-auto px-5 py-3.5 bg-surface hover:bg-surface-muted text-navy font-bold border border-border rounded-xl transition-all shadow-sm flex items-center justify-center text-base"
               >
-                <span>Explore Search Engine &rarr;</span>
-              </Link>
-              <Link
-                to="/login"
-                className="w-full sm:w-auto px-6 py-4 bg-surface hover:bg-surface-muted text-navy font-bold border border-border rounded-xl transition-all shadow-sm flex items-center justify-center text-base"
-              >
-                Sign In
+                <span>Live Sandbox &rarr;</span>
               </Link>
             </div>
           </MotionContainer>
@@ -300,6 +320,334 @@ export const HomePage = () => {
               </div>
             </div>
           </MotionContainer>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* SECTION: INTERACTIVE PEOPLE & DECISION-MAKER DISCOVERY DEMOS */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative rounded-3xl bg-gradient-to-b from-slate-50 via-white to-slate-50/80 border border-slate-200/90 p-6 sm:p-10 shadow-xl overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-3xl rounded-full pointer-events-none" />
+
+          {/* Section Header */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 pb-6 border-b border-slate-200">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-soft text-primary text-xs font-bold mb-3 border border-primary/20">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Interactive Decision-Maker & People Discovery Lab</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-black text-navy tracking-tight leading-tight">
+                See How Executives Discover Verified People in 15 Seconds
+              </h2>
+              <p className="mt-2 text-sm sm:text-base text-text-muted leading-relaxed">
+                Experience high-velocity intent matching, transparent 100-point rubric scoring, and zero-spam bilateral handshakes. Click any demo below to test-drive live.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => launchDemo(0, 'full')}
+                className="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all flex items-center space-x-2 cursor-pointer group"
+              >
+                <Film className="w-4 h-4" />
+                <span>Play Full Platform Tour</span>
+                <span className="text-[11px] bg-white/20 px-1.5 py-0.5 rounded font-mono">1:30</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 6 Responsive Demo Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* Demo 1: Mandate Search */}
+            <div
+              onClick={() => launchDemo(1, 'single')}
+              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-1 rounded-md bg-sky-50 text-sky-700 text-[10px] font-black uppercase tracking-wider border border-sky-200">
+                    Search by Mandate
+                  </span>
+                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
+                    <Clock className="w-3 h-3" />
+                    <span>0:15</span>
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
+                  <span>Describe the Outcome</span>
+                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
+                </h3>
+
+                <p className="text-xs text-text-muted leading-relaxed">
+                  Type your strategic objective in plain conversational English. The console parses intent and ranks matching C-Level executives instantly.
+                </p>
+
+                {/* Micro Preview Pill */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                      <strong className="text-navy">Dr. Vikram Malhotra</strong> · COO
+                    </span>
+                    <span className="text-emerald-700 font-bold shrink-0">96 / 100</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate font-mono">
+                    Bharat Precision Metallurgy &bull; Aerospace Forging
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
+                <span>Test-Drive Demo</span>
+                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  &rarr;
+                </span>
+              </div>
+            </div>
+
+            {/* Demo 2: Verified Person Dossier */}
+            <div
+              onClick={() => launchDemo(2, 'single')}
+              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider border border-emerald-200">
+                    Corporate DNS Verified
+                  </span>
+                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
+                    <Clock className="w-3 h-3" />
+                    <span>0:15</span>
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
+                  <span>People & Company Dossiers</span>
+                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
+                </h3>
+
+                <p className="text-xs text-text-muted leading-relaxed">
+                  Type a company or person to pull instant cryptographic proof, corporate email provenance, and verified operational capabilities.
+                </p>
+
+                {/* Micro Preview Pill */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <strong className="text-navy">Alistair Sterling</strong> · VP Supply Chain
+                    </span>
+                    <span className="text-sky-700 font-bold shrink-0">93 / 100</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate font-mono">
+                    Sterling Alloys UK &bull; Sheffield Aerospace Cluster
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
+                <span>Test-Drive Demo</span>
+                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  &rarr;
+                </span>
+              </div>
+            </div>
+
+            {/* Demo 3: Filter Decision-Makers */}
+            <div
+              onClick={() => launchDemo(3, 'single')}
+              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 text-[10px] font-black uppercase tracking-wider border border-purple-200">
+                    Decision-Maker Filters
+                  </span>
+                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
+                    <Clock className="w-3 h-3" />
+                    <span>0:15</span>
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
+                  <span>Narrow 4,218 People to 24</span>
+                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
+                </h3>
+
+                <p className="text-xs text-text-muted leading-relaxed">
+                  Start broad, then layer industry, trade corridor, seniority, and live intent signals to pinpoint the exact 24 target decision-makers.
+                </p>
+
+                {/* Micro Preview Pill */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                      <strong className="text-navy">Sarah Jenkins</strong> · VP Alliances
+                    </span>
+                    <span className="text-purple-700 font-bold shrink-0">91 / 100</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate font-mono">
+                    Pacific CleanTech &bull; Sydney Commercial Interconnection
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
+                <span>Test-Drive Demo</span>
+                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  &rarr;
+                </span>
+              </div>
+            </div>
+
+            {/* Demo 4: Double-Opt-In Handshake */}
+            <div
+              onClick={() => launchDemo(4, 'single')}
+              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider border border-emerald-200">
+                    Double-Opt-In
+                  </span>
+                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
+                    <Clock className="w-3 h-3" />
+                    <span>0:30</span>
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
+                  <span>Close a Handshake</span>
+                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
+                </h3>
+
+                <p className="text-xs text-text-muted leading-relaxed">
+                  Send a protected commercial note. Direct contact details unlock only upon mutual acceptance, then launch directly into an executed Deal Room.
+                </p>
+
+                {/* Micro Preview Pill */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <Handshake className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <strong className="text-navy">Mutual Consent Locked</strong>
+                    </span>
+                    <span className="text-emerald-700 font-bold shrink-0">Zero Spam</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate font-mono">
+                    Protected Details &bull; Bilateral MNDA &bull; Encrypted Vault
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
+                <span>Test-Drive Demo</span>
+                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  &rarr;
+                </span>
+              </div>
+            </div>
+
+            {/* Demo 5: Warm Introductions */}
+            <div
+              onClick={() => launchDemo(5, 'single')}
+              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-wider border border-amber-200">
+                    Trust Graph Bridges
+                  </span>
+                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
+                    <Clock className="w-3 h-3" />
+                    <span>0:15</span>
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
+                  <span>Warm Introductions</span>
+                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
+                </h3>
+
+                <p className="text-xs text-text-muted leading-relaxed">
+                  Bridge cross-border deals via shared organizational peers. Route requests with private sponsor endorsements for 74%+ conversion.
+                </p>
+
+                {/* Micro Preview Pill */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <GitPullRequest className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <strong className="text-navy">Mutual Colleague Bridge</strong>
+                    </span>
+                    <span className="text-amber-700 font-bold shrink-0">74% Meeting Rate</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate font-mono">
+                    India &bull; Australia &bull; UK Verified Peer Sponsorship
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
+                <span>Test-Drive Demo</span>
+                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  &rarr;
+                </span>
+              </div>
+            </div>
+
+            {/* Demo 6: Brand Film */}
+            <div
+              onClick={() => launchDemo(0, 'single')}
+              className="group cursor-pointer rounded-2xl bg-gradient-to-br from-primary-soft/50 via-white to-primary-soft/30 border border-primary/30 hover:border-primary p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-1 rounded-md bg-primary text-white text-[10px] font-black uppercase tracking-wider">
+                    Brand Film
+                  </span>
+                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
+                    <Clock className="w-3 h-3" />
+                    <span>0:15</span>
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
+                  <span>MESHVI in 15 Seconds</span>
+                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
+                </h3>
+
+                <p className="text-xs text-text-muted leading-relaxed">
+                  The brand story: why bilateral intent beats open directories, how verified identity protects executive time, and why real deals close here.
+                </p>
+
+                {/* Micro Preview Pill */}
+                <div className="p-3 rounded-xl bg-white/80 border border-primary/20 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <strong className="text-navy">Intent-Driven Platform</strong>
+                    </span>
+                    <span className="text-primary font-bold shrink-0">100% Signal</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate font-mono">
+                    Zero Cold Spam &bull; Cryptographic Provenance &bull; Global
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-primary/20 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
+                <span>Play Brand Film</span>
+                <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center transition-transform group-hover:scale-110">
+                  <Play className="w-2.5 h-2.5 fill-current" />
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -464,13 +812,14 @@ export const HomePage = () => {
               {/* Bottom Quick-Action Bar */}
               <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
                 <span className="text-xs text-slate-400 font-mono">Status: Verified Zero-Trust Boundary</span>
-                <Link
-                  to="/register"
-                  className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg transition-colors flex items-center"
+                <button
+                  type="button"
+                  onClick={() => launchDemo(0, 'full')}
+                  className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg transition-colors flex items-center cursor-pointer space-x-1"
                 >
-                  <span>Launch Tour</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-                </Link>
+                  <Play className="w-3 h-3 fill-white" />
+                  <span>Interactive Tour (1:30)</span>
+                </button>
               </div>
             </div>
           </div>
@@ -618,7 +967,7 @@ export const HomePage = () => {
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-navy text-white rounded-3xl p-8 sm:p-14 relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 blur-[130px] rounded-full pointer-events-none" />
+          <div className="absolute top-0 right-0 w-full max-w-lg h-[500px] bg-primary/20 blur-[130px] rounded-full pointer-events-none" />
 
           <div className="max-w-3xl mb-12">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary/20 text-primary-light text-xs font-bold mb-4 border border-primary/30">
@@ -828,7 +1177,7 @@ export const HomePage = () => {
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative rounded-3xl bg-gradient-to-br from-navy via-slate-900 to-navy text-white p-8 sm:p-14 text-center overflow-hidden shadow-2xl border border-slate-800">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/25 blur-[120px] rounded-full pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl h-[300px] bg-primary/25 blur-[120px] rounded-full pointer-events-none" />
 
           <div className="relative z-10 max-w-3xl mx-auto space-y-6">
             <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-surface/10 text-primary-light text-xs font-bold border border-white/10">
@@ -848,17 +1197,19 @@ export const HomePage = () => {
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 to="/register"
-                className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center text-base"
+                className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center text-base cursor-pointer"
               >
                 <span>Create Your Verified Account Free</span>
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
-              <Link
-                to="/app/home"
-                className="w-full sm:w-auto px-8 py-4 bg-surface/10 hover:bg-surface/20 text-white font-bold rounded-xl border border-white/20 transition-all text-base"
+              <button
+                type="button"
+                onClick={() => launchDemo(0, 'full')}
+                className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl border border-white/20 transition-all text-base flex items-center justify-center space-x-2 cursor-pointer"
               >
-                Enter Platform Demo &rarr;
-              </Link>
+                <Play className="w-4 h-4 fill-white" />
+                <span>Watch Product Tour (1:30)</span>
+              </button>
             </div>
 
             <div className="pt-4 text-xs text-slate-400 flex items-center justify-center space-x-2">
@@ -868,6 +1219,14 @@ export const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Interactive Product Demo Player Modal */}
+      <ProductDemoPlayer
+        open={demoPlayerOpen}
+        initialChapter={demoChapter}
+        mode={demoMode}
+        onClose={() => setDemoPlayerOpen(false)}
+      />
     </div>
   );
 };

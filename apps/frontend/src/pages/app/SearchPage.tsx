@@ -157,11 +157,10 @@ const SearchableDropdownFilter: React.FC<SearchableDropdownFilterProps> = ({
           setIsOpen(!isOpen);
           setSearchTerm('');
         }}
-        className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-          selectedValue
-            ? 'bg-black text-white border-black font-bold shadow-xs'
-            : 'bg-surface text-text-muted border-border hover:border-neutral-400 hover:text-navy'
-        }`}
+        className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${selectedValue
+          ? 'bg-black text-white border-black font-bold shadow-xs'
+          : 'bg-surface text-text-muted border-border hover:border-neutral-400 hover:text-navy'
+          }`}
       >
         <span className={selectedValue ? 'text-amber-300' : 'text-text-muted'}>{icon}</span>
         <span className="max-w-[150px] truncate">{displayLabel}</span>
@@ -202,9 +201,8 @@ const SearchableDropdownFilter: React.FC<SearchableDropdownFilterProps> = ({
                 onSelect('');
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
-                !selectedValue ? 'bg-black text-white font-bold' : 'text-navy hover:bg-surface-muted font-medium'
-              }`}
+              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${!selectedValue ? 'bg-black text-white font-bold' : 'text-navy hover:bg-surface-muted font-medium'
+                }`}
             >
               <span>{allLabel}</span>
               {!selectedValue && <Check className="w-3.5 h-3.5 text-white" />}
@@ -223,9 +221,8 @@ const SearchableDropdownFilter: React.FC<SearchableDropdownFilterProps> = ({
                       onSelect(opt.value);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
-                      isSelected ? 'bg-black text-white font-bold' : 'text-navy hover:bg-surface-muted font-medium'
-                    }`}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${isSelected ? 'bg-black text-white font-bold' : 'text-navy hover:bg-surface-muted font-medium'
+                      }`}
                   >
                     <span className="truncate mr-2">{opt.label}</span>
                     <div className="flex items-center space-x-1 shrink-0">
@@ -419,19 +416,19 @@ export const SearchPage = () => {
         const updatedResults = resultsData.results.map((r: any) =>
           r.profile.id === targetProfileId
             ? {
-                ...r,
-                profile: {
-                  ...r.profile,
-                  connectionStatus: 'NONE',
-                  connectedAt: null,
-                  connectedDays: 0,
-                },
-              }
+              ...r,
+              profile: {
+                ...r.profile,
+                connectionStatus: 'NONE',
+                connectedAt: null,
+                connectedDays: 0,
+              },
+            }
             : r
         );
         setResultsData({ ...resultsData, results: updatedResults, matches: updatedResults });
       }
-    } catch {}
+    } catch { }
   };
 
   const handleWithdraw = async (connectionId?: string, name?: string) => {
@@ -453,13 +450,13 @@ export const SearchPage = () => {
         const updatedResults = resultsData.results.map((r: any) =>
           r.profile.connectionId === connectionId || r.profile.id === connectionId
             ? {
-                ...r,
-                profile: {
-                  ...r.profile,
-                  connectionStatus: 'NONE',
-                  connectionId: null,
-                },
-              }
+              ...r,
+              profile: {
+                ...r.profile,
+                connectionStatus: 'NONE',
+                connectionId: null,
+              },
+            }
             : r
         );
         setResultsData({ ...resultsData, results: updatedResults, matches: updatedResults });
@@ -517,7 +514,7 @@ export const SearchPage = () => {
       if (res.ok && data.success) {
         setCorridorData(data.data);
       }
-    } catch {} finally {
+    } catch { } finally {
       if (currentReqId === searchRequestIdRef.current) {
         setLoadingCorridors(false);
       }
@@ -810,7 +807,7 @@ export const SearchPage = () => {
       if (res.ok && data.success) {
         setTwoSidedData(data.data);
       }
-    } catch {} finally {
+    } catch { } finally {
       setLoadingTwoSided(false);
     }
   };
@@ -989,7 +986,7 @@ export const SearchPage = () => {
             }
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }, 200);
     return () => clearTimeout(t);
   }, [query, token]);
@@ -1108,11 +1105,10 @@ export const SearchPage = () => {
                       setQuery(sessionQ);
                       handleFreshSearch(sessionQ);
                     }}
-                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-                      isCurrent
-                        ? 'bg-primary text-white shadow-2xs font-bold'
-                        : 'bg-white hover:bg-slate-100 text-navy border border-slate-200/90'
-                    }`}
+                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${isCurrent
+                      ? 'bg-primary text-white shadow-2xs font-bold'
+                      : 'bg-white hover:bg-slate-100 text-navy border border-slate-200/90'
+                      }`}
                     title={`Re-run query "${sessionQ}"`}
                   >
                     <span>{sessionQ}</span>
@@ -1171,10 +1167,10 @@ export const SearchPage = () => {
                 searchMode === 'DECISION_MAKERS'
                   ? 'Search by title, role, company, or objective, e.g. "Procurement head at Nestle"...'
                   : searchMode === 'ENTERPRISES'
-                  ? 'Search by company name, domain, or sector, e.g. "Cold storage logistics"...'
-                  : searchMode === 'MARKET_CORRIDOR'
-                  ? 'Filter trade corridors by partner keyword or category...'
-                  : 'Describe your commercial goal to map buying committees...'
+                    ? 'Search by company name, domain, or sector, e.g. "Cold storage logistics"...'
+                    : searchMode === 'MARKET_CORRIDOR'
+                      ? 'Filter trade corridors by partner keyword or category...'
+                      : 'Describe your commercial goal to map buying committees...'
               }
               className="w-full pl-10 pr-10 py-2.5 bg-bg border border-border rounded-xl text-xs text-navy focus:outline-none focus:ring-2 focus:ring-black/20"
             />
@@ -1238,11 +1234,10 @@ export const SearchPage = () => {
                         className="w-full px-4 py-2 text-left text-xs hover:bg-neutral-50 flex items-center justify-between transition-colors group"
                       >
                         <div className="flex items-center space-x-2.5 min-w-0">
-                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
-                            item.type === 'COMPANY'
-                              ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                              : 'bg-indigo-100 text-indigo-900 border border-indigo-200'
-                          }`}>
+                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${item.type === 'COMPANY'
+                            ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                            : 'bg-indigo-100 text-indigo-900 border border-indigo-200'
+                            }`}>
                             {item.type === 'COMPANY' ? (
                               <Building2 className="w-3.5 h-3.5 text-amber-700" />
                             ) : (
@@ -1317,12 +1312,12 @@ export const SearchPage = () => {
               facets.functions && facets.functions.length > 0
                 ? facets.functions.map((f) => ({ value: f.value, label: f.label, count: f.count }))
                 : [
-                    { value: 'Procurement', label: 'Procurement & Sourcing' },
-                    { value: 'Partnerships', label: 'Strategic Alliances & BD' },
-                    { value: 'Supply Chain', label: 'Supply Chain & Operations' },
-                    { value: 'Sales', label: 'Commercial Sales & Channel' },
-                    { value: 'Executive Management', label: 'Executive Management' },
-                  ]
+                  { value: 'Procurement', label: 'Procurement & Sourcing' },
+                  { value: 'Partnerships', label: 'Strategic Alliances & BD' },
+                  { value: 'Supply Chain', label: 'Supply Chain & Operations' },
+                  { value: 'Sales', label: 'Commercial Sales & Channel' },
+                  { value: 'Executive Management', label: 'Executive Management' },
+                ]
             }
             onSelect={(val) => applyFilter('function', val)}
             icon={<Briefcase className="w-3.5 h-3.5 shrink-0" />}
@@ -1337,13 +1332,13 @@ export const SearchPage = () => {
               facets.industries && facets.industries.length > 0
                 ? facets.industries.map((ind) => ({ value: ind.value, label: ind.label, count: ind.count }))
                 : [
-                    { value: 'FMCG & Consumer Goods', label: 'FMCG & Consumer Goods' },
-                    { value: 'Enterprise Software', label: 'Enterprise Software & Cloud' },
-                    { value: 'Logistics & Supply Chain', label: 'Logistics & Supply Chain' },
-                    { value: 'Renewable Energy & CleanTech', label: 'Renewable Energy & CleanTech' },
-                    { value: 'Healthcare & Life Sciences', label: 'Healthcare & Life Sciences' },
-                    { value: 'Industrial Manufacturing', label: 'Industrial Manufacturing' },
-                  ]
+                  { value: 'FMCG & Consumer Goods', label: 'FMCG & Consumer Goods' },
+                  { value: 'Enterprise Software', label: 'Enterprise Software & Cloud' },
+                  { value: 'Logistics & Supply Chain', label: 'Logistics & Supply Chain' },
+                  { value: 'Renewable Energy & CleanTech', label: 'Renewable Energy & CleanTech' },
+                  { value: 'Healthcare & Life Sciences', label: 'Healthcare & Life Sciences' },
+                  { value: 'Industrial Manufacturing', label: 'Industrial Manufacturing' },
+                ]
             }
             onSelect={(val) => applyFilter('industry', val)}
             icon={<Filter className="w-3.5 h-3.5 shrink-0" />}
@@ -1743,10 +1738,10 @@ export const SearchPage = () => {
                   activeCorridorTier === 'RECOMMENDED'
                     ? recCorridors
                     : activeCorridorTier === 'STRONG'
-                    ? strongCorridors
-                    : activeCorridorTier === 'DIRECTORY'
-                    ? dirCorridors
-                    : allCorridors;
+                      ? strongCorridors
+                      : activeCorridorTier === 'DIRECTORY'
+                        ? dirCorridors
+                        : allCorridors;
 
                 return (
                   <>
@@ -1755,19 +1750,17 @@ export const SearchPage = () => {
                       <button
                         type="button"
                         onClick={() => setActiveCorridorTier('ALL')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                          activeCorridorTier === 'ALL'
-                            ? 'bg-black text-white shadow-xs'
-                            : 'text-text-muted hover:text-navy hover:bg-surface'
-                        }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeCorridorTier === 'ALL'
+                          ? 'bg-black text-white shadow-xs'
+                          : 'text-text-muted hover:text-navy hover:bg-surface'
+                          }`}
                       >
                         <span>All Matches</span>
                         <span
-                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                            activeCorridorTier === 'ALL'
-                              ? 'bg-white/20 text-white'
-                              : 'bg-neutral-200 text-neutral-700'
-                          }`}
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${activeCorridorTier === 'ALL'
+                            ? 'bg-white/20 text-white'
+                            : 'bg-neutral-200 text-neutral-700'
+                            }`}
                         >
                           {allCorridors.length}
                         </span>
@@ -1776,19 +1769,17 @@ export const SearchPage = () => {
                       <button
                         type="button"
                         onClick={() => setActiveCorridorTier('RECOMMENDED')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                          activeCorridorTier === 'RECOMMENDED'
-                            ? 'bg-amber-500 text-white shadow-xs'
-                            : 'text-text-muted hover:text-navy hover:bg-surface'
-                        }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeCorridorTier === 'RECOMMENDED'
+                          ? 'bg-amber-500 text-white shadow-xs'
+                          : 'text-text-muted hover:text-navy hover:bg-surface'
+                          }`}
                       >
                         <span>⭐ Top Recommendations (80-100%)</span>
                         <span
-                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                            activeCorridorTier === 'RECOMMENDED'
-                              ? 'bg-white/20 text-white'
-                              : 'bg-neutral-200 text-neutral-700'
-                          }`}
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${activeCorridorTier === 'RECOMMENDED'
+                            ? 'bg-white/20 text-white'
+                            : 'bg-neutral-200 text-neutral-700'
+                            }`}
                         >
                           {recCorridors.length}
                         </span>
@@ -1797,19 +1788,17 @@ export const SearchPage = () => {
                       <button
                         type="button"
                         onClick={() => setActiveCorridorTier('STRONG')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                          activeCorridorTier === 'STRONG'
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'text-text-muted hover:text-navy hover:bg-surface'
-                        }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeCorridorTier === 'STRONG'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-text-muted hover:text-navy hover:bg-surface'
+                          }`}
                       >
                         <span>Strong Potential (60-79%)</span>
                         <span
-                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                            activeCorridorTier === 'STRONG'
-                              ? 'bg-white/20 text-white'
-                              : 'bg-neutral-200 text-neutral-700'
-                          }`}
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${activeCorridorTier === 'STRONG'
+                            ? 'bg-white/20 text-white'
+                            : 'bg-neutral-200 text-neutral-700'
+                            }`}
                         >
                           {strongCorridors.length}
                         </span>
@@ -1818,19 +1807,17 @@ export const SearchPage = () => {
                       <button
                         type="button"
                         onClick={() => setActiveCorridorTier('DIRECTORY')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                          activeCorridorTier === 'DIRECTORY'
-                            ? 'bg-neutral-700 text-white shadow-xs'
-                            : 'text-text-muted hover:text-navy hover:bg-surface'
-                        }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeCorridorTier === 'DIRECTORY'
+                          ? 'bg-neutral-700 text-white shadow-xs'
+                          : 'text-text-muted hover:text-navy hover:bg-surface'
+                          }`}
                       >
                         <span>Directory (&lt;60%)</span>
                         <span
-                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                            activeCorridorTier === 'DIRECTORY'
-                              ? 'bg-white/20 text-white'
-                              : 'bg-neutral-200 text-neutral-700'
-                          }`}
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${activeCorridorTier === 'DIRECTORY'
+                            ? 'bg-white/20 text-white'
+                            : 'bg-neutral-200 text-neutral-700'
+                            }`}
                         >
                           {dirCorridors.length}
                         </span>
@@ -1997,16 +1984,14 @@ export const SearchPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveMatchTier('ALL')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                  activeMatchTier === 'ALL'
-                    ? 'bg-black text-white shadow-xs'
-                    : 'bg-surface border border-border text-text-muted hover:text-navy hover:bg-surface-muted'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeMatchTier === 'ALL'
+                  ? 'bg-black text-white shadow-xs'
+                  : 'bg-surface border border-border text-text-muted hover:text-navy hover:bg-surface-muted'
+                  }`}
               >
                 <span>All Organizations</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  activeMatchTier === 'ALL' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeMatchTier === 'ALL' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
+                  }`}>
                   {opportunityGraphData.graphNodes.length}
                 </span>
               </button>
@@ -2014,16 +1999,14 @@ export const SearchPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveMatchTier('BEST')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                  activeMatchTier === 'BEST'
-                    ? 'bg-emerald-700 text-white shadow-xs'
-                    : 'bg-surface border border-emerald-300 text-emerald-800 hover:bg-emerald-50'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeMatchTier === 'BEST'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : 'bg-surface border border-emerald-300 text-emerald-800 hover:bg-emerald-50'
+                  }`}
               >
                 <span>⭐ Top Recommendations (80-100%)</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  activeMatchTier === 'BEST' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-900'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeMatchTier === 'BEST' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-900'
+                  }`}>
                   {opportunityGraphData.graphNodes.filter((o: any) => (o.matchScore || 70) >= 80).length}
                 </span>
               </button>
@@ -2031,16 +2014,14 @@ export const SearchPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveMatchTier('STRONG')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                  activeMatchTier === 'STRONG'
-                    ? 'bg-indigo-700 text-white shadow-xs'
-                    : 'bg-surface border border-indigo-200 text-indigo-800 hover:bg-indigo-50'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeMatchTier === 'STRONG'
+                  ? 'bg-indigo-700 text-white shadow-xs'
+                  : 'bg-surface border border-indigo-200 text-indigo-800 hover:bg-indigo-50'
+                  }`}
               >
                 <span>Strong Potential (60-79%)</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  activeMatchTier === 'STRONG' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-900'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeMatchTier === 'STRONG' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-900'
+                  }`}>
                   {opportunityGraphData.graphNodes.filter((o: any) => (o.matchScore || 70) >= 60 && (o.matchScore || 70) < 80).length}
                 </span>
               </button>
@@ -2048,16 +2029,14 @@ export const SearchPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveMatchTier('DIRECTORY')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                  activeMatchTier === 'DIRECTORY'
-                    ? 'bg-neutral-800 text-white shadow-xs'
-                    : 'bg-surface border border-border text-text-muted hover:text-navy hover:bg-surface-muted'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeMatchTier === 'DIRECTORY'
+                  ? 'bg-neutral-800 text-white shadow-xs'
+                  : 'bg-surface border border-border text-text-muted hover:text-navy hover:bg-surface-muted'
+                  }`}
               >
                 <span>Directory Matches (&lt;60%)</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  activeMatchTier === 'DIRECTORY' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeMatchTier === 'DIRECTORY' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
+                  }`}>
                   {opportunityGraphData.graphNodes.filter((o: any) => (o.matchScore || 70) < 60).length}
                 </span>
               </button>
@@ -2104,207 +2083,199 @@ export const SearchPage = () => {
                   return true;
                 })
                 .map((org: any) => (
-                <div
-                  key={org.companyId}
-                  className="bg-surface border border-border rounded-xl p-3.5 sm:p-4 shadow-xs hover:border-black/30 transition-all space-y-3"
-                >
-                  {/* Organization Root Node */}
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2.5 border-b border-border">
-                    <div className="flex items-start space-x-3 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-black text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
-                        {org.companyName?.[0] || 'O'}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center flex-wrap gap-2">
-                          <h3 className="text-xs font-bold text-navy truncate">{org.companyName}</h3>
-                          <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-800 text-[9px] font-bold rounded border border-emerald-200 uppercase shrink-0">
-                            {org.verificationStatus || 'VERIFIED'}
-                          </span>
-                          {org.branchCount > 0 && (
-                            <span className="px-1.5 py-0.2 bg-blue-50 text-blue-700 text-[9.5px] font-semibold rounded border border-blue-200">
-                              {org.branchCount} Branch{org.branchCount > 1 ? 'es' : ''}
+                  <div
+                    key={org.companyId}
+                    className="bg-surface border border-border rounded-xl p-3.5 sm:p-4 shadow-xs hover:border-black/30 transition-all space-y-3"
+                  >
+                    {/* Organization Root Node */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2.5 border-b border-border">
+                      <div className="flex items-start space-x-3 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-black text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                          {org.companyName?.[0] || 'O'}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center flex-wrap gap-2">
+                            <h3 className="text-xs font-bold text-navy truncate">{org.companyName}</h3>
+                            <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-800 text-[9px] font-bold rounded border border-emerald-200 uppercase shrink-0">
+                              {org.verificationStatus || 'VERIFIED'}
                             </span>
-                          )}
-                          <span className={`px-2 py-0.5 rounded text-[9.5px] font-black border flex items-center gap-0.5 ${
-                            (org.matchScore || 70) >= 80
+                            {org.branchCount > 0 && (
+                              <span className="px-1.5 py-0.2 bg-blue-50 text-blue-700 text-[9.5px] font-semibold rounded border border-blue-200">
+                                {org.branchCount} Branch{org.branchCount > 1 ? 'es' : ''}
+                              </span>
+                            )}
+                            <span className={`px-2 py-0.5 rounded text-[9.5px] font-black border flex items-center gap-0.5 ${(org.matchScore || 70) >= 80
                               ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                               : 'bg-indigo-50 text-indigo-800 border-indigo-200'
-                          }`}>
-                            <span>{org.matchScore || 75}%</span>
-                            <span className="font-normal text-[8.5px] opacity-75">Fit</span>
-                          </span>
+                              }`}>
+                              <span>{org.matchScore || 75}%</span>
+                              <span className="font-normal text-[8.5px] opacity-75">Fit</span>
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-text-muted truncate mt-0.5">
+                            {org.industry} &bull; {org.headquartersCity ? `${org.headquartersCity}, ` : ''}{org.headquartersCountry || 'Global'}
+                          </p>
                         </div>
-                        <p className="text-[11px] text-text-muted truncate mt-0.5">
-                          {org.industry} &bull; {org.headquartersCity ? `${org.headquartersCity}, ` : ''}{org.headquartersCountry || 'Global'}
-                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setDossierCompanyId(org.companyId)}
+                          className="px-2.5 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold rounded-lg border border-neutral-300 transition-colors"
+                        >
+                          Dossier
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProposalModalTarget({
+                              companyName: org.companyName,
+                              recipientProfileId: org.companyId,
+                              executiveName: `${org.companyName} Corporate Inbound`,
+                              executiveTitle: 'Executive Leadership Desk',
+                            });
+                          }}
+                          className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
+                        >
+                          Submit RFP
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setDossierCompanyId(org.companyId)}
-                        className="px-2.5 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold rounded-lg border border-neutral-300 transition-colors"
-                      >
-                        Dossier
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProposalModalTarget({
-                            companyName: org.companyName,
-                            recipientProfileId: org.companyId,
-                            executiveName: `${org.companyName} Corporate Inbound`,
-                            executiveTitle: 'Executive Leadership Desk',
-                          });
-                        }}
-                        className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
-                      >
-                        Submit RFP
-                      </button>
-                    </div>
-                  </div>
+                    {/* Buying Committee Hierarchy */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center space-x-1.5">
+                          <Users className="w-3 h-3 text-navy" />
+                          <span>Buying Committee & Mandate Authority</span>
+                        </h4>
+                        <span className="text-[10px] text-text-muted font-medium">
+                          Role-based pathway
+                        </span>
+                      </div>
 
-                  {/* Buying Committee Hierarchy */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center space-x-1.5">
-                        <Users className="w-3 h-3 text-navy" />
-                        <span>Buying Committee & Mandate Authority</span>
-                      </h4>
-                      <span className="text-[10px] text-text-muted font-medium">
-                        Role-based pathway
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                      {org.committeeMembers?.map((member: any) => (
-                        <div
-                          key={member.id}
-                          className="p-2.5 bg-bg rounded-lg border border-border/80 hover:border-black/20 transition-all flex flex-col justify-between space-y-2"
-                        >
-                          <div className="space-y-1.5">
-                            <div className="flex items-start justify-between gap-1.5">
-                              <div className="min-w-0">
-                                <h5 className="text-xs font-bold text-navy truncate">{member.displayName}</h5>
-                                <p className="text-[10.5px] text-text-muted truncate font-medium">{member.title}</p>
-                              </div>
-                              <span
-                                className={`px-1.5 py-0.2 text-[8.5px] font-bold rounded uppercase shrink-0 ${
-                                  member.roleType === 'DECISION_MAKER'
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                        {org.committeeMembers?.map((member: any) => (
+                          <div
+                            key={member.id}
+                            className="p-2.5 bg-bg rounded-lg border border-border/80 hover:border-black/20 transition-all flex flex-col justify-between space-y-2"
+                          >
+                            <div className="space-y-1.5">
+                              <div className="flex items-start justify-between gap-1.5">
+                                <div className="min-w-0">
+                                  <h5 className="text-xs font-bold text-navy truncate">{member.displayName}</h5>
+                                  <p className="text-[10.5px] text-text-muted truncate font-medium">{member.title}</p>
+                                </div>
+                                <span
+                                  className={`px-1.5 py-0.2 text-[8.5px] font-bold rounded uppercase shrink-0 ${member.roleType === 'DECISION_MAKER'
                                     ? 'bg-rose-50 text-rose-800 border border-rose-200'
                                     : member.roleType === 'COMMERCIAL_SPONSOR'
-                                    ? 'bg-blue-50 text-blue-800 border border-blue-200'
-                                    : 'bg-neutral-100 text-neutral-800 border border-neutral-300'
-                                }`}
-                              >
-                                {member.roleType?.replace('_', ' ') || 'EVALUATOR'}
-                              </span>
+                                      ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                                      : 'bg-neutral-100 text-neutral-800 border border-neutral-300'
+                                    }`}
+                                >
+                                  {member.roleType?.replace('_', ' ') || 'EVALUATOR'}
+                                </span>
+                              </div>
+
+                              {/* Mandate Attestation Badge if present */}
+                              {member.mandate ? (
+                                <div className="p-1.5 bg-emerald-50/80 border border-emerald-200 rounded-md text-[9.5px] space-y-0.5">
+                                  <span className="font-bold text-emerald-900 flex items-center space-x-1">
+                                    <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
+                                    <span>Active Mandate</span>
+                                  </span>
+                                  <div className="text-emerald-800 font-medium truncate">
+                                    {member.mandate.categoryScope} &bull; {member.mandate.geographicScope}
+                                    {member.mandate.maxBudgetLimit && ` (Up to $${member.mandate.maxBudgetLimit.toLocaleString()})`}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-text-muted font-medium truncate">
+                                  Scope: {member.function} &bull; {member.seniority}
+                                </div>
+                              )}
                             </div>
 
-                            {/* Mandate Attestation Badge if present */}
-                            {member.mandate ? (
-                              <div className="p-1.5 bg-emerald-50/80 border border-emerald-200 rounded-md text-[9.5px] space-y-0.5">
-                                <span className="font-bold text-emerald-900 flex items-center space-x-1">
-                                  <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
-                                  <span>Active Mandate</span>
-                                </span>
-                                <div className="text-emerald-800 font-medium truncate">
-                                  {member.mandate.categoryScope} &bull; {member.mandate.geographicScope}
-                                  {member.mandate.maxBudgetLimit && ` (Up to $${member.mandate.maxBudgetLimit.toLocaleString()})`}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-[10px] text-text-muted font-medium truncate">
-                                Scope: {member.function} &bull; {member.seniority}
-                              </div>
-                            )}
+                            <div className="flex items-center justify-between pt-1.5 border-t border-border/60">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenTwoSidedFit(member)}
+                                className="text-[10.5px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center space-x-1"
+                              >
+                                <Scale className="w-2.5 h-2.5" />
+                                <span>Two-Sided Fit</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConnectModalTarget({
+                                    id: member.id,
+                                    displayName: member.displayName,
+                                    currentTitle: member.title,
+                                    companyName: org.companyName,
+                                    city: org.headquartersCity || 'Regional',
+                                    countryCode: org.headquartersCountry || member.countryCode || 'IN',
+                                    matchScore: 92,
+                                  });
+                                }}
+                                className="px-2 py-0.5 bg-black hover:bg-neutral-800 text-white rounded text-[10.5px] font-bold flex items-center space-x-1 shadow-xs transition-colors"
+                              >
+                                <Send className="w-2.5 h-2.5" />
+                                <span>Bridge</span>
+                              </button>
+                            </div>
                           </div>
-
-                          <div className="flex items-center justify-between pt-1.5 border-t border-border/60">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenTwoSidedFit(member)}
-                              className="text-[10.5px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center space-x-1"
-                            >
-                              <Scale className="w-2.5 h-2.5" />
-                              <span>Two-Sided Fit</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setConnectModalTarget({
-                                  id: member.id,
-                                  displayName: member.displayName,
-                                  currentTitle: member.title,
-                                  companyName: org.companyName,
-                                  city: org.headquartersCity || 'Regional',
-                                  countryCode: org.headquartersCountry || member.countryCode || 'IN',
-                                  matchScore: 92,
-                                });
-                              }}
-                              className="px-2 py-0.5 bg-black hover:bg-neutral-800 text-white rounded text-[10.5px] font-bold flex items-center space-x-1 shadow-xs transition-colors"
-                            >
-                              <Send className="w-2.5 h-2.5" />
-                              <span>Bridge</span>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Recommended Warm Route Banner */}
-                  {org.recommendedRoute && (
-                    <div className="px-3 py-2 bg-neutral-900 text-white rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                      <div className="flex items-start sm:items-center space-x-2 min-w-0">
-                        <TrendingUp className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5 sm:mt-0" />
-                        <div className="min-w-0">
-                          <span className="font-extrabold text-emerald-400 uppercase tracking-wider text-[9px] block">
-                            Recommended Route ({org.recommendedRoute.recommendedAction?.replace(/_/g, ' ')})
-                          </span>
-                          <span className="text-neutral-200 text-[11px] font-medium truncate block">
-                            {org.recommendedRoute.explanation}
-                          </span>
-                        </div>
+                        ))}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const primaryMember = org.committeeMembers?.[0];
-                          setConnectModalTarget({
-                            id: primaryMember?.id || org.companyId,
-                            displayName: primaryMember?.displayName || `${org.companyName} Executive Leadership`,
-                            currentTitle: primaryMember?.title || 'Corporate Leadership Desk',
-                            companyName: org.companyName,
-                            city: org.headquartersCity || 'Regional HQ',
-                            countryCode: org.headquartersCountry || 'IN',
-                            matchScore: org.matchScore || 94,
-                          });
-                        }}
-                        className="px-2.5 py-1 bg-white text-black hover:bg-neutral-200 rounded-md text-xs font-bold flex items-center space-x-1 shrink-0 transition-colors"
-                      >
-                        <span>Warm Route</span>
-                        <ArrowRight className="w-2.5 h-2.5" />
-                      </button>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Recommended Warm Route Banner */}
+                    {org.recommendedRoute && (
+                      <div className="px-3 py-2 bg-neutral-900 text-white rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                        <div className="flex items-start sm:items-center space-x-2 min-w-0">
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5 sm:mt-0" />
+                          <div className="min-w-0">
+                            <span className="font-extrabold text-emerald-400 uppercase tracking-wider text-[9px] block">
+                              Recommended Route ({org.recommendedRoute.recommendedAction?.replace(/_/g, ' ')})
+                            </span>
+                            <span className="text-neutral-200 text-[11px] font-medium truncate block">
+                              {org.recommendedRoute.explanation}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const primaryMember = org.committeeMembers?.[0];
+                            setConnectModalTarget({
+                              id: primaryMember?.id || org.companyId,
+                              displayName: primaryMember?.displayName || `${org.companyName} Executive Leadership`,
+                              currentTitle: primaryMember?.title || 'Corporate Leadership Desk',
+                              companyName: org.companyName,
+                              city: org.headquartersCity || 'Regional HQ',
+                              countryCode: org.headquartersCountry || 'IN',
+                              matchScore: org.matchScore || 94,
+                            });
+                          }}
+                          className="px-2.5 py-1 bg-white text-black hover:bg-neutral-200 rounded-md text-xs font-bold flex items-center space-x-1 shrink-0 transition-colors"
+                        >
+                          <span>Warm Route</span>
+                          <ArrowRight className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
             </div>
           )}
         </div>
       ) : searchMode === 'DECISION_MAKERS' ? (
         /* 2. DECISION MAKERS RESULTS */
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-text-muted px-1 gap-2">
-            <span className="font-semibold text-neutral-700">
-              {candidateResults.length === 0
-                ? 'Showing 0 Decision-Makers Matched'
-                : `Showing ${((resultsData?.page || 1) - 1) * (resultsData?.limit || pageSize) + 1} - ${((resultsData?.page || 1) - 1) * (resultsData?.limit || pageSize) + candidateResults.length} of ${resultsData?.totalMatches || candidateResults.length} Decision-Makers Matched`}
-            </span>
-          </div>
+        <div className="">
+
 
           {/* Query Typo / Auto-Correction Notice Banner */}
           {resultsData?.queryCorrection?.hasCorrection && !loading && (
@@ -2457,16 +2428,14 @@ export const SearchPage = () => {
             const companyName = resultsData.matchedCompany.name;
 
             return (
-              <div className={`p-4 rounded-2xl border shadow-xs transition-all animate-in fade-in space-y-3 ${
-                isVerified
-                  ? 'bg-white text-navy border-slate-200/90'
-                  : 'bg-amber-50/60 text-navy border-amber-200/80'
-              }`}>
+              <div className={`p-4 rounded-2xl border shadow-xs transition-all animate-in fade-in space-y-3 ${isVerified
+                ? 'bg-white text-navy border-slate-200/90'
+                : 'bg-amber-50/60 text-navy border-amber-200/80'
+                }`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start sm:items-center space-x-3.5 min-w-0">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black shrink-0 shadow-2xs ${
-                      isVerified ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-amber-100 text-amber-800 border border-amber-300'
-                    }`}>
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black shrink-0 shadow-2xs ${isVerified ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-amber-100 text-amber-800 border border-amber-300'
+                      }`}>
                       <Building2 className="w-6 h-6" />
                     </div>
                     <div className="min-w-0 space-y-1">
@@ -2577,102 +2546,10 @@ export const SearchPage = () => {
             <div className="space-y-4">
               {/* Proactive Clarification Interview Card for Tricky / Ambiguous Searches (LIGHT THEME) */}
               {resultsData?.clarification?.isClarificationNeeded && (
-                <div className="p-5 bg-white text-navy rounded-2xl border border-slate-200/90 shadow-xs space-y-4 animate-in fade-in">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-900 border border-amber-200 flex items-center justify-center font-black shrink-0 shadow-2xs">
-                        <Sparkles className="w-5 h-5 text-amber-700" />
-                      </div>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
-                            Search Clarification Engine
-                          </span>
-                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                            {resultsData.clarification.detectedTheme}
-                          </span>
-                        </div>
-                        <h3 className="text-sm font-extrabold text-navy mt-0.5">
-                          {resultsData.clarification.headline}
-                        </h3>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowQualificationModal(true)}
-                      className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 rounded-xl text-xs font-black transition-colors flex items-center space-x-1.5 shrink-0 shadow-2xs cursor-pointer"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Full Qualification Interview</span>
-                    </button>
-                  </div>
+                <div className="">
 
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {resultsData.clarification.prompt}
-                  </p>
 
-                  {/* Interactive Clarification Question Sets */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-                    {resultsData.clarification.questions.map((qSet: any, qIdx: number) => (
-                      <div key={qIdx} className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 block">
-                            Step {qIdx + 1}: {qSet.question}
-                          </span>
-                          {qSet.badge && (
-                            <span className="text-[9.5px] font-bold text-slate-500">
-                              {qSet.badge}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 max-h-56 overflow-y-auto pr-1">
-                          {qSet.options.map((opt: any, optIdx: number) => {
-                            const isSelected = (
-                              (opt.filterKey === 'country' && clarifySelectedRegion?.filterVal === opt.filterVal) ||
-                              (opt.filterKey === 'corridor' && clarifySelectedRegion?.filterVal === opt.filterVal) ||
-                              (opt.filterKey === 'function' && clarifySelectedRole?.filterVal === opt.filterVal) ||
-                              (opt.filterKey === 'seniority' && clarifySelectedRole?.filterVal === opt.filterVal) ||
-                              (opt.filterKey === 'country' && countryFilter === opt.filterVal) ||
-                              (opt.filterKey === 'function' && functionFilter === opt.filterVal)
-                            );
 
-                            return (
-                              <button
-                                key={optIdx}
-                                type="button"
-                                onClick={() => {
-                                  if (opt.filterKey === 'country' || opt.filterKey === 'corridor') {
-                                    const next = isSelected ? null : opt;
-                                    setClarifySelectedRegion(next);
-                                  } else if (opt.filterKey === 'function' || opt.filterKey === 'seniority') {
-                                    const next = isSelected ? null : opt;
-                                    setClarifySelectedRole(next);
-                                  } else {
-                                    applyFilter(opt.filterKey, opt.filterVal);
-                                  }
-                                }}
-                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all flex items-center space-x-1.5 cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-primary text-white border-primary font-extrabold shadow-2xs'
-                                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-300'
-                                }`}
-                              >
-                                {opt.flag && <span className="text-xs">{opt.flag}</span>}
-                                <span>{opt.label}</span>
-                                {opt.count !== undefined && (
-                                  <span className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${
-                                    isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-                                  }`}>
-                                    {opt.count}
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
 
                   {/* Dynamic Combined Refinement Action Bar */}
                   {(clarifySelectedRegion || clarifySelectedRole) && (
@@ -2733,8 +2610,8 @@ export const SearchPage = () => {
                     {resultsData?.matchedCompany
                       ? `No decision-makers matched at ${resultsData.matchedCompany.name}`
                       : query
-                      ? `No verified decision-makers found for "${query}"`
-                      : 'No decision-makers found'}
+                        ? `No verified decision-makers found for "${query}"`
+                        : 'No decision-makers found'}
                   </h3>
                   <p className="text-xs text-slate-500 leading-relaxed">
                     {resultsData?.matchedCompany
@@ -2742,8 +2619,8 @@ export const SearchPage = () => {
                         ? `Your active search filters narrowed the results to 0 matches at ${resultsData.matchedCompany.name}. Clear your filters to explore all functions and seniorities at this enterprise.`
                         : `No decision-makers are currently onboarded for ${resultsData.matchedCompany.name}. This organization is an unverified directory record.`
                       : activeFiltersCount > 0
-                      ? 'Your active filter combination returned 0 exact matches. Reset filters or try a 1-click refined query below.'
-                      : 'Zero profiles match this query exactly. Try one of our 1-click refined queries below or broaden your mandate criteria.'}
+                        ? 'Your active filter combination returned 0 exact matches. Reset filters or try a 1-click refined query below.'
+                        : 'Zero profiles match this query exactly. Try one of our 1-click refined queries below or broaden your mandate criteria.'}
                   </p>
                 </div>
 
@@ -3002,11 +2879,10 @@ export const SearchPage = () => {
                         key={sz}
                         type="button"
                         onClick={() => handlePageSizeChange(sz)}
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-all ${
-                          pageSize === sz
-                            ? 'bg-black text-white shadow-xs'
-                            : 'text-text-muted hover:text-navy'
-                        }`}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-all ${pageSize === sz
+                          ? 'bg-black text-white shadow-xs'
+                          : 'text-text-muted hover:text-navy'
+                          }`}
                       >
                         {sz}
                       </button>
@@ -3036,11 +2912,10 @@ export const SearchPage = () => {
                         setCurrentPage(pg);
                         handleSearch(query, 'DECISION_MAKERS', pg, pageSize, { matchTier: activeMatchTier, locationScope: activeLocationScope, searchPriority });
                       }}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
-                        currentPage === pg
-                          ? 'bg-black text-white shadow-xs'
-                          : 'border border-border bg-surface text-navy hover:bg-surface-muted'
-                      }`}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${currentPage === pg
+                        ? 'bg-black text-white shadow-xs'
+                        : 'border border-border bg-surface text-navy hover:bg-surface-muted'
+                        }`}
                     >
                       {pg}
                     </button>
@@ -3088,16 +2963,14 @@ export const SearchPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveMatchTier('ALL')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                  activeMatchTier === 'ALL'
-                    ? 'bg-black text-white shadow-xs'
-                    : 'bg-surface border border-border text-text-muted hover:text-navy hover:bg-surface-muted'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeMatchTier === 'ALL'
+                  ? 'bg-black text-white shadow-xs'
+                  : 'bg-surface border border-border text-text-muted hover:text-navy hover:bg-surface-muted'
+                  }`}
               >
                 <span>All Organizations</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  activeMatchTier === 'ALL' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeMatchTier === 'ALL' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
+                  }`}>
                   {companyResults.length}
                 </span>
               </button>
@@ -3105,16 +2978,14 @@ export const SearchPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveMatchTier('BEST')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                  activeMatchTier === 'BEST'
-                    ? 'bg-emerald-700 text-white shadow-xs'
-                    : 'bg-surface border border-emerald-300 text-emerald-800 hover:bg-emerald-50'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeMatchTier === 'BEST'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : 'bg-surface border border-emerald-300 text-emerald-800 hover:bg-emerald-50'
+                  }`}
               >
                 <span>⭐ Top Recommendations (80-100%)</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  activeMatchTier === 'BEST' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-900'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeMatchTier === 'BEST' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-900'
+                  }`}>
                   {companyResults.filter((c: any) => (c.matchScore || 70) >= 80).length}
                 </span>
               </button>
@@ -3122,16 +2993,14 @@ export const SearchPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveMatchTier('STRONG')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                  activeMatchTier === 'STRONG'
-                    ? 'bg-indigo-700 text-white shadow-xs'
-                    : 'bg-surface border border-indigo-200 text-indigo-800 hover:bg-indigo-50'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeMatchTier === 'STRONG'
+                  ? 'bg-indigo-700 text-white shadow-xs'
+                  : 'bg-surface border border-indigo-200 text-indigo-800 hover:bg-indigo-50'
+                  }`}
               >
                 <span>Strong Potential (60-79%)</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  activeMatchTier === 'STRONG' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-900'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeMatchTier === 'STRONG' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-900'
+                  }`}>
                   {companyResults.filter((c: any) => (c.matchScore || 70) >= 60 && (c.matchScore || 70) < 80).length}
                 </span>
               </button>
@@ -3139,16 +3008,14 @@ export const SearchPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveMatchTier('DIRECTORY')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
-                  activeMatchTier === 'DIRECTORY'
-                    ? 'bg-neutral-800 text-white shadow-xs'
-                    : 'bg-surface border border-border text-text-muted hover:text-navy hover:bg-surface-muted'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${activeMatchTier === 'DIRECTORY'
+                  ? 'bg-neutral-800 text-white shadow-xs'
+                  : 'bg-surface border border-border text-text-muted hover:text-navy hover:bg-surface-muted'
+                  }`}
               >
                 <span>Directory Matches (&lt;60%)</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  activeMatchTier === 'DIRECTORY' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${activeMatchTier === 'DIRECTORY' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
+                  }`}>
                   {companyResults.filter((c: any) => (c.matchScore || 70) < 60).length}
                 </span>
               </button>
@@ -3322,11 +3189,10 @@ export const SearchPage = () => {
                         key={sz}
                         type="button"
                         onClick={() => handlePageSizeChange(sz)}
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-all ${
-                          pageSize === sz
-                            ? 'bg-black text-white shadow-xs'
-                            : 'text-text-muted hover:text-navy'
-                        }`}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-all ${pageSize === sz
+                          ? 'bg-black text-white shadow-xs'
+                          : 'text-text-muted hover:text-navy'
+                          }`}
                       >
                         {sz}
                       </button>
@@ -3354,11 +3220,10 @@ export const SearchPage = () => {
                       onClick={() => {
                         handleSearch(query, 'ENTERPRISES', pg, pageSize);
                       }}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
-                        companyMeta.page === pg
-                          ? 'bg-black text-white shadow-xs'
-                          : 'border border-border bg-surface text-navy hover:bg-surface-muted'
-                      }`}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${companyMeta.page === pg
+                        ? 'bg-black text-white shadow-xs'
+                        : 'border border-border bg-surface text-navy hover:bg-surface-muted'
+                        }`}
                     >
                       {pg}
                     </button>
@@ -3385,7 +3250,7 @@ export const SearchPage = () => {
       {/* Feature #15: Save Search Slide-Over Drawer */}
       {showSaveModal && (
         <div className="fixed inset-0 z-50 overflow-hidden flex justify-end bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div 
+          <div
             className="w-full max-w-md bg-surface border-l border-border h-full shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out"
             onClick={(e) => e.stopPropagation()}
           >
@@ -3428,11 +3293,10 @@ export const SearchPage = () => {
                       key={cadence}
                       type="button"
                       onClick={() => setSaveSearchCadence(cadence)}
-                      className={`py-2 px-3 rounded-xl text-xs font-bold border text-center transition-all ${
-                        saveSearchCadence === cadence
-                          ? 'bg-black text-white border-black shadow-sm'
-                          : 'bg-bg text-text-muted border-border hover:text-navy'
-                      }`}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border text-center transition-all ${saveSearchCadence === cadence
+                        ? 'bg-black text-white border-black shadow-sm'
+                        : 'bg-bg text-text-muted border-border hover:text-navy'
+                        }`}
                     >
                       {cadence}
                     </button>
@@ -3470,7 +3334,7 @@ export const SearchPage = () => {
       {/* Feature #18: Lookalike Explorer Slide-Over Drawer */}
       {(lookalikeData || loadingLookalikes) && (
         <div className="fixed inset-0 z-50 overflow-hidden flex justify-end bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div 
+          <div
             className="w-full max-w-xl bg-surface border-l border-border h-full shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out"
             onClick={(e) => e.stopPropagation()}
           >
@@ -3898,22 +3762,20 @@ export const SearchPage = () => {
                     <button
                       type="button"
                       onClick={() => setVerifyMode('BUYER_REQUEST')}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                        verifyMode === 'BUYER_REQUEST'
-                          ? 'bg-white text-black shadow-xs'
-                          : 'text-neutral-600 hover:text-black'
-                      }`}
+                      className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${verifyMode === 'BUYER_REQUEST'
+                        ? 'bg-white text-black shadow-xs'
+                        : 'text-neutral-600 hover:text-black'
+                        }`}
                     >
                       Buyer / Partner Request
                     </button>
                     <button
                       type="button"
                       onClick={() => setVerifyMode('CLAIM_DOMAIN')}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                        verifyMode === 'CLAIM_DOMAIN'
-                          ? 'bg-white text-black shadow-xs'
-                          : 'text-neutral-600 hover:text-black'
-                      }`}
+                      className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${verifyMode === 'CLAIM_DOMAIN'
+                        ? 'bg-white text-black shadow-xs'
+                        : 'text-neutral-600 hover:text-black'
+                        }`}
                     >
                       I Represent This Enterprise
                     </button>
@@ -4027,8 +3889,8 @@ export const SearchPage = () => {
                     {verifySubmitting
                       ? 'Submitting...'
                       : verifyMode === 'BUYER_REQUEST'
-                      ? 'Submit Verification Request'
-                      : 'Claim & Verify Enterprise'}
+                        ? 'Submit Verification Request'
+                        : 'Claim & Verify Enterprise'}
                   </span>
                 </button>
               )}

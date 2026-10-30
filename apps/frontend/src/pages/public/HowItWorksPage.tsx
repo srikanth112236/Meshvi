@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, UserCheck, MessageSquare, Building, Users, ShieldAlert, CheckCircle, Send, Sparkles } from 'lucide-react';
+import { ArrowRight, UserCheck, MessageSquare, Building, Users, ShieldAlert, CheckCircle, Send, Sparkles, Play } from 'lucide-react';
 import { MotionContainer, MotionStagger, MotionItem } from '../../components/ui/MotionSection';
+import { ProductDemoPlayer } from '../../components/ui/ProductDemoPlayer';
 
 export const HowItWorksPage = () => {
+  const [tourOpen, setTourOpen] = useState(false);
+
   const steps = [
     {
       num: '01',
@@ -58,19 +62,36 @@ export const HowItWorksPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20">
       {/* Header */}
-      <MotionContainer className="max-w-3xl">
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-soft text-primary text-xs font-bold mb-4">
+      <MotionContainer className="max-w-3xl space-y-4">
+        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-soft text-primary text-xs font-bold mb-1">
           <Sparkles className="w-3.5 h-3.5" />
           <span>7-Step Deterministic Protocol</span>
         </div>
         <h1 className="text-4xl sm:text-6xl font-black text-navy tracking-tight">
           How MESHVI works
         </h1>
-        <p className="mt-4 text-base sm:text-lg text-text-muted leading-relaxed">
+        <p className="mt-2 text-base sm:text-lg text-text-muted leading-relaxed">
           Traditional directories require knowing the exact person’s title before you can find them.
           Meshvi begins with your business outcome, normalizes intent, explains matches transparently,
           and facilitates mutual connections without unsolicited spam.
         </p>
+
+        <div className="pt-2 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setTourOpen(true)}
+            className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all flex items-center space-x-2 cursor-pointer"
+          >
+            <Play className="w-3.5 h-3.5 fill-white" />
+            <span>Watch Full Interactive Tour (1:30)</span>
+          </button>
+          <Link
+            to="/register"
+            className="px-5 py-2.5 bg-surface hover:bg-surface-muted text-navy text-xs sm:text-sm font-bold rounded-xl border border-border transition-all"
+          >
+            Create Free Account &rarr;
+          </Link>
+        </div>
       </MotionContainer>
 
       {/* 7 Step Interactive Flow */}
@@ -110,16 +131,32 @@ export const HowItWorksPage = () => {
             Create your professional profile today or explore open pilot search criteria.
           </p>
         </div>
-        <div className="flex items-center space-x-3 shrink-0">
+        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => setTourOpen(true)}
+            className="w-full sm:w-auto px-5 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl border border-white/20 transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
+          >
+            <Play className="w-3.5 h-3.5 fill-white" />
+            <span>Watch Tour (1:30)</span>
+          </button>
           <Link
             to="/register"
-            className="px-6 py-3 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center"
+            className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center"
           >
             <span>Get Started Free</span>
             <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </div>
       </MotionContainer>
+
+      {/* Interactive Tour Modal */}
+      <ProductDemoPlayer
+        open={tourOpen}
+        initialChapter={0}
+        mode="full"
+        onClose={() => setTourOpen(false)}
+      />
     </div>
   );
 };

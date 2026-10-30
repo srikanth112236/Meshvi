@@ -330,8 +330,11 @@ const ScaledStage = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const update = () =>
-      setScale(Math.min(el.clientWidth / STAGE_W, el.clientHeight / STAGE_H));
+    const update = () => {
+      const clientW = el.clientWidth || window.innerWidth;
+      const clientH = el.clientHeight || (clientW * 9) / 16;
+      setScale(Math.min(clientW / STAGE_W, clientH / STAGE_H));
+    };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(el);
@@ -339,16 +342,18 @@ const ScaledStage = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <div ref={ref} className="absolute inset-0 overflow-hidden bg-white">
+    <div ref={ref} className="absolute inset-0 overflow-hidden bg-white flex items-center justify-center">
       <div
         style={{
           width: STAGE_W,
           height: STAGE_H,
           transform: `scale(${scale})`,
-          transformOrigin: 'top left',
+          transformOrigin: 'center center',
           position: 'absolute',
-          top: 0,
-          left: 0,
+          top: '50%',
+          left: '50%',
+          marginTop: -STAGE_H / 2,
+          marginLeft: -STAGE_W / 2,
         }}
       >
         {children}
@@ -2238,7 +2243,7 @@ export const ProductDemoPlayer = ({
       />
 
       <div
-        className="relative w-full max-w-6xl bg-white border border-border rounded-2xl shadow-2xl overflow-hidden"
+        className="relative w-full max-w-5xl max-h-[95vh] bg-white border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto"
         onClick={() => {
           if (!muted) {
             const kit = ensureAudio();
@@ -2247,23 +2252,23 @@ export const ProductDemoPlayer = ({
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-border bg-white shrink-0">
           <div className="flex items-center space-x-2 min-w-0">
             <img
               src="/meshvi-logo-full.png"
               alt="Meshvi"
-              className="h-4 object-contain shrink-0"
+              className="h-3.5 sm:h-4 object-contain shrink-0"
             />
             <span className="h-3 w-px bg-border shrink-0" />
-            <p className="text-[10px] font-semibold text-navy truncate">
-              {isFull ? 'The MESHVI tour' : chapter.title}
+            <p className="text-[10px] sm:text-xs font-bold text-navy truncate">
+              {isFull ? 'The MESHVI Tour' : chapter.title}
             </p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="text-text-muted hover:text-navy p-1 rounded-md hover:bg-surface-muted transition-colors"
+              className="text-text-muted hover:text-navy p-1.5 rounded-md hover:bg-surface-muted transition-colors cursor-pointer"
               aria-label={isFs ? 'Exit fullscreen' : 'Fullscreen'}
             >
               {isFs ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -2271,7 +2276,7 @@ export const ProductDemoPlayer = ({
             <button
               type="button"
               onClick={handleClose}
-              className="text-text-muted hover:text-navy p-1 rounded-md hover:bg-surface-muted transition-colors"
+              className="text-text-muted hover:text-navy p-1.5 rounded-md hover:bg-surface-muted transition-colors cursor-pointer"
               aria-label="Close tour"
             >
               <X className="w-4 h-4" />
@@ -2280,38 +2285,38 @@ export const ProductDemoPlayer = ({
         </div>
 
         {/* Video surface */}
-        <div ref={screenRef} className="relative aspect-video bg-white overflow-hidden">
-          {isFull ? (
-            <TourScene chapter={chapter} t={boardT} />
-          ) : (
-            <ScaledStage>
+        <div ref={screenRef} className="relative aspect-video w-full bg-white overflow-hidden shrink-0">
+          <ScaledStage>
+            {isFull ? (
+              <TourScene chapter={chapter} t={boardT} />
+            ) : (
               <DemoScreen chapter={chapter} t={boardT} />
-            </ScaledStage>
-          )}
+            )}
+          </ScaledStage>
 
           {!playing && (
             <button
               type="button"
               onClick={() => setPlaying(true)}
-              className="absolute inset-0 flex items-center justify-center bg-navy/10"
+              className="absolute inset-0 flex items-center justify-center bg-navy/15 cursor-pointer z-10 transition-colors"
               aria-label="Play"
             >
-              <span className="w-12 h-12 rounded-full bg-white shadow-lg border border-border flex items-center justify-center">
-                <Play className="w-5 h-5 text-primary fill-primary" />
+              <span className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-xl border border-border flex items-center justify-center hover:scale-105 transition-transform">
+                <Play className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary ml-0.5" />
               </span>
             </button>
           )}
 
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-white via-white/85 to-transparent px-4 pb-2 pt-5 pointer-events-none">
-            <p className="text-[8px] font-black uppercase tracking-[0.18em] text-primary">
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-white via-white/90 to-transparent px-3 sm:px-5 pb-2 pt-6 pointer-events-none z-10">
+            <p className="text-[7.5px] sm:text-[9px] font-black uppercase tracking-[0.18em] text-primary">
               {beat.label}
             </p>
-            <p className="text-[10px] text-text-muted line-clamp-1">{chapter.caption}</p>
+            <p className="text-[9px] sm:text-xs text-text-muted truncate max-w-full font-medium">{chapter.caption}</p>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="px-4 py-3 space-y-2.5 border-t border-border">
+        <div className="px-3 sm:px-4 py-2 sm:py-2.5 space-y-2 border-t border-border bg-white shrink-0">
           <div className="flex items-center gap-2">
             <div className="flex-1 h-1.5 rounded-full bg-surface-muted overflow-hidden">
               <span
@@ -2319,42 +2324,42 @@ export const ProductDemoPlayer = ({
                 style={{ width: `${progress * 100}%` }}
               />
             </div>
-            <span className="text-[9px] font-bold tabular-nums text-text-muted shrink-0">
+            <span className="text-[9px] sm:text-[10px] font-bold tabular-nums text-text-muted shrink-0">
               {fmt(elapsed)} / {fmt(total)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center space-x-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center space-x-1 sm:space-x-1.5">
               <button
                 type="button"
                 onClick={() => setPlaying((p) => !p)}
-                className="w-8 h-8 rounded-full bg-primary hover:bg-primary-hover text-white flex items-center justify-center transition-colors"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary hover:bg-primary-hover text-white flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                 aria-label={playing ? 'Pause' : 'Play'}
               >
-                {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
+                {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white ml-0.5" />}
               </button>
               <button
                 type="button"
                 onClick={cycleSpeed}
-                className="ml-1 px-2 py-1 rounded-md text-[10px] font-bold text-text-muted hover:text-navy hover:bg-surface-muted transition-colors flex items-center space-x-1"
+                className="ml-1 px-1.5 sm:px-2 py-1 rounded-md text-[9px] sm:text-[10px] font-bold text-text-muted hover:text-navy hover:bg-surface-muted transition-colors flex items-center space-x-1 cursor-pointer"
                 aria-label={`Playback speed ${speed}x`}
               >
-                <Zap className="w-3 h-3" />
+                <Zap className="w-3 h-3 text-amber-500" />
                 <span>{speed}×</span>
               </button>
               <button
                 type="button"
                 onClick={toggleMute}
-                className="px-2 py-1 rounded-md text-text-muted hover:text-navy hover:bg-surface-muted transition-colors"
+                className="px-1.5 sm:px-2 py-1 rounded-md text-text-muted hover:text-navy hover:bg-surface-muted transition-colors cursor-pointer"
                 aria-label={muted ? 'Unmute demo sound' : 'Mute demo sound'}
               >
                 {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
               </button>
             </div>
 
-            <span className="text-[9px] font-semibold text-text-muted">
-              {isFull ? 'Full tour · 5 scenes · 1:30 · 2× default' : `Demo · ${fmt(total)} · 1× default`}
+            <span className="text-[8.5px] sm:text-[10px] font-medium text-text-muted truncate">
+              {isFull ? 'Full tour · 5 scenes · 1:30' : `Demo · ${fmt(total)}`}
             </span>
           </div>
         </div>
