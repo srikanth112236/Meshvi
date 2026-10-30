@@ -102,7 +102,7 @@ export const AppLayout = () => {
     e.preventDefault();
     const newSessionId = startNewSearchSession();
     setMobileMenuOpen(false);
-    navigate(`/app/search?session=${newSessionId}`);
+    navigate(`/app/home?new_search=true&session=${newSessionId}`);
   };
 
   const openRecentModal = () => {

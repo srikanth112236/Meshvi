@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   Search,
@@ -245,6 +245,7 @@ const SearchableDropdownFilter: React.FC<SearchableDropdownFilterProps> = ({
 };
 
 export const SearchPage = () => {
+  const navigate = useNavigate();
   const { token } = useAuth();
   const {
     addSearch,
@@ -789,10 +790,7 @@ export const SearchPage = () => {
 
   const handleStartNewChat = () => {
     const newSessionId = startNewSearchSession();
-    setQuery('');
-    setResultsData(null);
-    setCompanyResults([]);
-    setSearchParams({ session: newSessionId }, { replace: true });
+    navigate(`/app/home?new_search=true&session=${newSessionId}`);
   };
 
   const handleOpenTwoSidedFit = async (profile: any) => {
