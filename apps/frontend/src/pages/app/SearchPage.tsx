@@ -30,6 +30,7 @@ import {
   Clock,
   XCircle,
   MessageSquare,
+  Plus,
 } from 'lucide-react';
 import { ConnectOpportunityModal } from '../../components/ui/ConnectOpportunityModal';
 import { SubmitCompanyProposalModal } from '../../components/ui/SubmitCompanyProposalModal';
@@ -39,6 +40,66 @@ import { OpportunityQualificationModal } from '../../components/ui/OpportunityQu
 import { SearchGuideModal } from '../../components/ui/SearchGuideModal';
 import { WhyThisMatchModal } from '../../components/ui/WhyThisMatchModal';
 import { autoCorrectQuery } from '../../utils/typoCorrection';
+import { useSearchHistory } from '../../context/SearchHistoryContext';
+
+const toRecentSearchResult = (item: any, index: number) => {
+  const p = item?.profile || item || {};
+  const rawScore = typeof item?.score === 'number' ? item.score : undefined;
+  return {
+    id: String(p.id || item?.id || index),
+    name: p.displayName || p.name || 'Untitled match',
+    headline: p.currentTitle || p.headline || p.industry || undefined,
+    company: p.company?.name || p.companyName || undefined,
+    location: p.city ? `${p.city}${p.countryCode ? `, ${p.countryCode}` : ''}` : undefined,
+    score: rawScore === undefined ? undefined : Math.round(rawScore > 1 ? rawScore : rawScore * 100),
+  };
+};
+
+const getRefinedSuggestions = (q: string, backendReformulations?: string[]): string[] => {
+  if (Array.isArray(backendReformulations) && backendReformulations.length > 0) {
+    return backendReformulations;
+  }
+  const lower = (q || '').toLowerCase();
+  if (lower.includes('bev') || lower.includes('drink') || lower.includes('coffee') || lower.includes('cold brew')) {
+    return [
+      'Cold Brew Beverage Sourcing',
+      'Airport Retail Concessions',
+      'FMCG Food Procurement & Distribution',
+      'APAC Supply Chain Logistics',
+    ];
+  }
+  if (lower.includes('airport') || lower.includes('retail') || lower.includes('lounge') || lower.includes('concession')) {
+    return [
+      'Airport Retail Concessions',
+      'Travel Retail Food & Beverage',
+      'Duty Free Brand Placement',
+      'Transit Hub Distribution',
+    ];
+  }
+  if (lower.includes('ai') || lower.includes('tech') || lower.includes('software') || lower.includes('cloud')) {
+    return [
+      'Enterprise AI Platform Architecture',
+      'SOC2 Enterprise SaaS Procurement',
+      'Cloud Infrastructure Sourcing',
+      'B2B Tech Partnerships',
+    ];
+  }
+  if (lower.includes('logistics') || lower.includes('supply') || lower.includes('freight') || lower.includes('shipping')) {
+    return [
+      'APAC Supply Chain Logistics',
+      'Cross-Border Cold Chain Warehousing',
+      'Transit Hub Distribution',
+      'Freight Procurement Network',
+    ];
+  }
+  return [
+    'Airport Retail Concessions',
+    'Cold Brew Beverage Sourcing',
+    'APAC Supply Chain Logistics',
+    'Enterprise AI Platform',
+    'FMCG Food Procurement',
+  ];
+};
 
 type SearchMode = 'DECISION_MAKERS' | 'ENTERPRISES' | 'OPPORTUNITY_GRAPH' | 'MARKET_CORRIDOR';
 
@@ -188,8 +249,25 @@ const SearchableDropdownFilter: React.FC<SearchableDropdownFilterProps> = ({
 
 export const SearchPage = () => {
   const { token } = useAuth();
+  const {
+    addSearch,
+    activeSessionId,
+    setActiveSessionId,
+    startNewSearchSession,
+    getSession,
+  } = useSearchHistory();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
+  const urlSession = searchParams.get('session') || '';
+
+  // Sync active session if URL specifies a session
+  useEffect(() => {
+    if (urlSession && urlSession !== activeSessionId) {
+      setActiveSessionId(urlSession);
+    }
+  }, [urlSession, activeSessionId, setActiveSessionId]);
+
+  const currentSession = getSession(urlSession || activeSessionId || '');
 
   // Search Mode: DECISION_MAKERS vs ENTERPRISES vs OPPORTUNITY_GRAPH vs MARKET_CORRIDOR (Differentiator #3)
   const [searchMode, setSearchMode] = useState<
@@ -530,6 +608,17 @@ export const SearchPage = () => {
         if (currentReqId !== searchRequestIdRef.current) return;
         if (res.ok && data.success) {
           setResultsData(data.data);
+          // Keep the member's search + matched results in the sidebar history on the SAME chat session
+          const effectiveSessionId = urlSession || activeSessionId || startNewSearchSession();
+          const matched = data.data?.matches || data.data?.results || [];
+          if (qText.trim() && Array.isArray(matched) && matched.length > 0) {
+            addSearch(
+              qText,
+              matched.map(toRecentSearchResult),
+              Number(data.data?.total ?? data.data?.totalCount ?? matched.length),
+              effectiveSessionId
+            );
+          }
           // Zero filter bleed: Intent criteria are evaluated natively in search engine backend without polluting frontend filter state
         }
       } else {
@@ -563,6 +652,17 @@ export const SearchPage = () => {
               limit: data.data?.limit || targetLimit,
               totalPages: data.data?.totalPages || 1,
             });
+          }
+
+          const companies = Array.isArray(data.data) ? data.data : data.data?.items || [];
+          const effectiveSessionId = urlSession || activeSessionId || startNewSearchSession();
+          if (qText.trim() && companies.length > 0) {
+            addSearch(
+              qText,
+              companies.map(toRecentSearchResult),
+              Array.isArray(data.data) ? companies.length : Number(data.data?.totalCount ?? companies.length),
+              effectiveSessionId
+            );
           }
         }
       }
@@ -666,11 +766,10 @@ export const SearchPage = () => {
       }
     }
     const mode = targetMode || searchMode;
-    if (q.trim()) {
-      setSearchParams({ q: q.trim() }, { replace: true });
-    } else {
-      setSearchParams({}, { replace: true });
-    }
+    const effectiveSessionId = urlSession || activeSessionId || startNewSearchSession();
+    const newParams: Record<string, string> = { session: effectiveSessionId };
+    if (q.trim()) newParams.q = q.trim();
+    setSearchParams(newParams, { replace: true });
     setShowSuggestions(false);
     setCurrentPage(1);
     handleSearch(q, mode, 1, pageSize, {
@@ -689,6 +788,14 @@ export const SearchPage = () => {
       locationScope: activeLocationScope,
       searchPriority,
     });
+  };
+
+  const handleStartNewChat = () => {
+    const newSessionId = startNewSearchSession();
+    setQuery('');
+    setResultsData(null);
+    setCompanyResults([]);
+    setSearchParams({ session: newSessionId }, { replace: true });
   };
 
   const handleOpenTwoSidedFit = async (profile: any) => {
@@ -982,6 +1089,48 @@ export const SearchPage = () => {
             Discover verified executives, suppliers, and commercial partners.
           </p>
         </div>
+
+        {/* Search Chat Thread Indicator / Session Breadcrumb */}
+        {currentSession && currentSession.queries && currentSession.queries.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 p-2 px-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs animate-in fade-in">
+            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 flex items-center gap-1 mr-1">
+              <MessageSquare className="w-3 h-3 text-primary" />
+              <span>Current Search Chat:</span>
+            </span>
+            <div className="flex flex-wrap items-center gap-1 min-w-0">
+              {currentSession.queries.map((sessionQ, idx) => {
+                const isCurrent = sessionQ.toLowerCase() === query.trim().toLowerCase();
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setQuery(sessionQ);
+                      handleFreshSearch(sessionQ);
+                    }}
+                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                      isCurrent
+                        ? 'bg-primary text-white shadow-2xs font-bold'
+                        : 'bg-white hover:bg-slate-100 text-navy border border-slate-200/90'
+                    }`}
+                    title={`Re-run query "${sessionQ}"`}
+                  >
+                    <span>{sessionQ}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              onClick={handleStartNewChat}
+              className="ml-auto text-[11px] font-bold text-primary hover:text-primary-hover flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
+              title="Start a fresh search thread"
+            >
+              <Plus className="w-3 h-3" />
+              <span>New Search Chat</span>
+            </button>
+          </div>
+        )}
 
         {/* Compact Command Search Bar with Autocomplete */}
         <form
@@ -2301,69 +2450,69 @@ export const SearchPage = () => {
             </div>
           )}
 
-          {/* P1/P2: Targeted Enterprise Spotlight Card */}
+          {/* P1/P2: Targeted Enterprise Spotlight Card (Light Theme) */}
           {resultsData?.matchedCompany && !loading && (() => {
             const isVerified = resultsData.matchedCompany.verificationStatus === 'VERIFIED';
             const hasDecisionMakers = candidateResults.length > 0;
             const companyName = resultsData.matchedCompany.name;
 
             return (
-              <div className={`p-4 rounded-2xl border shadow-sm transition-all animate-in fade-in space-y-3 ${
+              <div className={`p-4 rounded-2xl border shadow-xs transition-all animate-in fade-in space-y-3 ${
                 isVerified
-                  ? 'bg-gradient-to-r from-neutral-900 via-neutral-850 to-black text-white border-neutral-750'
-                  : 'bg-gradient-to-r from-neutral-950 via-neutral-900 to-amber-950/40 text-white border-amber-600/40'
+                  ? 'bg-white text-navy border-slate-200/90'
+                  : 'bg-amber-50/60 text-navy border-amber-200/80'
               }`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start sm:items-center space-x-3.5 min-w-0">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black shrink-0 shadow-sm ${
-                      isVerified ? 'bg-amber-400 text-neutral-950' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black shrink-0 shadow-2xs ${
+                      isVerified ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-amber-100 text-amber-800 border border-amber-300'
                     }`}>
                       <Building2 className="w-6 h-6" />
                     </div>
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
                           Target Organization Spotlight
                         </span>
 
                         {/* Honest, Clear Verification Badge */}
                         {isVerified ? (
-                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1">
-                            <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
+                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center space-x-1">
+                            <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
                             <span>DNS VERIFIED ENTERPRISE</span>
                           </span>
                         ) : (
-                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center space-x-1">
-                            <AlertCircle className="w-2.5 h-2.5 text-amber-400" />
+                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-100 text-amber-900 border border-amber-200 flex items-center space-x-1">
+                            <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
                             <span>UNVERIFIED DIRECTORY RECORD</span>
                           </span>
                         )}
 
                         {/* Accurate Buying Committee Indicator */}
                         {hasDecisionMakers ? (
-                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800 flex items-center space-x-1">
-                            <Users className="w-2.5 h-2.5 text-emerald-400" />
+                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center space-x-1">
+                            <Users className="w-2.5 h-2.5 text-emerald-600" />
                             <span>Buying Committee Active ({candidateResults.length})</span>
                           </span>
                         ) : (
-                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-semibold bg-neutral-800 text-neutral-400 border border-neutral-700 flex items-center space-x-1">
-                            <Users className="w-2.5 h-2.5 text-neutral-500" />
+                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 flex items-center space-x-1">
+                            <Users className="w-2.5 h-2.5 text-slate-400" />
                             <span>No Decision-Makers Onboarded</span>
                           </span>
                         )}
                       </div>
 
-                      <h3 className="text-sm sm:text-base font-extrabold text-white truncate">
+                      <h3 className="text-sm sm:text-base font-extrabold text-navy truncate">
                         {companyName}
                       </h3>
-                      <div className="text-[11px] text-neutral-300 flex flex-wrap items-center gap-2">
+                      <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-2">
                         <span>{resultsData.matchedCompany.industry || 'Enterprise Directory'}</span>
-                        <span className="text-neutral-500">&bull;</span>
+                        <span className="text-slate-400">&bull;</span>
                         <span>{resultsData.matchedCompany.headquartersCity || 'Regional HQ'}, {resultsData.matchedCompany.headquartersCountry || 'Global'}</span>
                         {resultsData.matchedCompany.domain && (
                           <>
-                            <span className="text-neutral-500">&bull;</span>
-                            <span className="text-amber-200/90 font-mono text-[10.5px]">{resultsData.matchedCompany.domain}</span>
+                            <span className="text-slate-400">&bull;</span>
+                            <span className="text-primary font-mono text-[10.5px]">{resultsData.matchedCompany.domain}</span>
                           </>
                         )}
                       </div>
@@ -2374,10 +2523,10 @@ export const SearchPage = () => {
                     <button
                       type="button"
                       onClick={() => setDossierCompanyId(resultsData.matchedCompany.id)}
-                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-100 border border-neutral-600 rounded-xl text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-xs"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-navy border border-slate-200 rounded-xl text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-2xs cursor-pointer"
                       title="360° Company Dossier"
                     >
-                      <Briefcase className="w-3.5 h-3.5 text-neutral-400" />
+                      <Briefcase className="w-3.5 h-3.5 text-slate-500" />
                       <span>Company Dossier</span>
                     </button>
 
@@ -2387,7 +2536,7 @@ export const SearchPage = () => {
                         onClick={() => {
                           window.location.href = `/company/claim?companyId=${resultsData.matchedCompany?.id || ''}`;
                         }}
-                        className="px-3.5 py-1.5 bg-amber-400 text-black hover:bg-amber-300 rounded-xl text-xs font-black transition-colors flex items-center space-x-1.5 shadow-xs"
+                        className="px-3.5 py-1.5 bg-amber-400 text-black hover:bg-amber-300 rounded-xl text-xs font-black transition-colors flex items-center space-x-1.5 shadow-xs cursor-pointer"
                       >
                         <ShieldCheck className="w-3.5 h-3.5 text-black" />
                         <span>Request Verification</span>
@@ -2398,9 +2547,9 @@ export const SearchPage = () => {
 
                 {/* Unverified Enterprise Guidance Banner */}
                 {!isVerified && (
-                  <div className="pt-2.5 border-t border-neutral-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-neutral-400">
+                  <div className="pt-2.5 border-t border-amber-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-amber-900">
                     <div className="flex items-start sm:items-center space-x-2">
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
                       <span>
                         <strong>Verification Pending:</strong> {companyName} is listed as an unverified directory record. Cryptographic domain attestation and executive signing authority have not yet been completed.
                       </span>
@@ -2410,7 +2559,7 @@ export const SearchPage = () => {
                       onClick={() => {
                         window.location.href = `/company/claim?companyId=${resultsData.matchedCompany?.id || ''}`;
                       }}
-                      className="text-amber-300 hover:text-amber-200 font-bold hover:underline shrink-0 text-left sm:text-right"
+                      className="text-primary hover:underline font-bold shrink-0 text-left sm:text-right cursor-pointer"
                     >
                       Verify or Claim This Company &rarr;
                     </button>
@@ -2426,24 +2575,24 @@ export const SearchPage = () => {
             </div>
           ) : candidateResults.length === 0 ? (
             <div className="space-y-4">
-              {/* Proactive Clarification Interview Card for Tricky / Ambiguous Searches */}
+              {/* Proactive Clarification Interview Card for Tricky / Ambiguous Searches (LIGHT THEME) */}
               {resultsData?.clarification?.isClarificationNeeded && (
-                <div className="p-5 bg-gradient-to-br from-neutral-900 via-neutral-850 to-black text-white rounded-2xl border border-neutral-700 shadow-md space-y-4 animate-in fade-in">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-750">
+                <div className="p-5 bg-white text-navy rounded-2xl border border-slate-200/90 shadow-xs space-y-4 animate-in fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div className="flex items-center space-x-3">
-                      <div className="w-9 h-9 rounded-xl bg-amber-400 text-neutral-950 flex items-center justify-center font-black shrink-0 shadow-sm">
-                        <Sparkles className="w-5 h-5 text-neutral-950" />
+                      <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-900 border border-amber-200 flex items-center justify-center font-black shrink-0 shadow-2xs">
+                        <Sparkles className="w-5 h-5 text-amber-700" />
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
                             Search Clarification Engine
                           </span>
-                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-400/20 text-amber-200 border border-amber-400/30">
+                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                             {resultsData.clarification.detectedTheme}
                           </span>
                         </div>
-                        <h3 className="text-sm font-extrabold text-white mt-0.5">
+                        <h3 className="text-sm font-extrabold text-navy mt-0.5">
                           {resultsData.clarification.headline}
                         </h3>
                       </div>
@@ -2451,27 +2600,27 @@ export const SearchPage = () => {
                     <button
                       type="button"
                       onClick={() => setShowQualificationModal(true)}
-                      className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 rounded-xl text-xs font-black transition-colors flex items-center space-x-1.5 shrink-0 shadow-sm"
+                      className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 rounded-xl text-xs font-black transition-colors flex items-center space-x-1.5 shrink-0 shadow-2xs cursor-pointer"
                     >
                       <ShieldCheck className="w-3.5 h-3.5" />
                       <span>Full Qualification Interview</span>
                     </button>
                   </div>
 
-                  <p className="text-xs text-neutral-300 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     {resultsData.clarification.prompt}
                   </p>
 
                   {/* Interactive Clarification Question Sets */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
                     {resultsData.clarification.questions.map((qSet: any, qIdx: number) => (
-                      <div key={qIdx} className="p-3 bg-neutral-800/95 rounded-xl border border-neutral-700 space-y-2">
+                      <div key={qIdx} className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 block">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 block">
                             Step {qIdx + 1}: {qSet.question}
                           </span>
                           {qSet.badge && (
-                            <span className="text-[9.5px] font-bold text-neutral-400">
+                            <span className="text-[9.5px] font-bold text-slate-500">
                               {qSet.badge}
                             </span>
                           )}
@@ -2502,17 +2651,17 @@ export const SearchPage = () => {
                                     applyFilter(opt.filterKey, opt.filterVal);
                                   }
                                 }}
-                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all flex items-center space-x-1.5 ${
+                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all flex items-center space-x-1.5 cursor-pointer ${
                                   isSelected
-                                    ? 'bg-amber-400 text-neutral-950 border-amber-300 font-extrabold shadow-xs'
-                                    : 'bg-neutral-750 hover:bg-neutral-650 hover:border-amber-400/60 text-neutral-100 border-neutral-650'
+                                    ? 'bg-primary text-white border-primary font-extrabold shadow-2xs'
+                                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-300'
                                 }`}
                               >
                                 {opt.flag && <span className="text-xs">{opt.flag}</span>}
                                 <span>{opt.label}</span>
                                 {opt.count !== undefined && (
                                   <span className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${
-                                    isSelected ? 'bg-neutral-950/20 text-neutral-950' : 'bg-neutral-850 text-neutral-300'
+                                    isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
                                   }`}>
                                     {opt.count}
                                   </span>
@@ -2527,19 +2676,19 @@ export const SearchPage = () => {
 
                   {/* Dynamic Combined Refinement Action Bar */}
                   {(clarifySelectedRegion || clarifySelectedRole) && (
-                    <div className="p-3 bg-amber-400/10 border border-amber-400/40 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                    <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
                       <div className="text-xs space-y-0.5">
-                        <span className="text-[10px] uppercase font-black text-amber-300 block">
+                        <span className="text-[10px] uppercase font-black text-amber-800 block">
                           Target Alignment Configured:
                         </span>
-                        <div className="flex flex-wrap items-center gap-2 text-white font-bold">
+                        <div className="flex flex-wrap items-center gap-2 text-navy font-bold">
                           {clarifySelectedRegion && (
-                            <span className="px-2 py-0.5 rounded-md bg-neutral-800 text-amber-300 border border-amber-400/30 text-[11px]">
+                            <span className="px-2 py-0.5 rounded-md bg-white text-amber-800 border border-amber-300 text-[11px]">
                               📍 {clarifySelectedRegion.label}
                             </span>
                           )}
                           {clarifySelectedRole && (
-                            <span className="px-2 py-0.5 rounded-md bg-neutral-800 text-amber-300 border border-amber-400/30 text-[11px]">
+                            <span className="px-2 py-0.5 rounded-md bg-white text-amber-800 border border-amber-300 text-[11px]">
                               👔 {clarifySelectedRole.label}
                             </span>
                           )}
@@ -2552,71 +2701,84 @@ export const SearchPage = () => {
                             setClarifySelectedRegion(null);
                             setClarifySelectedRole(null);
                           }}
-                          className="px-2.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg text-xs font-semibold border border-neutral-700 transition-colors"
+                          className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
                         >
                           Clear Selection
                         </button>
                         <button
                           type="button"
                           onClick={() => handleExecuteClarification()}
-                          className="px-4 py-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 rounded-lg text-xs font-black transition-colors flex items-center space-x-1.5 shadow-sm"
+                          className="px-4 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-black transition-colors flex items-center space-x-1.5 shadow-2xs cursor-pointer"
                         >
-                          <Sparkles className="w-3.5 h-3.5" />
+                          <Sparkles className="w-3.5 h-3.5 text-white" />
                           <span>⚡ Execute Refined Search Now</span>
                         </button>
                       </div>
                     </div>
                   )}
-
-                  {/* 1-Click Recommended Reformulations */}
-                  {resultsData.clarification.suggestedReformulations?.length > 0 && (
-                    <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-neutral-750">
-                      <span className="text-[10px] uppercase font-bold text-neutral-400 mr-1">
-                        Try 1-Click Refined Query:
-                      </span>
-                      {resultsData.clarification.suggestedReformulations.map((refQuery: string, rIdx: number) => (
-                        <button
-                          key={rIdx}
-                          type="button"
-                          onClick={() => {
-                            setQuery(refQuery);
-                            handleFreshSearch(refQuery);
-                          }}
-                          className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[11px] font-medium border border-white/20 transition-colors flex items-center space-x-1"
-                        >
-                          <Sparkles className="w-3 h-3 text-amber-300" />
-                          <span>{refQuery}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
               )}
 
-              <div className="p-8 text-center bg-surface border border-border rounded-2xl space-y-3 animate-in fade-in">
-                <Users className="w-8 h-8 text-text-muted mx-auto" />
-                <h3 className="text-sm font-bold text-navy">
-                  {resultsData?.matchedCompany
-                    ? `No decision-makers matched at ${resultsData.matchedCompany.name}`
-                    : query
-                    ? `No matching decision-makers found for "${query}"`
-                    : 'No decision-makers found'}
-                </h3>
-                <p className="text-xs text-text-muted max-w-md mx-auto">
-                  {resultsData?.matchedCompany
-                    ? activeFiltersCount > 0
-                      ? `Your active search filters narrowed the results to 0 matches at ${resultsData.matchedCompany.name}. Clear your filters to explore all functions and seniorities at this enterprise.`
-                      : `No decision-makers are currently onboarded for ${resultsData.matchedCompany.name}. This organization is an unverified directory record.`
-                    : activeFiltersCount > 0
-                    ? 'Your active filter combination returned 0 exact matches. Reset filters or clear query to browse available verified executives.'
-                    : 'Zero profiles match this query exactly. Use the clarification steps above or reset to browse all verified records.'}
-                </p>
+              {/* Complete Light-Theme "Search Not Found" State Card with Try 1-Click Refined Query */}
+              <div className="p-6 sm:p-8 text-center bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-4 animate-in fade-in">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center mx-auto shadow-2xs">
+                  <Search className="w-6 h-6 text-slate-400" />
+                </div>
+
+                <div className="space-y-1.5 max-w-lg mx-auto">
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider">
+                    Search Not Found
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-navy">
+                    {resultsData?.matchedCompany
+                      ? `No decision-makers matched at ${resultsData.matchedCompany.name}`
+                      : query
+                      ? `No verified decision-makers found for "${query}"`
+                      : 'No decision-makers found'}
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    {resultsData?.matchedCompany
+                      ? activeFiltersCount > 0
+                        ? `Your active search filters narrowed the results to 0 matches at ${resultsData.matchedCompany.name}. Clear your filters to explore all functions and seniorities at this enterprise.`
+                        : `No decision-makers are currently onboarded for ${resultsData.matchedCompany.name}. This organization is an unverified directory record.`
+                      : activeFiltersCount > 0
+                      ? 'Your active filter combination returned 0 exact matches. Reset filters or try a 1-click refined query below.'
+                      : 'Zero profiles match this query exactly. Try one of our 1-click refined queries below or broaden your mandate criteria.'}
+                  </p>
+                </div>
+
+                {/* Prominent "Try 1-Click Refined Query:" with Suggested Mandate Pills */}
+                <div className="pt-3 pb-1 border-t border-slate-100 max-w-2xl mx-auto space-y-2.5">
+                  <div className="flex items-center justify-center space-x-1.5 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                    <span>Try 1-Click Refined Query:</span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {getRefinedSuggestions(query, resultsData?.clarification?.suggestedReformulations).map((refQuery, rIdx) => (
+                      <button
+                        key={rIdx}
+                        type="button"
+                        onClick={() => {
+                          setQuery(refQuery);
+                          handleFreshSearch(refQuery);
+                        }}
+                        className="px-3 py-1.5 bg-slate-50 hover:bg-primary-soft text-slate-800 hover:text-primary rounded-xl text-xs font-semibold border border-slate-200/80 hover:border-primary/40 transition-all flex items-center space-x-1.5 shadow-2xs hover:shadow-xs group cursor-pointer"
+                        title={`Refine search to "${refQuery}"`}
+                      >
+                        <Sparkles className="w-3 h-3 text-primary group-hover:rotate-12 transition-transform" />
+                        <span>{refQuery}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Reset / Fallback Actions */}
                 <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
                   {resultsData?.matchedCompany && activeFiltersCount > 0 && (
                     <button
                       type="button"
                       onClick={handleResetFiltersKeepQuery}
-                      className="px-3.5 py-1.5 bg-neutral-900 text-white hover:bg-neutral-800 text-xs font-bold rounded-xl transition-colors inline-flex items-center space-x-1.5 shadow-xs"
+                      className="px-3.5 py-2 bg-slate-800 text-white hover:bg-slate-900 text-xs font-bold rounded-xl transition-colors inline-flex items-center space-x-1.5 shadow-xs cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Clear Active Filters (Keep Company)</span>
@@ -2626,17 +2788,17 @@ export const SearchPage = () => {
                     <button
                       type="button"
                       onClick={() => setVerifyCompanyModalTarget(resultsData.matchedCompany)}
-                      className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 text-xs font-black rounded-xl transition-colors inline-flex items-center space-x-1.5 shadow-sm"
+                      className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-neutral-950 text-xs font-black rounded-xl transition-colors inline-flex items-center space-x-1.5 shadow-xs cursor-pointer"
                     >
                       <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Request Enterprise Verification & Executive Onboarding</span>
+                      <span>Request Enterprise Verification</span>
                     </button>
                   )}
                   {(query || activeFiltersCount > 0) && (
                     <button
                       type="button"
                       onClick={handleClearSearch}
-                      className="px-3.5 py-1.5 bg-neutral-100 text-neutral-800 hover:bg-neutral-200 text-xs font-bold rounded-xl transition-colors inline-flex items-center space-x-1.5"
+                      className="px-3.5 py-2 bg-slate-100 text-navy hover:bg-slate-200 text-xs font-bold rounded-xl transition-colors inline-flex items-center space-x-1.5 border border-slate-200 cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Reset Search & Browse All</span>

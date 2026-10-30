@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Mail,
@@ -13,7 +13,10 @@ import {
   Network,
   X,
   Info,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
+import { DoodleMeet } from '../../components/brand/DoodleMeet';
 import { useAuth } from '../../context/AuthContext';
 
 export const LoginPage = () => {
@@ -23,6 +26,7 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login, logout, loginWithGoogle, violationAlert, clearViolationAlert } = useAuth();
   const navigate = useNavigate();
 
@@ -223,7 +227,7 @@ export const LoginPage = () => {
               type="button"
               onClick={() => handleGoogleSignIn()}
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-xs transition-all flex items-center justify-center space-x-2.5 disabled:opacity-50 hover:border-slate-400 cursor-pointer"
+              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-400 active:translate-y-0 active:scale-[0.98] flex items-center justify-center space-x-2.5 disabled:opacity-50 cursor-pointer"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -285,13 +289,20 @@ export const LoginPage = () => {
               <div className="relative">
                 <Lock className="w-4 h-4 text-text-muted absolute left-3.5 top-3.5" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl text-xs text-navy focus:ring-2 focus:ring-focus focus:outline-none"
+                  className="w-full pl-10 pr-10 py-2.5 bg-surface border border-border rounded-xl text-xs text-navy focus:ring-2 focus:ring-focus focus:outline-none"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-navy transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
@@ -335,6 +346,7 @@ export const LoginPage = () => {
         <div className="absolute bottom-0 left-0 w-72 sm:w-96 h-72 sm:h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 space-y-4 sm:space-y-6">
+          <DoodleMeet className="w-14 h-10" />
           <Link to="/" className="inline-block">
             <img
               src="/meshvi-logo-white.png"

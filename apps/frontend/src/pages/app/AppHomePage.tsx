@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
+import { useSearchHistory } from '../../context/SearchHistoryContext';
 import {
   Search,
   UserCheck,
@@ -24,10 +25,14 @@ import {
   CheckCircle2,
   TrendingUp,
   Plus,
+  Play,
+  Film,
 } from 'lucide-react';
 import { ConnectOpportunityModal } from '../../components/ui/ConnectOpportunityModal';
 import { AddCompanyModal } from '../../components/ui/AddCompanyModal';
 import { CreatePartnershipPostModal } from '../../components/ui/CreatePartnershipPostModal';
+import { VideoShowcase } from '../../components/ui/VideoShowcase';
+import { ProductDemoPlayer } from '../../components/ui/ProductDemoPlayer';
 
 interface StatsState {
   connectionsCount: number;
@@ -125,6 +130,7 @@ const DEFAULT_CURATED_PARTNERS: CounterpartyItem[] = [
 export const AppHomePage = () => {
   const { user, token } = useAuth();
   const { showToast } = useNotifications();
+  const { addSearch } = useSearchHistory();
   const profile = user?.profile;
   const navigate = useNavigate();
 
@@ -147,6 +153,42 @@ export const AppHomePage = () => {
   const [dispatchedIds, setDispatchedIds] = useState<Set<string>>(new Set());
   const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
   const [isPartnershipModalOpen, setIsPartnershipModalOpen] = useState(false);
+
+  // First-time dashboard visitor tour glimpse & animated search state
+  const [showFirstTimeTour, setShowFirstTimeTour] = useState(false);
+  const [showDemoPlayer, setShowDemoPlayer] = useState(false);
+  const [searchHighlighted, setSearchHighlighted] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem('meshvi_dashboard_tour_glimpse_seen');
+    if (!hasSeenTour) {
+      const timer = setTimeout(() => {
+        setShowFirstTimeTour(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleCompleteTour = () => {
+    localStorage.setItem('meshvi_dashboard_tour_glimpse_seen', 'true');
+    setShowFirstTimeTour(false);
+    setShowDemoPlayer(false);
+    setSearchHighlighted(true);
+    setTimeout(() => {
+      searchCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      searchInputRef.current?.focus();
+    }, 250);
+    setTimeout(() => {
+      setSearchHighlighted(false);
+    }, 4500);
+  };
+
+  const handleStartTourVideo = () => {
+    setShowFirstTimeTour(false);
+    setShowDemoPlayer(true);
+  };
 
   // Load real-time counts from APIs
   const refreshStats = useCallback(() => {
@@ -298,6 +340,18 @@ export const AppHomePage = () => {
             };
           });
           setCuratedPartners(mapped);
+          addSearch(
+            q,
+            mapped.map((p) => ({
+              id: p.id,
+              name: p.name,
+              headline: p.headline,
+              company: p.company,
+              location: p.location,
+              score: p.matchScore,
+            })),
+            mapped.length
+          );
         } else {
           // If no backend matches, filter the curated partners by keyword
           const filtered = DEFAULT_CURATED_PARTNERS.filter(
@@ -307,7 +361,20 @@ export const AppHomePage = () => {
               p.company.toLowerCase().includes(q.toLowerCase()) ||
               p.matchReason.toLowerCase().includes(q.toLowerCase())
           );
-          setCuratedPartners(filtered.length > 0 ? filtered : DEFAULT_CURATED_PARTNERS);
+          const finalResults = filtered.length > 0 ? filtered : DEFAULT_CURATED_PARTNERS;
+          setCuratedPartners(finalResults);
+          addSearch(
+            q,
+            finalResults.map((p) => ({
+              id: p.id,
+              name: p.name,
+              headline: p.headline,
+              company: p.company,
+              location: p.location,
+              score: p.matchScore,
+            })),
+            finalResults.length
+          );
         }
       })
       .catch(() => {
@@ -346,10 +413,40 @@ export const AppHomePage = () => {
     });
   };
 
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+  const nextMoves: Array<{
+    id: string;
+    title: string;
+    detail: string;
+    actionLabel: string;
+    to: string;
+  }> = [];
+
+  if (stats.inboundRequestsCount > 0) {
+    nextMoves.push({
+      id: 'triage-inbound',
+      title: 'Triage inbound proposals',
+      detail: `${stats.inboundRequestsCount} inbound proposal${stats.inboundRequestsCount > 1 ? 's' : ''} awaiting your 4-way decision. Close the loop to release warm bridges.`,
+      actionLabel: 'Review now',
+      to: '/app/connections',
+    });
+  }
+
+  if (curatedPartners.length > 0) {
+    const top = curatedPartners[0];
+    nextMoves.push({
+      id: 'reach-out',
+      title: `Open a bridge with ${top.company || top.name}`,
+      detail: `Top match ${top.matchScore}% — ${top.matchReason || top.intents?.[0]?.description || 'strategic intent alignment'}.`,
+      actionLabel: 'Start outreach',
+      to: '/app/partnerships',
+    });
+  }return (
+    <div className="w-full space-y-3 pb-6">
       {/* 1. COMPACT EXECUTIVE IDENTITY HERO */}
-      <div className="bg-surface border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3 relative overflow-hidden">
+      <div className="bg-surface border border-border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2 relative overflow-hidden">
         <div className="flex items-center space-x-3 relative z-10">
           <div className="relative shrink-0">
             {profile?.avatarUrl ? (
@@ -357,10 +454,10 @@ export const AppHomePage = () => {
                 src={profile.avatarUrl}
                 alt={profile.displayName || 'Executive'}
                 referrerPolicy="no-referrer"
-                className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-primary/20 shadow-2xs bg-white"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg object-cover border-2 border-primary/20 shadow-2xs bg-white"
               />
             ) : (
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-navy to-[#1E3A8A] text-white font-black text-base sm:text-lg flex items-center justify-center shadow-2xs">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-navy to-[#1E3A8A] text-white font-black text-sm flex items-center justify-center shadow-2xs">
                 {profile?.displayName ? profile.displayName[0]?.toUpperCase() : 'M'}
               </div>
             )}
@@ -374,18 +471,18 @@ export const AppHomePage = () => {
 
           <div className="space-y-0.5 min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9.5px] font-bold uppercase tracking-wider">
+              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9px] font-bold uppercase tracking-wider">
                 <UserCheck className="w-2.5 h-2.5 text-emerald-600" />
                 <span>Verified Executive</span>
               </span>
-              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[9.5px] font-bold">
+              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[9px] font-bold">
                 <ShieldCheck className="w-2.5 h-2.5 text-indigo-600" />
                 <span>Bilateral Intent Protected</span>
               </span>
             </div>
 
-            <h1 className="text-base sm:text-lg font-black text-navy tracking-tight flex items-center gap-2 truncate">
-              <span className="truncate">{profile?.displayName || 'Executive Leader'}</span>
+            <h1 className="text-sm sm:text-base font-black text-navy tracking-tight flex items-center gap-1.5 truncate">
+              <span className="truncate">{`${greeting}, ${profile?.displayName?.split(' ')[0] || 'there'}`}</span>
               {profile?.company?.name && (
                 <span className="text-xs font-semibold text-text-muted hidden sm:inline-flex items-center space-x-1 shrink-0">
                   <span>•</span>
@@ -395,7 +492,7 @@ export const AppHomePage = () => {
               )}
             </h1>
 
-            <p className="text-xs text-text-muted line-clamp-1 max-w-xl">
+            <p className="text-[11px] text-text-muted line-clamp-1 max-w-lg">
               {profile?.headline || profile?.summary || 'Configure corporate intent to connect with high-trust business decision makers.'}
             </p>
           </div>
@@ -405,14 +502,14 @@ export const AppHomePage = () => {
         <div className="flex items-center gap-2 relative z-10 shrink-0 self-start sm:self-center mt-2 sm:mt-0">
           <Link
             to="/app/profile"
-            className="px-3 py-1.5 bg-surface hover:bg-surface-muted border border-border text-navy font-bold text-xs rounded-lg transition-colors shadow-2xs"
+            className="px-2.5 py-1 bg-surface hover:bg-surface-muted border border-border text-navy font-bold text-[11px] rounded-lg transition-colors shadow-2xs"
           >
             My Profile
           </Link>
           <button
             type="button"
             onClick={() => setIsPartnershipModalOpen(true)}
-            className="px-3.5 py-1.5 bg-primary hover:bg-primary-dark text-white font-bold text-xs rounded-lg shadow-2xs transition-colors flex items-center space-x-1.5"
+            className="px-3 py-1 bg-primary hover:bg-primary-dark text-white font-bold text-[11px] rounded-lg shadow-2xs transition-colors flex items-center space-x-1.5"
           >
             <Plus className="w-3.5 h-3.5 text-white" />
             <span>Post Partnership</span>
@@ -420,8 +517,9 @@ export const AppHomePage = () => {
         </div>
       </div>
 
-      {/* 2. COMPACT EXECUTIVE KPI COMMAND BAR */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* 2. COMPACT EXECUTIVE KPI COMMAND BAR — HIDDEN PER USER REQUEST */}
+      {false && (
+      <div data-tour="tour-connections" className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Active Connections */}
         <Link
           to="/app/connections"
@@ -481,42 +579,62 @@ export const AppHomePage = () => {
           <p className="text-[10px] text-text-muted">Brokered via mutual peers</p>
         </Link>
       </div>
+      )}
 
-      {/* 3. SLEEK & COMPACT OBJECTIVE INTENT DISCOVERY BAR */}
-      <div className="bg-gradient-to-br from-[#0B1528] via-[#102A43] to-[#0A192F] rounded-2xl p-4 sm:p-5 text-white space-y-3.5 shadow-sm relative overflow-hidden">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-sky-400" />
-            <h2 className="text-sm font-black text-white tracking-tight">
-              Objective Intent Search Engine
-            </h2>
-            <span className="text-[11px] text-slate-300 hidden md:inline">
-              — Match verified commercial decision makers by corporate mandate
-            </span>
+      {/* 3. SLEEK & LIGHT-THEMED OBJECTIVE INTENT DISCOVERY BAR */}
+      <div
+        ref={searchCardRef}
+        data-tour="tour-dashboard"
+        className={`bg-white border transition-all duration-500 rounded-2xl p-4 sm:p-5 shadow-xs relative overflow-hidden ${
+          searchHighlighted
+            ? 'ring-4 ring-primary/40 border-primary shadow-lg scale-[1.008]'
+            : 'border-slate-200/90 hover:border-slate-300'
+        } animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-3`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-xl bg-sky-50 text-primary flex items-center justify-center border border-sky-100 shadow-2xs">
+              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs sm:text-sm font-black text-navy tracking-tight">
+                  Objective Intent Search Engine
+                </h2>
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-sky-50 text-sky-700 border border-sky-200/70 text-[9px] font-bold uppercase tracking-wider">
+                  Mandate AI
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 hidden sm:block">
+                Match verified commercial decision makers by corporate mandate — no cold spam.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-white/10 text-[11px] shrink-0 flex items-center space-x-1.5">
-            <span className="text-slate-400 font-semibold uppercase text-[10px]">Quota:</span>
-            <span className="font-extrabold text-white">{stats.quotaUsed} / {stats.quotaLimit} Used</span>
+          <div className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80 text-[11px] shrink-0 flex items-center space-x-1.5 self-start sm:self-center shadow-2xs">
+            <span className="text-slate-500 font-semibold uppercase text-[9.5px]">Quota:</span>
+            <span className="font-extrabold text-navy">{stats.quotaUsed} / {stats.quotaLimit}</span>
+            <span className="text-[10px] text-slate-400 font-medium">Used</span>
           </div>
         </div>
 
         {/* High-Performance Search Input Bar */}
-        <form onSubmit={handleSearchSubmit} className="relative flex items-center gap-2">
+        <form onSubmit={handleSearchSubmit} className="relative flex items-center gap-2 max-w-3xl mx-auto pt-1">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2 pointer-events-none" />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchIntent}
               onChange={(e) => setSearchIntent(e.target.value)}
               placeholder="e.g. Travel retail airport lounge concessions, cold brew beverage sourcing, enterprise fintech gateway..."
-              className="w-full pl-10 pr-24 py-2.5 bg-white/10 border border-white/20 rounded-xl text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 backdrop-blur-sm"
+              className="w-full pl-10 pr-20 py-2.5 sm:py-3 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200/90 focus:border-primary focus:ring-2 focus:ring-primary/15 rounded-xl text-xs sm:text-sm text-navy placeholder:text-slate-400 font-medium transition-all shadow-inner/10"
             />
             {searchIntent && (
               <button
                 type="button"
                 onClick={handleClearSearchFilter}
-                className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1"
+                className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-navy transition-colors p-1 cursor-pointer"
                 title="Clear query"
               >
                 <X className="w-3.5 h-3.5" />
@@ -527,15 +645,15 @@ export const AppHomePage = () => {
           <button
             type="button"
             onClick={handleQuickInlineSearch}
-            className="px-3.5 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition-colors shrink-0 hidden sm:inline-flex items-center space-x-1"
-            title="Filter counterparties on page"
+            className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-xl text-[11.5px] font-bold transition-all shrink-0 hidden sm:inline-flex items-center space-x-1 shadow-2xs cursor-pointer"
+            title="Preview matching counterparties on page"
           >
             <span>Preview</span>
           </button>
 
           <button
             type="submit"
-            className="px-3.5 sm:px-4 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs transition-colors shrink-0 flex items-center space-x-1.5"
+            className="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-[11.5px] font-bold shadow-xs hover:shadow-primary/20 transition-all shrink-0 flex items-center space-x-1.5 cursor-pointer"
           >
             <span className="hidden sm:inline">Search Directory</span>
             <span className="sm:hidden">Search</span>
@@ -544,8 +662,8 @@ export const AppHomePage = () => {
         </form>
 
         {/* Suggested Strategic Query Chips */}
-        <div className="flex flex-wrap items-center gap-1.5 text-xs pt-0.5">
-          <span className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Suggested Mandates:</span>
+        <div className="flex flex-wrap items-center justify-center gap-1.5 text-[10.5px] pt-1">
+          <span className="text-slate-400 text-[9.5px] font-bold uppercase tracking-wider">Suggested mandates:</span>
           {[
             'Airport Retail Concessions',
             'Cold Brew Beverage Sourcing',
@@ -557,7 +675,7 @@ export const AppHomePage = () => {
               key={term}
               type="button"
               onClick={() => handleChipClick(term)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white rounded-md text-[11px] font-medium border border-white/10 transition-colors"
+              className="px-2.5 py-1 bg-slate-100 hover:bg-primary-soft text-slate-700 hover:text-primary rounded-lg text-[10.5px] font-semibold border border-slate-200/80 hover:border-primary/30 transition-all shadow-2xs cursor-pointer"
             >
               {term}
             </button>
@@ -565,8 +683,37 @@ export const AppHomePage = () => {
         </div>
       </div>
 
-      {/* 4. CURATED COUNTERPARTIES & EXECUTIVE TOOLBOX */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      {/* 3c. INTERACTIVE PRODUCT DEMOS */}
+      <VideoShowcase />
+
+      {/* 3b. CHATGPT-STYLE NEXT MOVES ACTION CARDS — HIDDEN PER USER REQUEST */}
+      {false && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {nextMoves.map((move) => (
+            <div
+              key={move.id}
+              className="bg-surface border border-border rounded-2xl p-4 shadow-2xs space-y-2 hover:border-primary/40 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-[10px] font-black text-text-muted uppercase tracking-wider">{move.title}</h3>
+                <ArrowUpRight className="w-3.5 h-3.5 text-text-muted" />
+              </div>
+              <p className="text-xs text-text-muted leading-relaxed">{move.detail}</p>
+              <Link
+                to={move.to}
+                className="inline-flex items-center space-x-1 text-xs font-bold text-primary hover:underline"
+              >
+                <span>{move.actionLabel}</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 4. CURATED COUNTERPARTIES & EXECUTIVE TOOLBOX — HIDDEN PER USER REQUEST */}
+      {false && (
+      <div data-tour="tour-partners" className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: Curated Strategic Synergy Opportunities */}
         <div className="lg:col-span-8 bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
           <div className="flex items-center justify-between pb-2.5 border-b border-border">
@@ -814,6 +961,7 @@ export const AppHomePage = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* 5. DIRECT OPPORTUNITY CONNECTION MODAL */}
       <ConnectOpportunityModal
@@ -850,6 +998,119 @@ export const AppHomePage = () => {
         onPostCreated={() => {
           navigate('/app/partnerships');
         }}
+      />
+
+      {/* 8. FIRST-TIME DASHBOARD VISITOR GLIMPSE TOUR MODAL */}
+      {showFirstTimeTour && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-navy/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-300">
+            {/* Header with MESHVI Mark */}
+            <div className="px-5 pt-5 pb-3 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <img src="/meshvi-mark.png" alt="MESHVI" className="w-8 h-8 object-contain" />
+                <div>
+                  <h3 className="text-sm font-black text-navy tracking-tight">What is MESHVI?</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">B2B Discovery & Intent-Driven Connection</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCompleteTour}
+                className="p-1 rounded-lg text-slate-400 hover:text-navy hover:bg-slate-100 transition-colors cursor-pointer"
+                aria-label="Dismiss tour"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Tour Glimpse Content */}
+            <div className="p-5 space-y-4">
+              {/* Interactive Video Tour Preview Card */}
+              <div
+                onClick={handleStartTourVideo}
+                className="relative rounded-xl overflow-hidden bg-gradient-to-br from-sky-50 via-white to-indigo-50 border border-sky-100 p-4 cursor-pointer group hover:border-primary/40 transition-all shadow-2xs"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[9.5px] font-black uppercase tracking-wider">
+                      15-Second Glimpse
+                    </span>
+                    <h4 className="text-xs font-black text-navy group-hover:text-primary transition-colors">
+                      Watch: How MESHVI Matches Intent
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      See how verified decision-makers connect through bilateral mandates.
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md group-hover:scale-105 group-hover:bg-primary-hover transition-transform shrink-0 ml-3">
+                    <Play className="w-4 h-4 fill-white ml-0.5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* 3 Core Pillars */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-start space-x-2.5 text-xs">
+                  <div className="w-5 h-5 rounded-full bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                    1
+                  </div>
+                  <div>
+                    <strong className="text-navy font-bold">Mandate-Driven Search:</strong>
+                    <span className="text-slate-600 ml-1">Type in plain language what your business needs. No guessing job titles.</span>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-2.5 text-xs">
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                    2
+                  </div>
+                  <div>
+                    <strong className="text-navy font-bold">Verified Decision Makers:</strong>
+                    <span className="text-slate-600 ml-1">Connect directly with C-suite leaders and directors who hold real procurement mandates.</span>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-2.5 text-xs">
+                  <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                    3
+                  </div>
+                  <div>
+                    <strong className="text-navy font-bold">Zero Cold Spam:</strong>
+                    <span className="text-slate-600 ml-1">Bilateral consent protects both sides. Every outreach begins with high-trust alignment.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={handleStartTourVideo}
+                  className="w-full sm:w-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                >
+                  <Film className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Play 15s Tour Video</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCompleteTour}
+                  className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-black rounded-xl transition-colors flex items-center justify-center space-x-1.5 shadow-xs cursor-pointer"
+                >
+                  <span>Explore Search & Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 9. INTERACTIVE DEMO PLAYER MODAL */}
+      <ProductDemoPlayer
+        open={showDemoPlayer}
+        initialChapter={0}
+        mode="full"
+        onClose={handleCompleteTour}
       />
     </div>
   );

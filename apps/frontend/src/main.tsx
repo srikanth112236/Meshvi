@@ -14,7 +14,7 @@ if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' |
   // Production Azure custom domain: always route to api.meshvi.org
   backendOrigin = 'https://api.meshvi.org';
 } else if (rawApiUrl) {
-  backendOrigin = rawApiUrl.replace(/\/api\/v1\/?$/, '').replace(/https?:\/\/setu-backend\.onrender\.com/g, 'https://meshvi.onrender.com');
+  backendOrigin = rawApiUrl.replace(/\/api\/v1\/?$/, '').replace(/https?:\/\/setu-backend\.onrender\.com/g, 'https://api.meshvi.org').replace(/https?:\/\/meshvi\.onrender\.com/g, 'https://api.meshvi.org');
 } else {
   backendOrigin = 'https://api.meshvi.org';
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Mail, ArrowRight, AlertCircle, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ArrowRight, AlertCircle, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { DoodleMeet } from '../../components/brand/DoodleMeet';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleSsoButton } from '../../components/auth/GoogleSsoButton';
 
@@ -9,6 +10,7 @@ export const CompanyLoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [searchParams] = useSearchParams();
   const { login, logout, violationAlert, clearViolationAlert } = useAuth();
   const navigate = useNavigate();
@@ -67,6 +69,7 @@ export const CompanyLoginPage = () => {
 
   return (
     <div className="min-h-screen bg-bg text-navy flex flex-col justify-center items-center px-3 sm:px-4 py-6 sm:py-12">
+      <DoodleMeet className="w-16 h-12 mb-4" />
       <div className="max-w-md w-full bg-surface border border-indigo-200/80 rounded-2xl p-5 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -139,13 +142,21 @@ export const CompanyLoginPage = () => {
             <div className="relative">
               <Lock className="w-4 h-4 text-text-muted absolute left-3 top-3.5" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full pl-9 pr-4 py-2.5 bg-surface border border-border rounded-xl text-xs text-navy placeholder:text-text-muted focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
+                className="w-full pl-9 pr-10 py-2.5 bg-surface border border-border rounded-xl text-xs text-navy placeholder:text-text-muted focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-navy transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 

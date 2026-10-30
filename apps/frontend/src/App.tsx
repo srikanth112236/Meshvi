@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { SearchHistoryProvider } from './context/SearchHistoryContext';
 import { NotificationDrawer } from './components/ui/NotificationDrawer';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { AppLayout } from './components/layout/AppLayout';
@@ -83,6 +84,7 @@ export default function App() {
     <AuthProvider>
       <NotificationProvider>
         <BrowserRouter>
+          <SearchHistoryProvider>
           <NotificationDrawer />
           <Routes>
           {/* Public Website Routes */}
@@ -225,6 +227,7 @@ export default function App() {
             }
           />
         </Routes>
+          </SearchHistoryProvider>
       </BrowserRouter>
       </NotificationProvider>
     </AuthProvider>

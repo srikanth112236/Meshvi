@@ -853,7 +853,7 @@ export class AuthService {
     const clientId = process.env.GOOGLE_CLIENT_ID || '';
     const defaultRedirect =
       process.env.NODE_ENV === 'production'
-        ? 'https://meshvi-1.onrender.com/auth/google/callback'
+        ? 'https://meshvi.org/auth/google/callback'
         : 'http://localhost:3100/auth/google/callback';
     const effectiveRedirectUri =
       redirectUri || process.env.GOOGLE_REDIRECT_URI || defaultRedirect;
@@ -879,7 +879,7 @@ export class AuthService {
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const defaultRedirect =
       process.env.NODE_ENV === 'production'
-        ? 'https://meshvi-1.onrender.com/auth/google/callback'
+        ? 'https://meshvi.org/auth/google/callback'
         : 'http://localhost:3100/auth/google/callback';
     const effectiveRedirectUri =
       redirectUri || process.env.GOOGLE_REDIRECT_URI || defaultRedirect;
@@ -951,7 +951,7 @@ export class AuthService {
     const clientId = process.env.LINKEDIN_CLIENT_ID || 'setu_linkedin_dev_app';
     const defaultRedirect =
       process.env.NODE_ENV === 'production'
-        ? 'https://meshvi-1.onrender.com/auth/linkedin/callback'
+        ? 'https://meshvi.org/auth/linkedin/callback'
         : 'http://localhost:3100/auth/linkedin/callback';
     const effectiveRedirectUri =
       redirectUri || process.env.LINKEDIN_REDIRECT_URI || defaultRedirect;
@@ -977,7 +977,7 @@ export class AuthService {
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
     const defaultRedirect =
       process.env.NODE_ENV === 'production'
-        ? 'https://meshvi-1.onrender.com/auth/linkedin/callback'
+        ? 'https://meshvi.org/auth/linkedin/callback'
         : 'http://localhost:3100/auth/linkedin/callback';
     const effectiveRedirectUri =
       redirectUri || process.env.LINKEDIN_REDIRECT_URI || defaultRedirect;
