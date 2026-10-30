@@ -173,26 +173,26 @@ export const VideoShowcase = () => {
   };
 
   return (
-    <div className="bg-surface border border-border rounded-xl p-3 shadow-2xs space-y-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center space-x-2 min-w-0">
-          <span className="w-7 h-7 rounded-lg bg-primary-soft text-primary flex items-center justify-center shrink-0">
-            <Sparkles className="w-3.5 h-3.5" />
+    <div className="w-full bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center space-x-2.5 min-w-0">
+          <span className="w-8 h-8 rounded-xl bg-sky-50 text-primary border border-sky-100 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-primary" />
           </span>
           <div className="min-w-0">
-            <h3 className="text-xs font-black text-navy tracking-tight">See MESHVI in action</h3>
-            <p className="text-[10px] text-text-muted truncate">
-              6 demos · 15s each · one 30s journey + a 1:30 tour
+            <h3 className="text-xs sm:text-sm font-black text-navy tracking-tight">Interactive Platform Demos & Video Showcase</h3>
+            <p className="text-[11px] text-text-muted truncate">
+              6 interactive decision-maker discovery demos &bull; 15s each &bull; 1:30 guided platform tour
             </p>
           </div>
         </div>
         <button
           type="button"
           onClick={playFullTour}
-          className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-[11px] font-bold rounded-lg shadow-2xs transition-colors flex items-center space-x-1.5 shrink-0"
+          className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center space-x-1.5 shrink-0 cursor-pointer"
         >
-          <Film className="w-3 h-3" />
-          <span>Watch the tour</span>
+          <Film className="w-3.5 h-3.5" />
+          <span>Watch Full Tour (1:30)</span>
         </button>
       </div>
 
@@ -200,23 +200,26 @@ export const VideoShowcase = () => {
       <button
         type="button"
         onClick={playFullTour}
-        className="group w-full relative overflow-hidden rounded-xl bg-gradient-to-r from-[#F0F9FF] via-white to-[#E0F2FE] border border-border hover:border-primary/40 transition-colors p-3 sm:p-4 text-left"
+        className="group w-full relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-50 via-white to-sky-50/60 border border-slate-200/90 hover:border-primary/40 transition-colors p-3.5 sm:p-4 text-left cursor-pointer"
       >
-        <div className="absolute -right-6 -top-10 w-32 h-32 rounded-full bg-primary/10 blur-2xl" />
+        <div className="absolute -right-6 -top-10 w-40 h-40 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
         <div className="relative flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <Play className="w-4 h-4 fill-white" />
+          <div className="flex items-center gap-3.5 min-w-0">
+            <span className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-md">
+              <Play className="w-4 h-4 fill-white ml-0.5" />
             </span>
             <div className="min-w-0">
-              <p className="text-xs font-black text-navy">The MESHVI tour</p>
-              <p className="text-[10px] text-text-muted truncate">
-                A separate 1:30 film · 5 scenes · not the six demos
+              <div className="flex items-center gap-2">
+                <p className="text-xs sm:text-sm font-black text-navy">The MESHVI Platform Tour</p>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-primary text-white">Featured</span>
+              </div>
+              <p className="text-[11px] text-text-muted truncate">
+                Full 1:30 cinematic walkthrough &bull; 5 interactive workspace scenes &bull; Audio narration included
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[9px] font-bold text-text-muted hidden sm:inline">1:30</span>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="text-[11px] font-mono font-bold text-slate-500 bg-white/90 border border-slate-200 px-2 py-0.5 rounded-md hidden sm:inline">1:30</span>
             <img
               src="/meshvi-logo-full.png"
               alt="Meshvi"
@@ -227,13 +230,13 @@ export const VideoShowcase = () => {
       </button>
 
       {/* Six standalone demos — distinct visuals and flows */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         {DEMO_TILES.map((tile) => (
           <button
             key={tile.title}
             type="button"
             onClick={() => playDemo(tile.chapter)}
-            className="group text-left rounded-xl border border-border hover:border-primary/40 overflow-hidden bg-surface transition-all hover:-translate-y-0.5 hover:shadow-md"
+            className="group text-left rounded-xl border border-slate-200/90 hover:border-primary/50 overflow-hidden bg-white transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
           >
             <div
               className={`relative aspect-[16/10] bg-gradient-to-br ${tile.tone} flex items-center justify-center`}
@@ -242,7 +245,7 @@ export const VideoShowcase = () => {
 
               <span className="absolute inset-0 flex items-center justify-center bg-navy/0 group-hover:bg-navy/5 transition-colors">
                 <span className="w-9 h-9 rounded-full bg-white/90 backdrop-blur border border-border shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Play className="w-3.5 h-3.5 text-primary fill-primary" />
+                  <Play className="w-3.5 h-3.5 text-primary fill-primary ml-0.5" />
                 </span>
               </span>
 
@@ -251,13 +254,13 @@ export const VideoShowcase = () => {
                   {tile.badge}
                 </span>
               )}
-              <span className="absolute bottom-2 right-2 text-[9px] font-bold text-navy/60 inline-flex items-center space-x-1">
+              <span className="absolute bottom-2 right-2 text-[9px] font-bold text-navy/60 inline-flex items-center space-x-1 font-mono">
                 <Clock className="w-2.5 h-2.5" />
                 <span>{tile.meta}</span>
               </span>
             </div>
             <div className="p-2.5 space-y-0.5">
-              <p className="text-xs font-bold text-navy truncate">{tile.title}</p>
+              <p className="text-xs font-bold text-navy truncate group-hover:text-primary transition-colors">{tile.title}</p>
               <p className="text-[11px] text-text-muted truncate">{tile.desc}</p>
             </div>
           </button>

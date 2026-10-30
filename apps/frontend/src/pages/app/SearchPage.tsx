@@ -246,7 +246,8 @@ const SearchableDropdownFilter: React.FC<SearchableDropdownFilterProps> = ({
 
 export const SearchPage = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { user, token } = useAuth();
+  const firstName = user?.profile?.displayName?.split(' ')[0] || 'Srikanth';
   const {
     addSearch,
     activeSessionId,
@@ -2539,6 +2540,81 @@ export const SearchPage = () => {
           {loading ? (
             <div className="py-16 text-center text-xs text-text-muted bg-surface rounded-2xl border border-border">
               Evaluating strategic intent and query parameters...
+            </div>
+          ) : !query && !resultsData ? (
+            /* NEW CHAT / EMPTY STATE MATCHING GIVEN IMAGE */
+            <div className="py-12 sm:py-20 text-center space-y-6 max-w-3xl mx-auto animate-in fade-in duration-300">
+              <div className="space-y-2">
+                <p className="text-base sm:text-lg font-bold text-slate-800 flex items-center justify-center gap-1.5">
+                  <span>Hey! 👋, {firstName}</span>
+                </p>
+                <h1 className="text-4xl sm:text-6xl font-black text-[#38BDF8] tracking-tight leading-tight">
+                  What’s on your mind Now?
+                </h1>
+              </div>
+
+              {/* Floating Pill Input Bar (Matching Image 3) */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleFreshSearch();
+                }}
+                className="max-w-2xl mx-auto w-full px-2"
+              >
+                <div className="relative flex items-center bg-white border border-slate-200 hover:border-slate-300 focus-within:border-[#38BDF8] focus-within:ring-4 focus-within:ring-[#38BDF8]/15 rounded-full shadow-lg hover:shadow-xl transition-all p-1.5 pl-4 sm:pl-5 pr-2">
+                  <span className="text-slate-400 shrink-0 mr-1.5">
+                    <Plus className="w-4 h-4" />
+                  </span>
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Ask Anything.. e.g. Travel retail airport lounge concessions, cold brew sourcing..."
+                    className="flex-1 bg-transparent border-none text-xs sm:text-sm text-navy placeholder:text-slate-400 font-medium focus:outline-none"
+                    autoFocus
+                  />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="text-slate-400 hover:text-navy p-1 mr-1.5 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="w-10 h-10 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
+                    title="Send"
+                  >
+                    <Send className="w-4 h-4 -rotate-45 -ml-0.5" />
+                  </button>
+                </div>
+              </form>
+
+              {/* Suggested Mandate Chips */}
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                <span className="text-slate-400 text-[10.5px] font-bold uppercase tracking-wider mr-1">Suggested mandates:</span>
+                {[
+                  'Airport Retail Concessions',
+                  'Cold Brew Beverage Sourcing',
+                  'APAC Supply Chain Logistics',
+                  'Enterprise AI Platform',
+                  'FMCG Food Procurement',
+                ].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => {
+                      setQuery(term);
+                      handleFreshSearch(term);
+                    }}
+                    className="px-3.5 py-1.5 bg-white hover:bg-sky-50 text-slate-700 hover:text-primary rounded-full text-xs font-semibold border border-slate-200/90 hover:border-primary/40 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : candidateResults.length === 0 ? (
             <div className="space-y-4">
