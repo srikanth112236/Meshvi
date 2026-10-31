@@ -23,7 +23,6 @@ import { useSearchHistory } from '../../context/SearchHistoryContext';
 import { formatSearchTime } from '../../utils/formatSearchTime';
 import { UniversalCommandBar } from '../ui/UniversalCommandBar';
 import { NetworkStatusPill } from '../ui/NetworkStatusPill';
-import { FeatureTour } from '../ui/FeatureTour';
 import { RecentSearchesModal } from '../ui/RecentSearchesModal';
 
 export const AppLayout = () => {
@@ -34,7 +33,6 @@ export const AppLayout = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commandBarOpen, setCommandBarOpen] = useState(false);
-  const [tourOpen, setTourOpen] = useState(false);
   const [recentModalOpen, setRecentModalOpen] = useState(false);
 
   // Sidebar starts collapsed (icon rail) and remembers the user's choice.
@@ -73,15 +71,6 @@ export const AppLayout = () => {
     }
   }, [user, location.pathname, navigate]);
 
-  // Contextual feature tour: auto-open once per session for authenticated members
-  useEffect(() => {
-    if (!user?.id) return;
-    if (user.onboardingCompleted === false) return;
-    if (localStorage.getItem('setu_feature_tour_seen')) return;
-    localStorage.setItem('setu_feature_tour_seen', '1');
-    setTourOpen(true);
-  }, [user?.id, user?.onboardingCompleted]);
-
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -109,37 +98,6 @@ export const AppLayout = () => {
     setRecentModalOpen(true);
     setMobileMenuOpen(false);
   };
-
-  const tourSteps = [
-    {
-      id: 'tour-dashboard',
-      title: 'Welcome to your Command Center',
-      description:
-        'This is your mission control. Push your next intent with the search engine, or jump through the network areas from the sidebar.',
-      target: '[data-tour="tour-dashboard"]',
-    },
-    {
-      id: 'tour-search',
-      title: 'Search anything, find your people',
-      description:
-        'The intent engine matches executives, companies and opportunities from live signals — this is the core of MESHVI.',
-      target: '[data-tour="tour-search"]',
-    },
-    {
-      id: 'tour-partners',
-      title: 'Curated high-fit partners',
-      description:
-        'When the engine surfaces a counterparty above your threshold, it lands here with match rationale and a one-click bridge.',
-      target: '[data-tour="tour-partners"]',
-    },
-    {
-      id: 'tour-connections',
-      title: 'Your network at a glance',
-      description:
-        'Direct bridges, inbound proposals and warm introductions live here — action items surface automatically.',
-      target: '[data-tour="tour-connections"]',
-    },
-  ];
 
   const navItems = [
     { name: 'Dashboard', href: '/app/home', icon: LayoutDashboard },
@@ -598,14 +556,6 @@ export const AppLayout = () => {
           })}
         </nav>
       </div>
-
-      {/* Feature Tour Overlay */}
-      <FeatureTour
-        steps={tourSteps}
-        open={tourOpen}
-        onClose={() => setTourOpen(false)}
-        onComplete={() => setTourOpen(false)}
-      />
 
       {/* Feature #48: Universal Command Bar Modal */}
       <UniversalCommandBar
