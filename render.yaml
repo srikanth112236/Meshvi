@@ -25,17 +25,17 @@ services:
           name: setu-db
           property: connectionString
       - key: FRONTEND_URL
-        value: https://meshvi-1.onrender.com
+        value: https://meshvi.org
       - key: GOOGLE_REDIRECT_URI
-        value: https://meshvi-1.onrender.com/auth/google/callback
+        value: https://meshvi.org/auth/google/callback
       - key: JWT_SECRET
-        generateValue: true
+        sync: false
       - key: JWT_EXPIRES_IN
         value: 24h
       - key: REFRESH_TOKEN_EXPIRES_IN
         value: 7d
       - key: SESSION_SECRET
-        generateValue: true
+        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
@@ -51,7 +51,7 @@ services:
       - key: LINKEDIN_CLIENT_SECRET
         sync: false
       - key: LINKEDIN_REDIRECT_URI
-        value: https://meshvi-1.onrender.com/auth/linkedin/callback
+        value: https://meshvi.org/auth/linkedin/callback
 
   # ----------------------------------------------------------------------------
   # 2. Vite React Frontend (Static Site)
@@ -69,7 +69,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://meshvi.onrender.com/api/v1
+        value: https://api.meshvi.org/api/v1
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false
 

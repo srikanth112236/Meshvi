@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, CheckCircle2, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
+import { getStoredOAuthRedirectUri, clearOAuthHandshakeState } from '../../utils/oauthUtils';
 
 export const GoogleCallbackPage = () => {
   const [searchParams] = useSearchParams();
@@ -39,7 +40,7 @@ export const GoogleCallbackPage = () => {
     }
 
     hasExchangedRef.current = true;
-    const redirectUri = window.location.origin + window.location.pathname;
+    const redirectUri = getStoredOAuthRedirectUri();
 
     const finishAuth = (resData: any) => {
       const token = resData.accessToken || resData.token;
@@ -89,6 +90,7 @@ export const GoogleCallbackPage = () => {
           if (!data.success || !data.data?.token) {
             throw new Error(data.error?.message || data.error || 'Failed to sign in with Google.');
           }
+          clearOAuthHandshakeState();
           finishAuth(data.data);
         })
         .catch((err: any) => {

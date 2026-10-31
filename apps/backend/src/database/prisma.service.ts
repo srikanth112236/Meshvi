@@ -30,12 +30,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           schemaArg = `--schema="${join(process.cwd(), 'prisma/schema.prisma')}"`;
         }
 
-        this.logger.log(`Verifying PostgreSQL tables and schema status (${schemaArg || 'default'})...`);
-        execSync(`npx prisma db push --skip-generate --accept-data-loss ${schemaArg}`.trim(), {
+        this.logger.log(`Verifying PostgreSQL tables and schema status non-destructively (${schemaArg || 'default'})...`);
+        execSync(`npx prisma db push --skip-generate ${schemaArg}`.trim(), {
           stdio: 'inherit',
           env: process.env,
         });
-        this.logger.log('✔ PostgreSQL tables and schema verified successfully.');
+        this.logger.log('✔ PostgreSQL tables and schema verified successfully (zero data loss).');
       } catch (pushErr: any) {
         this.logger.warn(`Prisma db push check completed: ${pushErr.message}`);
       }

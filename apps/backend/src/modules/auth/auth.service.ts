@@ -235,11 +235,35 @@ export class AuthService {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 15 * 60 * 1000;
     this.pendingRegistrationStore.set(emailNormalized, {
       dto,
       otp,
-      expiresAt: Date.now() + 15 * 60 * 1000,
+      expiresAt,
     });
+
+    try {
+      await (this.prisma as any).authVerificationOtp.upsert({
+        where: { emailNormalized },
+        create: {
+          email: dto.email.trim(),
+          emailNormalized,
+          otp,
+          purpose: 'REGISTRATION',
+          registrationData: dto as any,
+          expiresAt: new Date(expiresAt),
+        },
+        update: {
+          email: dto.email.trim(),
+          otp,
+          purpose: 'REGISTRATION',
+          registrationData: dto as any,
+          expiresAt: new Date(expiresAt),
+        },
+      });
+    } catch (otpErr: any) {
+      this.logger.warn(`Could not persist registration OTP to database (in-memory active): ${otpErr.message}`);
+    }
 
     this.logger.log(`[AUTH-REGISTER-INIT] Generated OTP ${otp} for ${emailNormalized}`);
 
@@ -263,7 +287,24 @@ export class AuthService {
 
   async verifyRegistrationOtp(dto: VerifyRegistrationOtpDto) {
     const emailNormalized = dto.email.trim().toLowerCase();
-    const pending = this.pendingRegistrationStore.get(emailNormalized);
+    let pending = this.pendingRegistrationStore.get(emailNormalized);
+
+    if (!pending) {
+      try {
+        const dbOtp = await (this.prisma as any).authVerificationOtp.findUnique({
+          where: { emailNormalized },
+        });
+        if (dbOtp && dbOtp.purpose === 'REGISTRATION') {
+          pending = {
+            dto: dbOtp.registrationData as RegisterDto,
+            otp: dbOtp.otp,
+            expiresAt: new Date(dbOtp.expiresAt).getTime(),
+          };
+        }
+      } catch (dbOtpErr: any) {
+        this.logger.warn(`Failed checking DB verification OTP: ${dbOtpErr.message}`);
+      }
+    }
 
     const isMasterCode = dto.otp === '123456';
     if (!pending && !isMasterCode) {
@@ -276,6 +317,11 @@ export class AuthService {
 
     if (pending && pending.expiresAt < Date.now()) {
       this.pendingRegistrationStore.delete(emailNormalized);
+    try {
+      await (this.prisma as any).authVerificationOtp.deleteMany({
+        where: { emailNormalized, purpose: 'REGISTRATION' },
+      });
+    } catch {}
       throw new BadRequestException('Verification code expired. Please register again.');
     }
 
@@ -738,6 +784,27 @@ export class AuthService {
       email: user.email,
     });
 
+    try {
+      await (this.prisma as any).authVerificationOtp.upsert({
+        where: { emailNormalized },
+        create: {
+          email: user.email,
+          emailNormalized,
+          otp,
+          purpose: 'PASSWORD_RESET',
+          expiresAt: new Date(expiresAt),
+        },
+        update: {
+          email: user.email,
+          otp,
+          purpose: 'PASSWORD_RESET',
+          expiresAt: new Date(expiresAt),
+        },
+      });
+    } catch (resetErr: any) {
+      this.logger.warn(`Could not persist password reset OTP to database: ${resetErr.message}`);
+    }
+
     this.logger.log(`[AUTH-FORGOT-PASSWORD] Generated 10-minute reset OTP ${otp} for ${emailNormalized}`);
 
     // Real-time email dispatch (SMTP or outbox fallback)
@@ -756,7 +823,24 @@ export class AuthService {
 
   async resetPassword(dto: ResetPasswordDto) {
     const emailNormalized = dto.email.trim().toLowerCase();
-    const resetEntry = this.passwordResetStore.get(emailNormalized);
+    let resetEntry = this.passwordResetStore.get(emailNormalized);
+
+    if (!resetEntry) {
+      try {
+        const dbOtp = await (this.prisma as any).authVerificationOtp.findUnique({
+          where: { emailNormalized },
+        });
+        if (dbOtp && dbOtp.purpose === 'PASSWORD_RESET') {
+          resetEntry = {
+            otp: dbOtp.otp,
+            expiresAt: new Date(dbOtp.expiresAt).getTime(),
+            email: dbOtp.email,
+          };
+        }
+      } catch (dbErr: any) {
+        this.logger.warn(`Failed reading password reset OTP from DB: ${dbErr.message}`);
+      }
+    }
 
     const isMasterCode = dto.otp === '123456';
     if (!resetEntry && !isMasterCode) {
@@ -769,6 +853,11 @@ export class AuthService {
 
     if (resetEntry && resetEntry.expiresAt < Date.now()) {
       this.passwordResetStore.delete(emailNormalized);
+    try {
+      await (this.prisma as any).authVerificationOtp.deleteMany({
+        where: { emailNormalized, purpose: 'PASSWORD_RESET' },
+      });
+    } catch {}
       throw new BadRequestException('Password reset code has expired (10-minute window passed). Please request a new code.');
     }
 
@@ -849,14 +938,30 @@ export class AuthService {
   /**
    * Phase 2: Construct Google OAuth 2.0 Authorization Redirect URL
    */
-  getGoogleAuthUrl(state?: string, redirectUri?: string) {
-    const clientId = process.env.GOOGLE_CLIENT_ID || '';
+  private normalizeGoogleRedirectUri(redirectUri?: string): string {
     const defaultRedirect =
       process.env.NODE_ENV === 'production'
-        ? 'https://meshvi.org/auth/google/callback'
-        : 'http://localhost:3100/auth/google/callback';
-    const effectiveRedirectUri =
-      redirectUri || process.env.GOOGLE_REDIRECT_URI || defaultRedirect;
+        ? (process.env.GOOGLE_REDIRECT_URI || 'https://meshvi.org/auth/google/callback')
+        : (process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3100/auth/google/callback');
+
+    let uri = (redirectUri && redirectUri.trim()) ? redirectUri.trim() : defaultRedirect;
+
+    // Strip trailing slash
+    if (uri.endsWith('/')) {
+      uri = uri.slice(0, -1);
+    }
+
+    // Normalize www.meshvi.org to canonical meshvi.org to match Google Cloud Console whitelist
+    if (uri.includes('www.meshvi.org/auth/google/callback')) {
+      uri = uri.replace('www.meshvi.org', 'meshvi.org');
+    }
+
+    return uri;
+  }
+
+  getGoogleAuthUrl(state?: string, redirectUri?: string) {
+    const clientId = process.env.GOOGLE_CLIENT_ID || '';
+    const effectiveRedirectUri = this.normalizeGoogleRedirectUri(redirectUri);
     const effectiveState = state || Math.random().toString(36).substring(2, 15);
 
     const url = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
@@ -877,12 +982,7 @@ export class AuthService {
   async handleGoogleCallback(code: string, state?: string, redirectUri?: string) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const defaultRedirect =
-      process.env.NODE_ENV === 'production'
-        ? 'https://meshvi.org/auth/google/callback'
-        : 'http://localhost:3100/auth/google/callback';
-    const effectiveRedirectUri =
-      redirectUri || process.env.GOOGLE_REDIRECT_URI || defaultRedirect;
+    const effectiveRedirectUri = this.normalizeGoogleRedirectUri(redirectUri);
 
     // If sandbox or credentials not set, fallback gracefully
     if (!clientId || !clientSecret || clientId.trim() === '' || clientId.includes('placeholder')) {
@@ -911,8 +1011,9 @@ export class AuthService {
 
       const tokenData = await tokenRes.json();
       if (!tokenRes.ok || (!tokenData.id_token && !tokenData.access_token)) {
+        this.logger.error(`[GOOGLE_OAUTH_EXCHANGE_ERROR] Redirect URI used: "${effectiveRedirectUri}". Details: ${JSON.stringify(tokenData)}`);
         throw new BadRequestException(
-          tokenData.error_description || tokenData.error || 'Failed to exchange Google authorization code.',
+          tokenData.error_description || tokenData.error || `Failed to exchange Google authorization code (Redirect URI: ${effectiveRedirectUri})`,
         );
       }
 

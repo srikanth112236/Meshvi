@@ -135,6 +135,21 @@ model CompanyOnboardingDraft {
   @@map("company_onboarding_drafts")
 }
 
+model AuthVerificationOtp {
+  id               String    @id @default(uuid())
+  email            String    @map("email")
+  emailNormalized  String    @unique @map("email_normalized")
+  otp              String    @map("otp")
+  purpose          String    @default("REGISTRATION") @map("purpose") // REGISTRATION, PASSWORD_RESET
+  registrationData Json?     @map("registration_data")
+  expiresAt        DateTime  @map("expires_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@index([emailNormalized, purpose])
+  @@map("auth_verification_otps")
+}
+
 model UserRole {
   id         String    @id @default(uuid())
   userId     String    @map("user_id")

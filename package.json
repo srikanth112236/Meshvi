@@ -7,12 +7,12 @@
     "apps/*"
   ],
   "scripts": {
-    "start": "cd apps/backend && npx prisma db push --skip-generate --accept-data-loss && node dist/main",
+    "start": "cd apps/backend && npx prisma db push --skip-generate && node dist/main",
     "dev:backend": "npm run start:dev --workspace=@setu/backend",
     "dev:frontend": "npm run dev --workspace=@setu/frontend",
     "dev:mobile": "npm run start --workspace=@setu/mobile",
     "seed": "npm run seed --workspace=@setu/backend",
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace=@setu/backend && npm run build --workspace=@setu/frontend",
     "test": "npm run test --workspaces",
     "test:flow": "ts-node --project apps/backend/tsconfig.json scripts/test-connections-flow.ts",
     "lint": "npm run lint --workspaces",

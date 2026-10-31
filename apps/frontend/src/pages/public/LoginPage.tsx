@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { DoodleMeet } from '../../components/brand/DoodleMeet';
 import { useAuth } from '../../context/AuthContext';
+import { getCanonicalGoogleRedirectUri, getGoogleClientId, saveOAuthHandshakeState } from '../../utils/oauthUtils';
 
 export const LoginPage = () => {
   const [searchParams] = useSearchParams();
@@ -47,26 +48,23 @@ export const LoginPage = () => {
     localStorage.getItem('setu_google_client_id') || ''
   );
 
-  // Google OAuth Initiation Handler
+  // Google OAuth Initiation Handler (Enterprise Normalized)
   const handleGoogleSignIn = async (overrideClientId?: string) => {
     setError('');
     clearViolationAlert();
     setLoading(true);
 
     try {
-      const redirectUri = window.location.origin + '/auth/google/callback';
-      const clientId =
-        (overrideClientId && overrideClientId.trim()) ||
-        customGoogleClientId.trim() ||
-        (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ||
-        '';
+      const redirectUri = getCanonicalGoogleRedirectUri();
+      const clientId = getGoogleClientId(overrideClientId || customGoogleClientId);
 
       if (clientId) {
         if (overrideClientId) {
           localStorage.setItem('setu_google_client_id', overrideClientId.trim());
         }
-        // Redirect directly to Google's official OAuth 2.0 Account Selection screen
         const state = Math.random().toString(36).substring(2, 15);
+        saveOAuthHandshakeState(redirectUri, state);
+
         const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${encodeURIComponent(
           clientId,
         )}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid%20profile%20email&state=${state}&access_type=offline&prompt=select_account`;
@@ -79,12 +77,12 @@ export const LoginPage = () => {
         const checkRes = await fetch(`/api/v1/auth/google/url?redirectUri=${encodeURIComponent(redirectUri)}`);
         const checkData = await checkRes.json();
         if (checkData.success && checkData.data?.clientId && checkData.data?.url) {
+          saveOAuthHandshakeState(checkData.data.redirectUri || redirectUri, checkData.data.state || '');
           window.location.href = checkData.data.url;
           return;
         }
       } catch {}
 
-      // If no client ID configured yet, open guidance modal
       setLoading(false);
       setShowGoogleModal(true);
     } catch (err: any) {
@@ -93,7 +91,6 @@ export const LoginPage = () => {
     }
   };
 
-  // Fast sandbox login handler for development or testing
   const handleGoogleSandboxLogin = async (customEmail?: string, customName?: string) => {
     setShowGoogleModal(false);
     setLoading(true);
