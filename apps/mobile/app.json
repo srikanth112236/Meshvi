@@ -58,7 +58,8 @@
           "photosPermission": "Meshvi requires access to your photo library to select executive avatars and corporate mandate documents.",
           "cameraPermission": "Meshvi requires camera access to take an executive selfie for corporate identity verification."
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "web": {
       "favicon": "./assets/favicon.png"

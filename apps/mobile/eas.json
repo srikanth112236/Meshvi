@@ -13,7 +13,9 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "http://192.168.1.6:3500/api/v1",
         "EXPO_PUBLIC_BACKEND_IP": "192.168.1.6",
-        "EXPO_PUBLIC_BACKEND_PORT": "3500"
+        "EXPO_PUBLIC_BACKEND_PORT": "3500",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_REDIRECT_URI": "https://meshvi.org/auth/google/callback"
       }
     },
     "preview": {

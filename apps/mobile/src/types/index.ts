@@ -30,6 +30,7 @@ export interface Profile {
   domain?: string;
   city?: string;
   countryCode?: string;
+  phoneNumber?: string;
   intents?: Intent[];
   firewallRules?: string[];
   receptionProtocols?: Array<'DEAL_ROOM' | 'SCHEDULED_CALL'>;
@@ -56,6 +57,23 @@ export interface BilateralMatch {
   dealRoomStatus?: 'NOT_STARTED' | 'ACTIVE' | 'NDA_PENDING' | 'LOCKED';
 }
 
+export interface DealMilestone {
+  id: string;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  isCompleted: boolean;
+}
+
+export interface DealDocument {
+  id: string;
+  name: string;
+  size: string;
+  uploadedAt: string;
+  isEncrypted: boolean;
+  type: string;
+}
+
 export interface DealRoom {
   id: string;
   counterpartyName: string;
@@ -69,6 +87,14 @@ export interface DealRoom {
   calendarSlotBooked?: string;
   meetUrl?: string;
   googleCalendarUrl?: string;
+  initiatorGoal?: string;
+  partnerGoal?: string;
+  status?: 'ACTIVE' | 'PAUSED' | 'CLOSED_WON' | 'CLOSED_NOT_FIT' | 'PARKED';
+  mndaSignerName?: string;
+  mndaLegalEntity?: string;
+  mndaSignedAt?: string;
+  milestones?: DealMilestone[];
+  documents?: DealDocument[];
 }
 
 export interface MessageThread {

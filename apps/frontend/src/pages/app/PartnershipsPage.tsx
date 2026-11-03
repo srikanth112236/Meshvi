@@ -6,8 +6,6 @@ import {
   Globe,
   Lock,
   MessageSquare,
-  Repeat2,
-  BarChart3,
   Hash,
   Send,
   CheckCircle2,
@@ -32,6 +30,8 @@ import {
   Award,
   Clock,
   HelpCircle,
+  MapPin,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -53,7 +53,6 @@ import {
   removeHiddenPostId,
   deleteStoredPost,
   toggleArchiveStoredPost,
-  unlockTeaserForPost,
 } from '../../data/partnershipsData';
 import { CreatePartnershipPostModal } from '../../components/ui/CreatePartnershipPostModal';
 import { EditPartnershipPostModal } from '../../components/ui/EditPartnershipPostModal';
@@ -63,6 +62,7 @@ import { ReshareModal } from '../../components/ui/ReshareModal';
 import { InitiatePartnershipModal } from '../../components/ui/InitiatePartnershipModal';
 import { ExecutiveTeaserModal } from '../../components/ui/ExecutiveTeaserModal';
 import { PartnershipGuidelinesModal } from '../../components/ui/PartnershipGuidelinesModal';
+import { PartnershipDetailModal } from '../../components/ui/PartnershipDetailModal';
 
 export const PartnershipsPage: React.FC = () => {
   const { user } = useAuth();
@@ -94,6 +94,7 @@ export const PartnershipsPage: React.FC = () => {
   const [reshareTarget, setReshareTarget] = useState<PartnershipPost | null>(null);
   const [initiatePartnerPost, setInitiatePartnerPost] = useState<PartnershipPost | null>(null);
   const [teaserTargetPost, setTeaserTargetPost] = useState<PartnershipPost | null>(null);
+  const [detailTargetPost, setDetailTargetPost] = useState<PartnershipPost | null>(null);
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
   // Comment Thread & @mention state
@@ -225,20 +226,6 @@ export const PartnershipsPage: React.FC = () => {
       title: 'Post Restored',
       message: 'Post is visible in your feed again.',
       type: 'success',
-    });
-  };
-
-  const handleUnlockAndOpenTeaser = (post: PartnershipPost) => {
-    const currentUserId = user?.id || 'current-user';
-    unlockTeaserForPost(post.id, currentUserId);
-    const updated = getStoredPosts();
-    setPosts(updated);
-    const freshPost = updated.find((p) => p.id === post.id) || post;
-    setTeaserTargetPost(freshPost);
-    showToast({
-      title: 'Confidential Teaser Unlocked 🔓',
-      message: `You now have full access to the Executive Deal Teaser & Spec Sheet for "${post.title}". The author was notified.`,
-      type: 'opportunity',
     });
   };
 
@@ -1192,8 +1179,13 @@ export const PartnershipsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Top Right: Visibility Badge + Three-Dots Dropdown Trigger */}
-                  <div className="flex items-center space-x-2">
+                  {/* Top Right: Location Badge + Visibility Badge + Three-Dots Dropdown Trigger */}
+                  <div className="flex items-center space-x-1.5">
+                    <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                      <MapPin className="w-3 h-3 text-primary shrink-0" />
+                      <span className="max-w-[120px] truncate">{post.dealTeaser?.geographicReach || 'Cross-Border'}</span>
+                    </span>
+
                     <span
                       className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                         post.visibility === 'PUBLIC'
@@ -1305,182 +1297,71 @@ export const PartnershipsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Title & Body */}
-                <div className="space-y-1.5">
-                  <h2 className="text-sm sm:text-base font-bold text-navy">{post.title}</h2>
-                  <p className="text-xs text-text leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                {/* Requirement (Title) */}
+                <div className="space-y-0.5">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                    Requirement Mandate
+                  </div>
+                  <h3
+                    onClick={() => setDetailTargetPost(post)}
+                    className="text-sm sm:text-base font-extrabold text-navy hover:text-primary transition-colors cursor-pointer line-clamp-1"
+                  >
+                    {post.title}
+                  </h3>
                 </div>
 
-                {/* Media Image Banner if uploaded */}
-                {post.imageUrl && (
-                  <div className="rounded-xl overflow-hidden border border-border max-h-80 bg-surface-muted">
-                    <img
-                      src={post.imageUrl}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
+                {/* Short Description (Initially Compact 2-Line Truncation) */}
+                <p
+                  onClick={() => setDetailTargetPost(post)}
+                  className="text-xs text-text-muted line-clamp-2 leading-relaxed cursor-pointer hover:text-slate-800 transition-colors"
+                >
+                  {post.content}
+                </p>
 
-                {/* Quoted Reshare if present */}
-                {post.originalPost && (
-                  <div className="p-3.5 rounded-xl border border-border bg-surface-muted/30 space-y-1">
-                    <div className="text-[11px] text-text-muted">
-                      Quoting <strong className="text-navy">{post.originalPost.authorName}</strong> ({post.originalPost.authorCompany})
-                    </div>
-                    <div className="text-xs font-bold text-navy">{post.originalPost.title}</div>
-                    <div className="text-[11px] text-text-muted line-clamp-2">{post.originalPost.content}</div>
-                  </div>
-                )}
-
-                {/* 1-Page Executive Deal Teaser Card (Confidential Spec Sheet) */}
-                {post.dealTeaser && (
-                  <div className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-navy flex items-center space-x-1.5">
-                        <FileText className="w-4 h-4 text-primary" />
-                        <span>1-Page Executive Deal Teaser</span>
+                {/* Compact Action Bar with "View Details" & "Initiate" */}
+                <div className="pt-2.5 border-t border-border flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center space-x-2 text-[11px] text-text-muted">
+                    {post.dealTeaser && (
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-primary/5 text-primary text-[10px] font-bold border border-primary/10">
+                        <FileText className="w-3 h-3 text-primary" />
+                        <span>Spec Sheet Attached</span>
                       </span>
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
-                          post.dealTeaser.isGated
-                            ? 'bg-amber-50 text-amber-800 border-amber-200'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        }`}
-                      >
-                        {post.dealTeaser.isGated ? '🔒 Confidential Spec Sheet' : '📄 Open Spec Sheet'}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] bg-surface p-2.5 rounded-lg border border-border">
-                      <div>
-                        <span className="text-text-muted block text-[10px] uppercase tracking-wider font-semibold">
-                          Scope
-                        </span>
-                        <span className="font-bold text-navy">{post.dealTeaser.scope}</span>
-                      </div>
-                      <div>
-                        <span className="text-text-muted block text-[10px] uppercase tracking-wider font-semibold">
-                          Volume Threshold
-                        </span>
-                        <span className="font-bold text-emerald-700">{post.dealTeaser.volumeThreshold}</span>
-                      </div>
-                      <div>
-                        <span className="text-text-muted block text-[10px] uppercase tracking-wider font-semibold">
-                          Corridor / Geography
-                        </span>
-                        <span className="font-bold text-navy">{post.dealTeaser.geographicReach}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                      <div className="text-[11px] text-text-muted truncate">
-                        {(post.dealTeaser.fileName || post.dealTeaser.specSheetFileName) ? (
-                          <span className="flex items-center space-x-1 font-mono text-[10px]">
-                            <FileText className="w-3 h-3 text-primary shrink-0" />
-                            <span className="truncate">{post.dealTeaser.fileName || post.dealTeaser.specSheetFileName}</span>
-                          </span>
-                        ) : (
-                          <span>Executive commercial terms attached</span>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const currentUserId = user?.id || 'current-user';
-                          const isUnlocked =
-                            !post.dealTeaser?.isGated ||
-                            isOwnPost ||
-                            post.dealTeaser?.unlockedUserIds?.includes(currentUserId);
-                          if (isUnlocked) {
-                            setTeaserTargetPost(post);
-                          } else {
-                            handleUnlockAndOpenTeaser(post);
-                          }
-                        }}
-                        className="px-3 py-1 bg-surface hover:bg-surface-muted text-primary border border-primary/30 font-bold text-xs rounded-lg shadow-2xs flex items-center space-x-1.5 transition-colors shrink-0"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>
-                          {!post.dealTeaser.isGated ||
-                          isOwnPost ||
-                          post.dealTeaser.unlockedUserIds?.includes(user?.id || 'current-user')
-                            ? 'View 1-Page Deal Teaser'
-                            : '🔒 Unlock Confidential Teaser (Request Access)'}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Hashtags */}
-                {post.tags && post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-0.5">
-                    {post.tags.map((tag) => (
-                      <button
-                        key={tag}
-                        onClick={() => setSelectedTag(tag)}
-                        className="text-[11px] font-bold text-primary hover:underline bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10 transition-colors"
-                      >
-                        #{tag}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Action Bar with Direct Bilateral Actions */}
-                <div className="pt-3 border-t border-border flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
-                  <div className="flex items-center space-x-1 sm:space-x-2">
-                    {/* Primary Bilateral CTA: Initiate Partnership */}
-                    <button
-                      onClick={() => setInitiatePartnerPost(post)}
-                      className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold flex items-center space-x-1.5 shadow-2xs transition-colors"
-                    >
-                      <Handshake className="w-3.5 h-3.5" />
-                      <span>{isConnected ? 'Initiate Partnership' : 'Initiate & Connect 🤝'}</span>
-                    </button>
-
-                    {/* Comment */}
+                    )}
                     <button
                       onClick={() => handleToggleComments(post.id)}
-                      className="px-2.5 py-1.5 rounded-lg hover:bg-surface-muted hover:text-navy flex items-center space-x-1.5 transition-colors font-medium border border-border/80"
+                      className="hover:text-primary flex items-center space-x-1 transition-colors"
                     >
                       <MessageSquare className="w-3.5 h-3.5 text-primary" />
                       <span>{post.commentsCount} Comments</span>
                     </button>
-
-                    {/* Reshare */}
-                    <button
-                      onClick={() => setReshareTarget(post)}
-                      className="px-2.5 py-1.5 rounded-lg hover:bg-surface-muted hover:text-navy flex items-center space-x-1.5 transition-colors font-medium border border-border/80"
-                    >
-                      <Repeat2 className="w-3.5 h-3.5 text-purple-600" />
-                      <span>{post.resharesCount} Reshares</span>
-                    </button>
-
-                    {/* Public Share Link */}
                     <button
                       onClick={() => handleSharePostLink(post)}
-                      title="Copy public link to share on LinkedIn, Slack, Twitter"
-                      className="px-2.5 py-1.5 rounded-lg hover:bg-surface-muted hover:text-navy flex items-center space-x-1.5 transition-colors font-medium border border-border/80"
+                      className="hover:text-primary p-1 rounded transition-colors"
+                      title="Share Mandate"
                     >
-                      <Share2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="hidden sm:inline">Share Link</span>
+                      <Share2 className="w-3.5 h-3.5 text-slate-500" />
                     </button>
                   </div>
 
-                  {/* LinkedIn-Style Analytics Button (Author's Own Posts Only) */}
-                  {isOwnPost && (
+                  <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => setAnalyticsPost(post)}
-                      className="px-2.5 py-1.5 rounded-lg bg-surface-muted hover:bg-border text-navy font-bold flex items-center space-x-1.5 transition-colors"
-                      title="View view counts and impressions for your mandate"
+                      type="button"
+                      onClick={() => setDetailTargetPost(post)}
+                      className="px-3 py-1.5 rounded-xl border border-border hover:border-primary/40 bg-surface hover:bg-primary-soft text-navy hover:text-primary font-bold text-xs transition-colors flex items-center space-x-1.5 shadow-2xs cursor-pointer"
                     >
-                      <BarChart3 className="w-3.5 h-3.5 text-primary" />
-                      <span>Analytics ({post.impressionsCount} views)</span>
+                      <span>View Details</span>
+                      <ExternalLink className="w-3 h-3 text-primary" />
                     </button>
-                  )}
+
+                    <button
+                      type="button"
+                      onClick={() => setInitiatePartnerPost(post)}
+                      className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-xs flex items-center space-x-1 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <Handshake className="w-3.5 h-3.5" />
+                      <span>Initiate</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Comment Thread Drawer with @mention tagging */}
@@ -1642,6 +1523,17 @@ export const PartnershipsPage: React.FC = () => {
           setTeaserTargetPost(null);
           setInitiatePartnerPost(p);
         }}
+      />
+
+      <PartnershipDetailModal
+        post={detailTargetPost}
+        isOpen={Boolean(detailTargetPost)}
+        onClose={() => setDetailTargetPost(null)}
+        onInitiatePartnership={(p) => {
+          setDetailTargetPost(null);
+          setInitiatePartnerPost(p);
+        }}
+        onShareLink={handleSharePostLink}
       />
 
       <PartnershipGuidelinesModal

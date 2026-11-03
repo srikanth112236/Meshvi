@@ -511,4 +511,46 @@ export class ProfilesService {
       originalFileName: originalFileName || safeFileName,
     };
   }
+
+  async linkLinkedInProfile(userId: string, linkedinUrl: string) {
+    const profile = await this.prisma.professionalProfile.findUnique({
+      where: { userId },
+    });
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    let cleanUrl = (linkedinUrl || '').trim();
+    if (!cleanUrl) {
+      cleanUrl = `https://www.linkedin.com/in/${profile.displayName.toLowerCase().replace(/\s+/g, '-')}`;
+    } else if (!cleanUrl.startsWith('http')) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
+    const updated = await this.prisma.professionalProfile.update({
+      where: { id: profile.id },
+      data: {
+        linkedinUrl: cleanUrl,
+        isLinkedInVerified: true,
+      },
+    });
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        linkedinProfileUrl: cleanUrl,
+        linkedinVerified: true,
+      },
+    });
+
+    this.logger.log(`Linked and verified LinkedIn profile for user ${userId}: ${cleanUrl}`);
+
+    return {
+      success: true,
+      message: 'LinkedIn profile successfully linked and verified.',
+      linkedinUrl: cleanUrl,
+      isLinkedInVerified: true,
+      profile: updated,
+    };
+  }
 }

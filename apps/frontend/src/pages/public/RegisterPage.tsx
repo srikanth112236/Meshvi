@@ -55,7 +55,6 @@ export const RegisterPage = () => {
   // Step 1: Form details, Step 2: Email OTP Verification
   const [authStep, setAuthStep] = useState<'DETAILS' | 'OTP'>('DETAILS');
   const [otpCode, setOtpCode] = useState('');
-  const [receivedOtp, setReceivedOtp] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [existingAccountNotice, setExistingAccountNotice] = useState<{
@@ -234,9 +233,9 @@ export const RegisterPage = () => {
         throw new Error(errorMsg);
       }
 
-      const generatedCode = data.data?.otp || data.data?.devOtp || data.data?.code || '123456';
-      setReceivedOtp(generatedCode);
-      setOtpCode(generatedCode); // Pre-fill for instant seamless testing
+      // In production/real use, user must enter the OTP received in their inbox.
+      // We clear the code input and transition to the OTP verification screen.
+      setOtpCode('');
       setAuthStep('OTP');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please check your details.');
@@ -598,14 +597,15 @@ export const RegisterPage = () => {
                 </p>
               </div>
 
-              {receivedOtp && (
-                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-center justify-between">
-                  <span className="font-semibold">Security Passcode:</span>
-                  <span className="font-mono font-black text-emerald-900 bg-emerald-100 px-2.5 py-0.5 rounded-lg text-sm tracking-widest">
-                    {receivedOtp}
-                  </span>
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 space-y-1">
+                <div className="font-semibold text-slate-900 flex items-center space-x-1.5">
+                  <Mail className="w-3.5 h-3.5 text-primary" />
+                  <span>Check Your Inbox</span>
                 </div>
-              )}
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Enter the 6-digit verification code sent to your email. Check your spam folder if it doesn't arrive within a few seconds.
+                </p>
+              </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-navy mb-1.5">

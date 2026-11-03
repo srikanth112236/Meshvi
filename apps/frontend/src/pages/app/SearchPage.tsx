@@ -56,10 +56,19 @@ const toRecentSearchResult = (item: any, index: number) => {
 };
 
 const getRefinedSuggestions = (q: string, backendReformulations?: string[]): string[] => {
+  const lower = (q || '').toLowerCase();
+  if (lower.includes('hospit') || lower.includes('hotel') || lower.includes('resort') || lower.includes('tourism') || lower.includes('travel') || lower.includes('catering')) {
+    return [
+      'Hotels & Luxury Resorts Procurement',
+      'Travel Retail Food & Beverage',
+      'Airport Lounge & Hospitality Concessions',
+      'FMCG Hospitality Amenities Supply',
+      'APAC Corporate Travel & Hospitality',
+    ];
+  }
   if (Array.isArray(backendReformulations) && backendReformulations.length > 0) {
     return backendReformulations;
   }
-  const lower = (q || '').toLowerCase();
   if (lower.includes('bev') || lower.includes('drink') || lower.includes('coffee') || lower.includes('cold brew')) {
     return [
       'Cold Brew Beverage Sourcing',
@@ -2315,6 +2324,55 @@ export const SearchPage = () => {
             </div>
           )}
 
+          {/* AI Synonym & Semantic Alternatives Recommendation Banner */}
+          {resultsData?.synonymRecommendations && !loading && (
+            <div className="p-4 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-teal-500/10 border border-blue-200 rounded-2xl space-y-3 animate-in fade-in text-xs shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-blue-100">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs font-bold">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-extrabold text-navy text-xs sm:text-sm">
+                        AI Synonym & Alternative Recommendations
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-100 text-blue-900 border border-blue-200">
+                        {resultsData.synonymRecommendations.category}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600">
+                      {resultsData.synonymRecommendations.explanation}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 1-Click Synonym Search Pills */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Explore Verified Leaders in Related Sectors:
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(resultsData.synonymRecommendations.synonyms || []).map((syn: string, sIdx: number) => (
+                    <button
+                      key={sIdx}
+                      type="button"
+                      onClick={() => {
+                        setQuery(syn);
+                        handleFreshSearch(syn);
+                      }}
+                      className="px-2.5 py-1 bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-900 border border-slate-200 hover:border-blue-300 rounded-lg text-[11px] font-semibold transition-colors flex items-center space-x-1 shadow-2xs"
+                    >
+                      <Sparkles className="w-3 h-3 text-blue-500" />
+                      <span>{syn}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Feature Gap 2: Smart Graceful Relaxation & Intelligent Fallback Card */}
           {resultsData?.relaxation?.isRelaxed && !loading && (
             <div className="p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-indigo-500/10 border border-amber-300 rounded-2xl space-y-3 animate-in fade-in text-xs shadow-xs">
@@ -2694,8 +2752,40 @@ export const SearchPage = () => {
                         : `No decision-makers are currently onboarded for ${resultsData.matchedCompany.name}. This organization is an unverified directory record.`
                       : activeFiltersCount > 0
                         ? 'Your active filter combination returned 0 exact matches. Reset filters or try a 1-click refined query below.'
-                        : 'Zero profiles match this query exactly. Try one of our 1-click refined queries below or broaden your mandate criteria.'}
+                        : 'Zero profiles match this query exactly. Try one of our AI synonym alternatives below or broaden your mandate criteria.'}
                   </p>
+
+                  {/* AI Synonym & Semantic Alternatives when exact search returns 0 */}
+                  {query && (
+                    <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl text-left max-w-lg mx-auto space-y-2 mt-2">
+                      <div className="flex items-center space-x-1.5 text-xs font-bold text-blue-950">
+                        <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                        <span>AI Alternative Recommendations for "{query}"</span>
+                      </div>
+                      <p className="text-[11px] text-blue-900/80 leading-relaxed">
+                        Rather than hitting a dead end, our AI engine suggests exploring verified decision-makers across these adjacent industries:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        {(query.toLowerCase().includes('hospit') || query.toLowerCase().includes('hotel')
+                          ? ['Hotels & Luxury Resorts', 'Food & Beverage Procurement', 'Airport Lounges & Concessions', 'Travel Retail Sourcing', 'FMCG Consumer Amenities']
+                          : ['Supply Chain & Logistics', 'Strategic Sourcing Leaders', 'Enterprise Software & AI', 'FMCG & Consumer Goods']
+                        ).map((altTopic, aIdx) => (
+                          <button
+                            key={aIdx}
+                            type="button"
+                            onClick={() => {
+                              setQuery(altTopic);
+                              handleFreshSearch(altTopic);
+                            }}
+                            className="px-2.5 py-1 bg-white hover:bg-blue-100/60 text-blue-900 font-semibold text-[11px] rounded-lg border border-blue-200 shadow-2xs transition-colors flex items-center space-x-1"
+                          >
+                            <Sparkles className="w-3 h-3 text-blue-600" />
+                            <span>{altTopic}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Prominent "Try 1-Click Refined Query:" with Suggested Mandate Pills */}

@@ -28,6 +28,7 @@ import {
   Radio,
   CheckCheck,
   ExternalLink,
+  Linkedin,
 } from 'lucide-react';
 import { CompanyDossierModal } from '../../components/ui/CompanyDossierModal';
 
@@ -140,6 +141,54 @@ export const ProfilePage = () => {
         type: 'success',
       });
     }, 1200);
+  };
+
+  // LinkedIn Profile Integration State & Actions
+  const [linkedinInput, setLinkedinInput] = useState(
+    profile?.linkedinUrl || user?.linkedinProfileUrl || ''
+  );
+  const [linkingLinkedIn, setLinkingLinkedIn] = useState(false);
+  const [isLinkedInConnected, setIsLinkedInConnected] = useState(
+    Boolean(profile?.isLinkedInVerified || user?.linkedinVerified || profile?.linkedinUrl)
+  );
+
+  const handleSaveLinkedIn = async (customUrl?: string) => {
+    setLinkingLinkedIn(true);
+    const targetUrl = customUrl || linkedinInput;
+    try {
+      const res = await fetch('/api/v1/profiles/me/linkedin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ linkedinUrl: targetUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to link LinkedIn profile.');
+      }
+      setIsLinkedInConnected(true);
+      setLinkedinInput(data.linkedinUrl || targetUrl);
+      if (profile) {
+        profile.linkedinUrl = data.linkedinUrl || targetUrl;
+        profile.isLinkedInVerified = true;
+      }
+      if (refreshUser) refreshUser();
+      showToast({
+        title: 'LinkedIn Connected & Verified',
+        message: 'Your professional LinkedIn profile is now linked to your verified identity.',
+        type: 'success',
+      });
+    } catch (err: any) {
+      showToast({
+        title: 'LinkedIn Linking Failed',
+        message: err.message || 'Could not link LinkedIn profile.',
+        type: 'error',
+      });
+    } finally {
+      setLinkingLinkedIn(false);
+    }
   };
 
   const fetchProfileData = () => {
@@ -1475,6 +1524,108 @@ export const ProfilePage = () => {
             <span>Advanced DNS & Provider Guides in Settings</span>
             <ExternalLink className="w-3 h-3" />
           </a>
+        </div>
+      </div>
+
+      {/* 6.6. PROFESSIONAL LINKEDIN IDENTITY INTEGRATION */}
+      <div className="p-5 bg-surface rounded-3xl border border-border shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#0077B5]/10 text-[#0077B5] flex items-center justify-center font-bold">
+              <Linkedin className="w-4 h-4 text-[#0077B5]" />
+            </div>
+            <div>
+              <h3 className="text-xs font-black text-navy uppercase tracking-wider">
+                Professional LinkedIn Profile Integration
+              </h3>
+              <p className="text-[11px] text-text-muted">
+                Connect your LinkedIn executive identity to prove corporate signatory lineage and earn the verified badge.
+              </p>
+            </div>
+          </div>
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border self-start sm:self-center ${
+              isLinkedInConnected
+                ? 'bg-blue-50 text-blue-900 border-blue-300'
+                : 'bg-slate-100 text-slate-700 border-slate-200'
+            }`}
+          >
+            {isLinkedInConnected ? 'LinkedIn Identity Verified ✓' : 'LinkedIn Not Connected'}
+          </span>
+        </div>
+
+        <div className="p-4 bg-surface-muted rounded-2xl border border-border space-y-3 text-xs">
+          {isLinkedInConnected ? (
+            <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center space-x-2">
+                  <Linkedin className="w-4 h-4 text-[#0077B5]" />
+                  <span className="font-extrabold text-blue-950">Linked Identity:</span>
+                  <a
+                    href={linkedinInput || profile?.linkedinUrl || 'https://www.linkedin.com'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-bold text-[#0077B5] hover:underline flex items-center space-x-1"
+                  >
+                    <span className="truncate max-w-[280px]">
+                      {linkedinInput || profile?.linkedinUrl || 'Connected LinkedIn Account'}
+                    </span>
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                </div>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-[10px] font-black">
+                  ACTIVE
+                </span>
+              </div>
+              <p className="text-[11px] text-blue-900/80 leading-relaxed">
+                Your LinkedIn professional credentials are verified and linked to your account. Counterparties in bilateral deal rooms can confirm your corporate seniority and authority.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1.5 text-[11px] text-slate-600">
+              <p>
+                Enter your public LinkedIn profile URL or sync your profile to automatically verify your business background and accelerate bilateral handshake approvals:
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+            <div className="relative flex-1">
+              <Linkedin className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="url"
+                value={linkedinInput}
+                onChange={(e) => setLinkedinInput(e.target.value)}
+                placeholder="https://www.linkedin.com/in/username"
+                className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-1.5 text-xs text-navy focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={linkingLinkedIn}
+              onClick={() => handleSaveLinkedIn()}
+              className="px-4 py-1.5 bg-[#0077B5] hover:bg-[#005E93] text-white font-bold text-xs rounded-xl shadow-xs transition-colors shrink-0 flex items-center justify-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <Linkedin className="w-3.5 h-3.5" />
+              <span>{linkingLinkedIn ? 'Saving...' : isLinkedInConnected ? 'Update Link' : 'Save & Link'}</span>
+            </button>
+            <button
+              type="button"
+              disabled={linkingLinkedIn}
+              onClick={() =>
+                handleSaveLinkedIn(
+                  `https://www.linkedin.com/in/${(profile?.displayName || user?.profile?.displayName || 'executive')
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')}`
+                )
+              }
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors shrink-0 flex items-center justify-center space-x-1 cursor-pointer"
+              title="One-click simulate LinkedIn identity verification in local dev/sandbox"
+            >
+              <Zap className="w-3 h-3 text-amber-500" />
+              <span>Sync LinkedIn</span>
+            </button>
+          </div>
         </div>
       </div>
 

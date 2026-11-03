@@ -21,6 +21,7 @@ import { useModal } from '../../context/ModalContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { apiRequest } from '../../services/api';
 import { SearchCardSkeleton } from '../../components/SkeletonLoader';
+import { VideoShowcaseCard } from '../../components/VideoShowcaseCard';
 
 const { width } = Dimensions.get('window');
 
@@ -131,10 +132,30 @@ interface DashboardScreenProps {
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateTab }) => {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-  const { showSuccess, showError } = useModal();
+  const { user, logout } = useAuth();
+  const { showSuccess, showError, showConfirm } = useModal();
   const { unreadCount } = useNotifications();
   const profile = user?.profile;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const firstName = profile?.displayName?.split(' ')[0] || user?.name?.split(' ')[0] || 'Executive';
+
+  const handleDashboardLogout = () => {
+    showConfirm({
+      title: 'Sign Out of Executive Workspace',
+      message:
+        'Are you sure you want to log out? Your corporate credentials and encrypted session will be safely cleared on this terminal.',
+      confirmText: 'Sign Out',
+      cancelText: 'Stay Connected',
+      isDestructive: true,
+      badgeText: 'SECURITY PROTOCOL',
+      onConfirm: async () => {
+        try {
+          await logout();
+        } catch {}
+      },
+    });
+  };
 
   const [stats, setStats] = useState<StatsState>({
     connectionsCount: 0,
@@ -495,88 +516,176 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateTab 
             >
               <Feather name="message-square" size={16} color={MeshviColors.primary} />
             </TouchableOpacity>
+
+            {/* Direct Executive Sign Out Button */}
+            <TouchableOpacity
+              style={styles.headerLogoutBtn}
+              onPress={handleDashboardLogout}
+              activeOpacity={0.75}
+            >
+              <Feather name="log-out" size={14} color={COLORS.rose} style={{ marginRight: 4 }} />
+              <Text style={styles.headerLogoutBtnText}>Sign Out</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* ======================================================== */}
-        {/* 1. COMPACT EXECUTIVE IDENTITY HERO                       */}
+        {/* 1. PROFILE HEADER — JUST ONE SLEEK LINE (WEB PARITY)     */}
         {/* ======================================================== */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroTopRow}>
-            {/* Avatar with Verified Badge */}
-            <View style={styles.avatarWrap}>
+        <View style={styles.sleekHeaderBar}>
+          <View style={styles.sleekHeaderLeft}>
+            <View style={styles.sleekAvatarWrap}>
               {profile?.avatarUrl || user?.avatarUrl ? (
                 <Image
                   source={{ uri: profile?.avatarUrl || user?.avatarUrl }}
-                  style={styles.avatarImg}
+                  style={styles.sleekAvatarImg}
                 />
               ) : (
-                <View style={styles.avatarInitials}>
-                  <Text style={styles.avatarInitialsText}>
-                    {profile?.displayName ? profile.displayName[0]?.toUpperCase() : 'M'}
+                <View style={styles.sleekAvatarInitials}>
+                  <Text style={styles.sleekAvatarInitialsText}>
+                    {firstName[0]?.toUpperCase() || 'E'}
                   </Text>
                 </View>
               )}
-              <View style={styles.avatarCheckmark}>
-                <Text style={styles.avatarCheckmarkText}>✓</Text>
+              <View style={styles.sleekAvatarBadge}>
+                <Text style={styles.sleekAvatarBadgeText}>✓</Text>
               </View>
             </View>
 
-            {/* Profile Meta & Tags */}
-            <View style={styles.heroMetaWrap}>
-              <View style={styles.heroTagsRow}>
-                <View style={styles.verifiedExecutiveTag}>
-                  <Feather name="user-check" size={10} color="#166534" />
-                  <Text style={styles.verifiedExecutiveText}>VERIFIED EXECUTIVE</Text>
+            <View style={styles.sleekMetaGroup}>
+              <View style={styles.sleekGreetingRow}>
+                <Text style={styles.sleekGreetingText} numberOfLines={1}>
+                  {greeting}, {firstName}
+                </Text>
+                <View style={styles.sleekVerifiedPill}>
+                  <Feather name="user-check" size={9} color="#166534" />
+                  <Text style={styles.sleekVerifiedPillText}>VERIFIED</Text>
                 </View>
-                <View style={styles.bilateralProtectedTag}>
-                  <Feather name="shield" size={10} color="#4338CA" />
-                  <Text style={styles.bilateralProtectedText}>BILATERAL PROTECTED</Text>
+                <View style={styles.sleekProtectedPill}>
+                  <Feather name="shield" size={9} color="#0369A1" />
+                  <Text style={styles.sleekProtectedPillText}>PROTECTED</Text>
                 </View>
               </View>
-
-              <Text style={styles.heroName} numberOfLines={1}>
-                {profile?.displayName || user?.name || 'Executive Leader'}
-              </Text>
-
-              {profile?.currentCompanyName || (profile as any)?.company?.name ? (
-                <View style={styles.heroCompanyRow}>
-                  <Feather name="briefcase" size={11} color={MeshviColors.accent} />
-                  <Text style={styles.heroCompanyText} numberOfLines={1}>
-                    {profile?.currentCompanyName || (profile as any)?.company?.name}
-                  </Text>
-                </View>
-              ) : null}
-
-              <Text style={styles.heroHeadline} numberOfLines={1}>
-                {profile?.headline || profile?.summary || 'Configure corporate intent to connect with high-trust business decision makers.'}
-              </Text>
             </View>
           </View>
 
-          {/* Compact Quick Actions */}
-          <View style={styles.heroActionsRow}>
+          <View style={styles.sleekHeaderActions}>
             <TouchableOpacity
-              style={styles.actionBtnSecondary}
+              style={styles.sleekProfileBtn}
               onPress={() => onNavigateTab('profile')}
               activeOpacity={0.75}
             >
-              <Text style={styles.actionBtnSecondaryText}>My Profile</Text>
+              <Text style={styles.sleekProfileBtnText}>My Profile</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.actionBtnPrimary}
+              style={styles.sleekLogoutBtn}
+              onPress={handleDashboardLogout}
+              activeOpacity={0.75}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Feather name="log-out" size={13} color={COLORS.rose} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.sleekPostBtn}
               onPress={() => setIsPartnershipModalOpen(true)}
               activeOpacity={0.85}
             >
-              <Feather name="plus" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
-              <Text style={styles.actionBtnPrimaryText}>Post Partnership</Text>
+              <Feather name="plus" size={12} color="#FFFFFF" style={{ marginRight: 3 }} />
+              <Text style={styles.sleekPostBtnText}>Post</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* ======================================================== */}
-        {/* 2. COMPACT EXECUTIVE KPI COMMAND BAR (3-Column Strip)    */}
+        {/* 2. CHAT & MAIN PAGE HERO — "HEY! 👋, WHAT'S ON YOUR MIND" */}
+        {/* ======================================================== */}
+        <View style={styles.heroMindContainer}>
+          <Text style={styles.heroMindGreeting}>
+            Hey! 👋, {firstName}
+          </Text>
+          <Text style={styles.heroMindTitle}>
+            What’s on your mind Now?
+          </Text>
+
+          <View style={styles.heroMindQuotaRow}>
+            <View style={styles.heroMindQuotaPill}>
+              <Text style={styles.heroMindQuotaPrefix}>MONTHLY QUOTA:</Text>
+              <Text style={styles.heroMindQuotaValue}> {stats.quotaUsed} / {stats.quotaLimit} </Text>
+              <Text style={styles.heroMindQuotaSuffix}>Used</Text>
+            </View>
+          </View>
+
+          {/* Sleek Floating Pill Input Bar */}
+          <View style={styles.floatingPillBar}>
+            <TouchableOpacity
+              onPress={() => onNavigateTab('search')}
+              style={styles.floatingPillPlusBtn}
+              activeOpacity={0.7}
+            >
+              <Feather name="plus" size={16} color="#94A3B8" />
+            </TouchableOpacity>
+
+            <TextInput
+              style={styles.floatingPillInput}
+              placeholder="Ask Anything... e.g. Travel retail airport lounge, cold brew..."
+              placeholderTextColor="#94A3B8"
+              value={searchIntent}
+              onChangeText={setSearchIntent}
+              returnKeyType="search"
+              onSubmitEditing={handleSearchSubmit}
+            />
+
+            {searchIntent.length > 0 && (
+              <TouchableOpacity
+                onPress={handleClearSearchFilter}
+                style={styles.floatingPillClearBtn}
+                activeOpacity={0.7}
+              >
+                <Feather name="x" size={14} color="#94A3B8" />
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.floatingPillSendBtn}
+              onPress={handleSearchSubmit}
+              activeOpacity={0.85}
+            >
+              <Feather
+                name="send"
+                size={14}
+                color="#FFFFFF"
+                style={{ transform: [{ rotate: '-45deg' }], marginLeft: -1 }}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Suggested Mandate Chips */}
+          <View style={styles.suggestedMandatesRow}>
+            <Text style={styles.suggestedMandatesLabel}>SUGGESTED:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mandatesScroll}>
+              {SUGGESTED_MANDATES.map((term) => (
+                <TouchableOpacity
+                  key={term}
+                  onPress={() => handleChipClick(term)}
+                  style={styles.modernMandateChip}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.modernMandateChipText}>{term}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+
+        {/* ======================================================== */}
+        {/* 3. PLATFORM VIDEO SHOWCASE (EXACT WEB PARITY)            */}
+        {/* ======================================================== */}
+        <VideoShowcaseCard />
+
+        {/* ======================================================== */}
+        {/* 4. COMPACT EXECUTIVE KPI COMMAND BAR (3-Column Strip)    */}
         {/* ======================================================== */}
         <View style={styles.kpiGridCompact}>
           {/* Card 1: Direct Network */}
@@ -630,76 +739,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateTab 
             <Text style={styles.kpiSubTextCompact} numberOfLines={1}>Mutual peers</Text>
           </TouchableOpacity>
         </View>
-
-        {/* ======================================================== */}
-        {/* 3. OBJECTIVE INTENT SEARCH ENGINE BANNER                 */}
-        {/* ======================================================== */}
-        <LinearGradient
-          colors={['#0B1528', '#102A43', '#0A192F']}
-          style={styles.searchBanner}
-        >
-          <View style={styles.searchBannerHeader}>
-            <View style={styles.searchBannerTitleRow}>
-              <MaterialCommunityIcons name="star-four-points" size={16} color="#38BDF8" />
-              <Text style={styles.searchBannerTitle}>Objective Intent Search Engine</Text>
-            </View>
-            <View style={styles.quotaPill}>
-              <Text style={styles.quotaPillText}>
-                Quota: <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>{stats.quotaUsed} / {stats.quotaLimit} Used</Text>
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.searchBannerSubtitle}>
-            Match verified commercial decision makers by corporate mandate
-          </Text>
-
-          {/* Search Input Box */}
-          <View style={styles.searchInputRow}>
-            <View style={styles.searchInputWrap}>
-              <Feather name="search" size={14} color="#94A3B8" style={{ marginRight: 8 }} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="e.g. Travel retail airport lounge, cold brew beverage, enterprise AI..."
-                placeholderTextColor="#94A3B8"
-                value={searchIntent}
-                onChangeText={setSearchIntent}
-                returnKeyType="search"
-                onSubmitEditing={handleSearchSubmit}
-              />
-              {searchIntent.length > 0 && (
-                <TouchableOpacity onPress={handleClearSearchFilter} style={{ padding: 4 }}>
-                  <Feather name="x" size={14} color="#94A3B8" />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <TouchableOpacity
-              style={styles.searchSubmitBtn}
-              onPress={handleSearchSubmit}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.searchSubmitText}>Search</Text>
-              <Feather name="arrow-right" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Suggested Mandate Chips */}
-          <View style={styles.mandatesRow}>
-            <Text style={styles.mandatesLabel}>SUGGESTED:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
-              {SUGGESTED_MANDATES.map((term) => (
-                <TouchableOpacity
-                  key={term}
-                  onPress={() => handleChipClick(term)}
-                  style={styles.mandateChip}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.mandateChipText}>{term}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </LinearGradient>
 
         {/* ======================================================== */}
         {/* 4. CURATED HIGH-SYNERGY COUNTERPARTIES                   */}
@@ -1241,183 +1280,308 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-
-  /* 1. HERO CARD */
-  heroCard: {
-    backgroundColor: MeshviColors.surface,
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: MeshviColors.border,
-    shadowColor: '#172B4D',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-    marginBottom: 10,
-  },
-  heroTopRow: {
+  headerLogoutBtn: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#FECDD3',
   },
-  avatarWrap: {
+  headerLogoutBtnText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: COLORS.rose,
+  },
+  sleekLogoutBtn: {
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /* 1. SLEEK ONE-LINE PROFILE HEADER */
+  sleekHeaderBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 14,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  sleekHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  sleekAvatarWrap: {
     position: 'relative',
     marginRight: 10,
   },
-  avatarImg: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: 'rgba(15, 118, 110, 0.25)',
+  sleekAvatarImg: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  avatarInitials: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: MeshviColors.primary,
+  sleekAvatarInitials: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarInitialsText: {
+  sleekAvatarInitialsText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900',
+    fontSize: 14,
+    fontWeight: '800',
   },
-  avatarCheckmark: {
+  sleekAvatarBadge: {
     position: 'absolute',
     bottom: -2,
     right: -2,
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
-    backgroundColor: '#166534',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 13,
+    height: 13,
+    borderRadius: 6.5,
+    backgroundColor: '#10B981',
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarCheckmarkText: {
+  sleekAvatarBadgeText: {
     color: '#FFFFFF',
-    fontSize: 8,
+    fontSize: 7,
     fontWeight: '900',
   },
-  heroMetaWrap: {
+  sleekMetaGroup: {
     flex: 1,
   },
-  heroTagsRow: {
+  sleekGreetingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: 5,
-    marginBottom: 3,
+    gap: 4,
   },
-  verifiedExecutiveTag: {
+  sleekGreetingText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginRight: 4,
+  },
+  sleekVerifiedPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ECFDF5',
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 5,
     borderWidth: 1,
     borderColor: '#A7F3D0',
-  },
-  verifiedExecutiveText: {
-    color: '#166534',
-    fontSize: 8,
-    fontWeight: '800',
-    marginLeft: 3,
-  },
-  bilateralProtectedTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EEF2FF',
     paddingHorizontal: 5,
     paddingVertical: 1.5,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderRadius: 4,
   },
-  bilateralProtectedText: {
-    color: '#4338CA',
+  sleekVerifiedPillText: {
     fontSize: 8,
     fontWeight: '800',
-    marginLeft: 3,
+    color: '#166534',
+    marginLeft: 2,
   },
-  heroName: {
-    color: MeshviColors.textPrimary,
-    fontSize: 15,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  heroCompanyRow: {
+  sleekProtectedPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 1,
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
   },
-  heroCompanyText: {
-    color: MeshviColors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    marginLeft: 4,
+  sleekProtectedPillText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#0369A1',
+    marginLeft: 2,
   },
-  heroHeadline: {
-    color: MeshviColors.textMuted,
-    fontSize: 10.5,
-    marginTop: 2,
-    lineHeight: 14,
-  },
-  heroActionsRow: {
+  sleekHeaderActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: MeshviColors.border,
   },
-  actionBtnSecondary: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  sleekProfileBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     borderRadius: 8,
-    backgroundColor: MeshviColors.surfaceMuted,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: MeshviColors.border,
+    borderColor: '#E2E8F0',
   },
-  actionBtnSecondaryText: {
-    color: MeshviColors.textPrimary,
+  sleekProfileBtnText: {
     fontSize: 11,
     fontWeight: '700',
+    color: '#0F172A',
   },
-  actionBtnPrimary: {
-    flex: 1,
+  sleekPostBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
     borderRadius: 8,
-    backgroundColor: MeshviColors.accent,
+    backgroundColor: '#0284C7',
   },
-  actionBtnPrimaryText: {
-    color: '#FFFFFF',
+  sleekPostBtnText: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  actionBtnDark: {
-    flex: 1,
+
+  /* 2. WHAT'S ON YOUR MIND HERO */
+  heroMindContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginBottom: 6,
+  },
+  heroMindGreeting: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 2,
+  },
+  heroMindTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#38BDF8',
+    letterSpacing: -0.5,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  heroMindQuotaRow: {
+    marginBottom: 14,
+  },
+  heroMindQuotaPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
-  actionBtnDarkText: {
-    color: '#FFFFFF',
-    fontSize: 11,
+  heroMindQuotaPrefix: {
+    fontSize: 9,
     fontWeight: '800',
+    color: '#94A3B8',
+  },
+  heroMindQuotaValue: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  heroMindQuotaSuffix: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+
+  /* FLOATING PILL SEARCH BAR */
+  floatingPillBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderRadius: 30,
+    paddingLeft: 10,
+    paddingRight: 5,
+    paddingVertical: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: 10,
+  },
+  floatingPillPlusBtn: {
+    padding: 6,
+  },
+  floatingPillInput: {
+    flex: 1,
+    fontSize: 12.5,
+    fontWeight: '500',
+    color: '#0F172A',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  floatingPillClearBtn: {
+    padding: 6,
+  },
+  floatingPillSendBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  /* SUGGESTED MANDATES */
+  suggestedMandatesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingTop: 2,
+  },
+  suggestedMandatesLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+    marginRight: 6,
+  },
+  mandatesScroll: {
+    paddingVertical: 2,
+  },
+  modernMandateChip: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginRight: 6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  modernMandateChipText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#334155',
   },
 
   /* 2. KPI COMMAND BAR */

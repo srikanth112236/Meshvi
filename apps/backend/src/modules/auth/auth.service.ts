@@ -279,9 +279,7 @@ export class AuthService {
       success: true,
       message: 'Verification OTP sent to your email. Enter the code below to complete registration.',
       email: dto.email.trim(),
-      otp, // Provided directly in response for development convenience
-      devOtp: otp,
-      code: otp,
+      ...(process.env.ENABLE_DEV_OTP === 'true' ? { devOtp: otp } : {}),
     };
   }
 
@@ -816,8 +814,7 @@ export class AuthService {
       message: 'A 6-digit recovery code has been dispatched to your email. It expires in 10 minutes.',
       email: user.email,
       expiresInMinutes: 10,
-      devOtp: otp, // For local test convenience
-      code: otp,
+      ...(process.env.ENABLE_DEV_OTP === 'true' ? { devOtp: otp } : {}),
     };
   }
 
@@ -1472,9 +1469,7 @@ export class AuthService {
       success: true,
       message: `A 6-digit cryptographic verification code has been dispatched to ${workEmail}.`,
       expiresInMinutes: 15,
-      otp,
-      devOtp: otp,
-      code: otp,
+      ...(process.env.ENABLE_DEV_OTP === 'true' ? { devOtp: otp } : {}),
     };
   }
 

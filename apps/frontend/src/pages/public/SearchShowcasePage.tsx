@@ -17,7 +17,7 @@ import {
   Play,
 } from 'lucide-react';
 import { MotionContainer, MotionStagger, MotionItem } from '../../components/ui/MotionSection';
-import { ProductDemoPlayer } from '../../components/ui/ProductDemoPlayer';
+import { AnimatedVideoModal } from '../../components/ui/AnimatedVideoModal';
 
 interface SimulationScenario {
   id: string;
@@ -189,7 +189,6 @@ export const SearchShowcasePage = () => {
   const [customQuery, setCustomQuery] = useState('');
   const [isSimulating, setIsSimulating] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
-  const [demoChapter, setDemoChapter] = useState(1);
 
   const handleSimulate = (scenario: SimulationScenario) => {
     setIsSimulating(true);
@@ -238,13 +237,12 @@ export const SearchShowcasePage = () => {
             <button
               type="button"
               onClick={() => {
-                setDemoChapter(1);
                 setDemoOpen(true);
               }}
               className="w-full sm:w-auto px-6 py-3.5 bg-white hover:bg-slate-50 text-navy font-bold rounded-xl border-2 border-primary/30 hover:border-primary shadow-xs transition-all flex items-center justify-center text-sm space-x-2 cursor-pointer"
             >
               <Play className="w-3.5 h-3.5 text-primary fill-primary" />
-              <span>Watch Search Demo (0:15)</span>
+              <span>Watch Product Video (0:30)</span>
             </button>
             <Link
               to="/why-meshvi"
@@ -674,11 +672,9 @@ export const SearchShowcasePage = () => {
         </div>
       </section>
 
-      {/* Interactive Search Product Demo Player */}
-      <ProductDemoPlayer
+      {/* Interactive Search Animated Video Modal */}
+      <AnimatedVideoModal
         open={demoOpen}
-        initialChapter={demoChapter}
-        mode="single"
         onClose={() => setDemoOpen(false)}
       />
     </div>

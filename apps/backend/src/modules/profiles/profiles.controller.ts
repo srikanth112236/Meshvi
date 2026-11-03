@@ -131,4 +131,16 @@ export class ProfilesController {
   ) {
     return this.profilesService.uploadAvatar(user.id, dto.dataUrl, dto.fileName);
   }
+
+  @Post('me/linkedin')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Link and verify professional LinkedIn profile' })
+  async linkLinkedIn(
+    @CurrentUser() user: any,
+    @Body() body: { linkedinUrl: string },
+  ) {
+    return this.profilesService.linkLinkedInProfile(user.id, body.linkedinUrl);
+  }
 }

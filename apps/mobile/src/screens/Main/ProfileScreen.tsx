@@ -97,6 +97,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
   const [editTitle, setEditTitle] = useState(
     profile?.currentTitle || 'VP of Global Strategic Sourcing & Partnerships'
   );
+  const [editPhoneNumber, setEditPhoneNumber] = useState(
+    profile?.phoneNumber || '+65 9123 4567'
+  );
   const [editSeniority, setEditSeniority] = useState(
     profile?.seniority || 'VP / Managing Director'
   );
@@ -213,6 +216,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
         displayName: editDisplayName.trim(),
         headline: editHeadline.trim(),
         currentTitle: editTitle.trim(),
+        phoneNumber: editPhoneNumber.trim(),
         seniority: editSeniority,
         function: editFunction,
         department: editFunction,
@@ -333,6 +337,29 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
           {Boolean(profile?.summary || editSummary) && (
             <Text style={styles.summaryText}>{profile?.summary || editSummary}</Text>
           )}
+
+          {/* Verified Corporate Contact Row */}
+          <View style={styles.profileContactStrip}>
+            <View style={styles.contactItemRow}>
+              <Feather name="mail" size={12} color="#0284C7" style={{ marginRight: 6 }} />
+              <Text style={styles.contactItemText} numberOfLines={1}>
+                {user?.email || 'executive@corporate.com'}
+              </Text>
+              <View style={styles.verifiedContactBadge}>
+                <Text style={styles.verifiedContactBadgeText}>Verified</Text>
+              </View>
+            </View>
+
+            <View style={[styles.contactItemRow, { marginTop: 6 }]}>
+              <Feather name="phone" size={12} color="#059669" style={{ marginRight: 6 }} />
+              <Text style={styles.contactItemText} numberOfLines={1}>
+                {profile?.phoneNumber || editPhoneNumber}
+              </Text>
+              <View style={styles.protectedContactBadge}>
+                <Text style={styles.protectedContactBadgeText}>🔒 Protected</Text>
+              </View>
+            </View>
+          </View>
         </View>
 
         {/* 3. Company & Corporate Credentials Section */}
@@ -588,6 +615,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
                       onChangeText={setEditTitle}
                       placeholder="e.g. Vice President, Strategic Partnerships"
                       placeholderTextColor={COLORS.textMuted}
+                    />
+                  </View>
+
+                  <View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={styles.inputLabel}>Direct Mobile Number</Text>
+                      <Text style={{ fontSize: 9.5, color: '#10B981', fontWeight: '700' }}>🔒 Bilateral Clearance</Text>
+                    </View>
+                    <TextInput
+                      style={styles.formInput}
+                      value={editPhoneNumber}
+                      onChangeText={setEditPhoneNumber}
+                      placeholder="+65 9123 4567 or +91 98765 43210"
+                      placeholderTextColor={COLORS.textMuted}
+                      keyboardType="phone-pad"
                     />
                   </View>
 
@@ -959,6 +1001,49 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 15,
     marginTop: 8,
+  },
+  profileContactStrip: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  contactItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  contactItemText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#0F172A',
+    flex: 1,
+  },
+  verifiedContactBadge: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  verifiedContactBadgeText: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    color: '#166534',
+  },
+  protectedContactBadge: {
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  protectedContactBadgeText: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    color: '#0284C7',
   },
 
   // Section Cards

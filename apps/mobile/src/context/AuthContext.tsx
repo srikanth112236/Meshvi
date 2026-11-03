@@ -346,11 +346,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    await SafeStorage.removeItem('@meshvi_token');
-    await SafeStorage.removeItem('@meshvi_refresh_token');
-    await SafeStorage.removeItem('@meshvi_user');
-    setToken(null);
-    setUser(null);
+    try {
+      await SafeStorage.removeItem('@meshvi_token');
+      await SafeStorage.removeItem('@meshvi_refresh_token');
+      await SafeStorage.removeItem('@meshvi_user');
+      await SafeStorage.removeItem('@meshvi_last_google_account');
+    } catch {
+      // safe fallback
+    } finally {
+      setToken(null);
+      setUser(null);
+      setIsLoading(false);
+    }
   };
 
   const quickDemoLogin = async () => {
@@ -449,7 +456,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             res.data.user?.avatarUrl ||
             googleData.avatarUrl,
           isEmailVerified: true,
-          onboardingCompleted,
+          onboardingCompleted: true,
           profile: profileData || {
             id: 'prof_' + Date.now(),
             displayName: googleData.displayName || 'Executive Leader',
@@ -498,26 +505,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const profileData = userData?.profile;
+      const userEmail = userData?.email || '';
+      const userName =
+        profileData?.displayName || userData?.name || userData?.displayName || 'Executive Leader';
+      const userAvatar = profileData?.avatarUrl || userData?.avatarUrl || userData?.photo;
+      const userGoogleId = userData?.id || userData?.googleId;
+
+      let finalAuthToken = authToken;
+      let finalRefreshToken = refreshToken;
+      let finalUserData = userData;
+
+      // In local development or cross-environment flows, sync directly with the active backend
+      // (e.g. 192.168.1.6:3500) so the token and user record exist in this backend's database with a valid local JWT signature.
+      if (userEmail) {
+        try {
+          const syncRes = await apiRequest('/auth/google', {
+            method: 'POST',
+            body: {
+              email: userEmail,
+              displayName: userName,
+              avatarUrl: userAvatar,
+              googleId: userGoogleId,
+            },
+            timeoutMs: 5000,
+          });
+
+          if (syncRes.success && (syncRes.data?.token || syncRes.data?.accessToken)) {
+            finalAuthToken = syncRes.data.token || syncRes.data.accessToken;
+            if (syncRes.data?.refreshToken) {
+              finalRefreshToken = syncRes.data.refreshToken;
+            }
+            if (syncRes.data?.user) {
+              finalUserData = syncRes.data.user;
+            }
+          }
+        } catch {
+          // If backend sync times out, keep original token
+        }
+      }
+
+      const finalProfile = finalUserData?.profile || profileData;
       const authUser: User = {
-        id: userData?.id || 'usr_' + Date.now(),
-        email: userData?.email || '',
-        name: profileData?.displayName || userData?.name || 'Executive Leader',
-        role: userData?.roles && userData.roles.includes('ADMIN') ? 'ADMIN' : 'EXECUTIVE',
-        avatarUrl: profileData?.avatarUrl || userData?.avatarUrl,
+        id: finalUserData?.id || 'usr_' + Date.now(),
+        email: userEmail,
+        name: finalProfile?.displayName || finalUserData?.name || userName,
+        role:
+          finalUserData?.roles && finalUserData.roles.includes('ADMIN') ? 'ADMIN' : 'EXECUTIVE',
+        avatarUrl: finalProfile?.avatarUrl || userAvatar,
         isEmailVerified: true,
-        onboardingCompleted: userData?.onboardingCompleted ?? true,
-        profile: profileData || {
+        onboardingCompleted: true,
+        profile: finalProfile || {
           id: 'prof_' + Date.now(),
-          displayName: profileData?.displayName || userData?.name || 'Executive Leader',
-          avatarUrl: profileData?.avatarUrl || userData?.avatarUrl,
+          displayName: userName,
+          avatarUrl: userAvatar,
         },
       };
 
-      setToken(authToken);
+      setToken(finalAuthToken);
       setUser(authUser);
-      await SafeStorage.setItem('@meshvi_token', authToken);
-      if (refreshToken) {
-        await SafeStorage.setItem('@meshvi_refresh_token', refreshToken);
+      await SafeStorage.setItem('@meshvi_token', finalAuthToken);
+      if (finalRefreshToken) {
+        await SafeStorage.setItem('@meshvi_refresh_token', finalRefreshToken);
       }
       await SafeStorage.setItem('@meshvi_user', JSON.stringify(authUser));
       await SafeStorage.setItem(

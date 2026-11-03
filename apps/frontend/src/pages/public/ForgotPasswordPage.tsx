@@ -24,7 +24,6 @@ export const ForgotPasswordPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [devOtp, setDevOtp] = useState<string | null>(null);
 
   // 10-minute countdown timer (600 seconds)
   const [secondsLeft, setSecondsLeft] = useState(600);
@@ -71,10 +70,6 @@ export const ForgotPasswordPage = () => {
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error?.message || data.error || 'Failed to dispatch recovery code.');
-      }
-
-      if (data.data?.devOtp) {
-        setDevOtp(data.data.devOtp);
       }
 
       setStep('RESET');
@@ -216,19 +211,15 @@ export const ForgotPasswordPage = () => {
         {/* STEP 2: VERIFY CODE & NEW PASSWORD */}
         {step === 'RESET' && (
           <form onSubmit={handleResetPassword} className="space-y-4">
-            {/* Quick Fill in Dev Mode */}
-            {devOtp && (
-              <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs text-amber-900">
-                <span className="font-semibold">Dev Auto-fill Code: <strong>{devOtp}</strong></span>
-                <button
-                  type="button"
-                  onClick={() => setOtp(devOtp)}
-                  className="px-2 py-0.5 bg-amber-200 hover:bg-amber-300 text-amber-950 font-bold rounded text-[11px]"
-                >
-                  Fill Code
-                </button>
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 space-y-1">
+              <div className="font-semibold text-slate-900 flex items-center space-x-1.5">
+                <Mail className="w-3.5 h-3.5 text-primary" />
+                <span>Verification Code Sent</span>
               </div>
-            )}
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Check your inbox for the 6-digit recovery code. Enter it below along with your new password.
+              </p>
+            </div>
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-navy mb-1.5">

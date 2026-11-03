@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator, Modal, ScrollView, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator, Modal, ScrollView } from 'react-native';
+import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
+import { useModal } from '../context/ModalContext';
 import { SafeStorage } from '../services/storage';
 import { IntroSplashSlides } from '../screens/IntroSplashSlides';
 import { SplashScreen } from '../screens/SplashScreen';
@@ -41,7 +43,8 @@ type MainTab =
 
 export const RootNavigator: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const { isAuthenticated, isOnboarded, loginWithToken } = useAuth();
+  const { isAuthenticated, isOnboarded, loginWithToken, logout } = useAuth();
+  const { showConfirm } = useModal();
   const { unreadCount } = useNotifications();
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
   const [splashStage, setSplashStage] = useState<SplashStage>('intro_slides');
@@ -51,6 +54,15 @@ export const RootNavigator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<MainTab>('dashboard');
   const [initialSearchQuery, setInitialSearchQuery] = useState('');
   const [isMoreModalVisible, setIsMoreModalVisible] = useState(false);
+
+  // Automatically reset to clean Login screen and dashboard tab when session terminates
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setAuthScreen('login');
+      setActiveTab('dashboard');
+      setIsMoreModalVisible(false);
+    }
+  }, [isAuthenticated]);
 
   // Deep linking handler for seamless Google OAuth return (meshvi://)
   useEffect(() => {
@@ -413,6 +425,9 @@ export const RootNavigator: React.FC = () => {
                   size={19}
                   color={isSelected ? COLORS.primary : COLORS.textMuted}
                 />
+                {tab.id === 'more' && unreadCount > 0 && (
+                  <View style={styles.tabBadgeDot} />
+                )}
               </View>
               <Text style={[styles.tabLabel, isSelected && styles.tabLabelActive]}>
                 {tab.label}
@@ -524,6 +539,29 @@ export const RootNavigator: React.FC = () => {
                 })}
               </View>
             </ScrollView>
+
+            {/* Direct Executive Sign Out Action */}
+            <TouchableOpacity
+              style={styles.moreSignOutBtn}
+              onPress={() => {
+                setIsMoreModalVisible(false);
+                showConfirm({
+                  title: 'Sign Out of Executive Node',
+                  message: 'Are you sure you want to terminate this corporate session? Your terminal keys will be safely revoked.',
+                  confirmText: 'Sign Out',
+                  cancelText: 'Stay Connected',
+                  isDestructive: true,
+                  badgeText: 'SECURITY PROTOCOL',
+                  onConfirm: async () => {
+                    await logout();
+                  },
+                });
+              }}
+              activeOpacity={0.8}
+            >
+              <Feather name="log-out" size={16} color={COLORS.rose} style={{ marginRight: 8 }} />
+              <Text style={styles.moreSignOutText}>Sign Out of Executive Workspace</Text>
+            </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -569,6 +607,17 @@ const styles = StyleSheet.create({
   },
   tabIconWrapActive: {
     backgroundColor: COLORS.primaryLight,
+  },
+  tabBadgeDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#0284C7',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
   tabLabel: {
     color: COLORS.textMuted,
@@ -679,5 +728,22 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     fontWeight: '800',
     color: '#FFF',
+  },
+  moreSignOutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+  },
+  moreSignOutText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.rose,
   },
 });

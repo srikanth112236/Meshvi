@@ -1,89 +1,74 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, UserCheck, MessageSquare, Building, Users, ShieldAlert, CheckCircle, Send, Sparkles, Play } from 'lucide-react';
+import {
+  ArrowRight,
+  Search,
+  ShieldCheck,
+  Handshake,
+  Lock,
+  Sparkles,
+  Play,
+} from 'lucide-react';
 import { MotionContainer, MotionStagger, MotionItem } from '../../components/ui/MotionSection';
-import { ProductDemoPlayer } from '../../components/ui/ProductDemoPlayer';
+import { AnimatedVideoModal } from '../../components/ui/AnimatedVideoModal';
 
 export const HowItWorksPage = () => {
-  const [tourOpen, setTourOpen] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
 
   const steps = [
     {
       num: '01',
-      title: 'Define Intent & Profile',
-      desc: 'Declare your business role, verified expertise, and specific commercial intents (what you are offering vs. seeking).',
-      icon: UserCheck,
-      badge: 'Zero Spam',
-    },
-    {
-      num: '02',
-      title: 'State Your Commercial Objective',
-      desc: 'Type your objective in plain English (e.g. "Airport lounge beverage partnerships in Malaysia" or "Cold-chain procurement").',
-      icon: MessageSquare,
+      title: 'State Your Objective in Plain English',
+      desc: 'No keyword guesswork or Boolean queries. Simply describe the commercial outcome, trade corridor, or executive capability you need.',
+      icon: Search,
       badge: 'Intent NLP',
     },
     {
+      num: '02',
+      title: 'Review Verified Decision-Makers',
+      desc: 'Inspect real corporate profiles with corporate DNS validation. Every match displays transparent relevance scoring.',
+      icon: ShieldCheck,
+      badge: 'DNS Verified',
+    },
+    {
       num: '03',
-      title: 'Target Division Mapping',
-      desc: 'Meshvi normalizes colloquial queries into taxonomy functions (Commercial, Supply Chain, Strategic Alliances).',
-      icon: Building,
-      badge: 'Taxonomy Match',
-    },
-    {
-      num: '04',
-      title: 'Inspect Permitted Professional Records',
-      desc: 'Discover verified professionals with full data provenance. Real records only—never hallucinated personas.',
-      icon: Users,
-      badge: 'Data Provenance',
-    },
-    {
-      num: '05',
-      title: 'Review Grounded Relevance Signals',
-      desc: 'Transparent 100-point rubric breakdown (Function 35, Geo 25, Industry 20, Seniority 10, Intent 10) with exact reason codes.',
-      icon: ShieldAlert,
-      badge: 'Explainable AI',
-    },
-    {
-      num: '06',
-      title: 'Send Intent-Backed Request or Intro',
-      desc: 'Send a direct request with mandatory business context, or route through mutual colleagues for warm introductions.',
-      icon: Send,
+      title: 'Send Intent-Backed Handshake',
+      desc: 'Connect with mandatory business context. Both parties must mutually accept before direct communication or contact details unlock.',
+      icon: Handshake,
       badge: 'Double-Opt-In',
     },
     {
-      num: '07',
-      title: 'Engage in Permissioned Direct Messaging',
-      desc: 'Once mutual consent is established, engage in direct professional messaging with zero unsolicited blast outreach.',
-      icon: CheckCircle,
-      badge: 'Encrypted Thread',
+      num: '04',
+      title: 'Execute in a Private Deal Room',
+      desc: 'One-click mutual NDAs, milestone tracking with evidence verification, and an encrypted document vault for clean governance.',
+      icon: Lock,
+      badge: 'Signed MNDA',
     },
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
       {/* Header */}
-      <MotionContainer className="max-w-3xl space-y-4">
+      <MotionContainer className="max-w-2xl space-y-4">
         <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-soft text-primary text-xs font-bold mb-1">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>7-Step Deterministic Protocol</span>
+          <span>Intent-First Architecture</span>
         </div>
-        <h1 className="text-4xl sm:text-6xl font-black text-navy tracking-tight">
-          How MESHVI works
+        <h1 className="text-3xl sm:text-5xl font-black text-navy tracking-tight">
+          How MESHVI Works
         </h1>
-        <p className="mt-2 text-base sm:text-lg text-text-muted leading-relaxed">
-          Traditional directories require knowing the exact person’s title before you can find them.
-          Meshvi begins with your business outcome, normalizes intent, explains matches transparently,
-          and facilitates mutual connections without unsolicited spam.
+        <p className="mt-2 text-sm sm:text-base text-text-muted leading-relaxed">
+          Traditional networks sell contact lists to spammers. MESHVI starts with your business objective, verifies identities cryptographically, and closes high-trust bilateral deals.
         </p>
 
         <div className="pt-2 flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={() => setTourOpen(true)}
+            onClick={() => setVideoModalOpen(true)}
             className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all flex items-center space-x-2 cursor-pointer"
           >
             <Play className="w-3.5 h-3.5 fill-white" />
-            <span>Watch Full Interactive Tour (1:30)</span>
+            <span>Watch Product Video (0:30)</span>
           </button>
           <Link
             to="/register"
@@ -94,29 +79,26 @@ export const HowItWorksPage = () => {
         </div>
       </MotionContainer>
 
-      {/* 7 Step Interactive Flow */}
-      <MotionStagger className="space-y-4">
+      {/* 4 Clean Steps */}
+      <MotionStagger className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {steps.map((s) => (
           <MotionItem key={s.num}>
-            <div className="bg-surface border border-border hover:border-primary/50 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group">
-              <div className="flex items-start sm:items-center space-x-5">
-                <div className="text-2xl sm:text-3xl font-black text-navy/30 group-hover:text-primary transition-colors w-12 shrink-0">
-                  {s.num}
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-surface-muted group-hover:bg-primary-soft text-navy group-hover:text-primary transition-colors flex items-center justify-center shrink-0">
-                  <s.icon className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2.5">
-                    <h3 className="text-base sm:text-lg font-bold text-navy">{s.title}</h3>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary-soft/80 px-2.5 py-0.5 rounded-full">
-                      {s.badge}
-                    </span>
+            <div className="bg-surface border border-border hover:border-primary/50 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all space-y-4 group h-full flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-xl bg-surface-muted group-hover:bg-primary-soft text-navy group-hover:text-primary transition-colors flex items-center justify-center">
+                    <s.icon className="w-5 h-5" />
                   </div>
-                  <p className="text-xs sm:text-sm text-text-muted max-w-2xl leading-relaxed">
-                    {s.desc}
-                  </p>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary-soft/80 px-2.5 py-0.5 rounded-full">
+                    {s.badge}
+                  </span>
                 </div>
+
+                <div className="text-xs font-mono font-bold text-slate-400">Step {s.num}</div>
+                <h3 className="text-base sm:text-lg font-bold text-navy">{s.title}</h3>
+                <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+                  {s.desc}
+                </p>
               </div>
             </div>
           </MotionItem>
@@ -124,25 +106,17 @@ export const HowItWorksPage = () => {
       </MotionStagger>
 
       {/* Call to action */}
-      <MotionContainer className="bg-navy text-white rounded-3xl p-8 sm:p-12 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-lg">
-          <h3 className="text-2xl font-bold">Experience the Intent-First Advantage</h3>
-          <p className="text-xs text-surface-muted leading-relaxed">
-            Create your professional profile today or explore open pilot search criteria.
+      <MotionContainer className="bg-navy text-white rounded-3xl p-8 sm:p-10 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="space-y-1.5 max-w-lg">
+          <h3 className="text-xl sm:text-2xl font-bold">Ready to Start Finding Counterparties?</h3>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Join verified decision-makers across India, Australia, the UK, Europe, and the Americas.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={() => setTourOpen(true)}
-            className="w-full sm:w-auto px-5 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl border border-white/20 transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
-          >
-            <Play className="w-3.5 h-3.5 fill-white" />
-            <span>Watch Tour (1:30)</span>
-          </button>
+        <div className="flex items-center gap-3 shrink-0">
           <Link
             to="/register"
-            className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center"
+            className="px-6 py-3 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center cursor-pointer"
           >
             <span>Get Started Free</span>
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -150,12 +124,10 @@ export const HowItWorksPage = () => {
         </div>
       </MotionContainer>
 
-      {/* Interactive Tour Modal */}
-      <ProductDemoPlayer
-        open={tourOpen}
-        initialChapter={0}
-        mode="full"
-        onClose={() => setTourOpen(false)}
+      {/* Animated Video Modal */}
+      <AnimatedVideoModal
+        open={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
       />
     </div>
   );

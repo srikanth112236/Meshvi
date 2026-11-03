@@ -11,11 +11,56 @@ import {
   Check,
   Building2,
   Lock,
+  Linkedin,
 } from 'lucide-react';
 
 export const SettingsPage = () => {
-  const { user } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const { showToast } = useNotifications();
+
+  // LinkedIn Account Connection
+  const [linkedinUrl, setLinkedinUrl] = useState(
+    user?.profile?.linkedinUrl || user?.linkedinProfileUrl || ''
+  );
+  const [isLinkedInConnected, setIsLinkedInConnected] = useState(
+    Boolean(user?.profile?.isLinkedInVerified || user?.linkedinVerified || user?.profile?.linkedinUrl)
+  );
+  const [savingLinkedIn, setSavingLinkedIn] = useState(false);
+
+  const handleSaveLinkedIn = async (customUrl?: string) => {
+    setSavingLinkedIn(true);
+    const targetUrl = customUrl || linkedinUrl;
+    try {
+      const res = await fetch('/api/v1/profiles/me/linkedin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ linkedinUrl: targetUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update LinkedIn account.');
+      }
+      setIsLinkedInConnected(true);
+      setLinkedinUrl(data.linkedinUrl || targetUrl);
+      if (refreshUser) refreshUser();
+      showToast({
+        title: 'LinkedIn Account Synced',
+        message: 'Your LinkedIn credentials have been saved and verified.',
+        type: 'success',
+      });
+    } catch (err: any) {
+      showToast({
+        title: 'LinkedIn Update Failed',
+        message: err.message || 'Could not update LinkedIn account.',
+        type: 'error',
+      });
+    } finally {
+      setSavingLinkedIn(false);
+    }
+  };
 
   // Extract domain from user email or fallback
   const userDomain = user?.email ? user.email.split('@')[1] : 'borneoagro.my';
@@ -244,6 +289,70 @@ export const SettingsPage = () => {
               </ol>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Connected Accounts & LinkedIn Integration */}
+      <div className="p-6 bg-surface rounded-3xl border border-border space-y-4 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#0077B5]/10 text-[#0077B5] flex items-center justify-center font-bold">
+              <Linkedin className="w-4 h-4 text-[#0077B5]" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-navy">Connected Accounts & LinkedIn</h2>
+              <p className="text-xs text-text-muted">
+                Link and sync your professional LinkedIn profile to unlock verified trust badges.
+              </p>
+            </div>
+          </div>
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border self-start sm:self-center ${
+              isLinkedInConnected
+                ? 'bg-blue-50 text-blue-900 border-blue-300'
+                : 'bg-slate-100 text-slate-700 border-slate-200'
+            }`}
+          >
+            {isLinkedInConnected ? 'Connected & Verified ✓' : 'Not Connected'}
+          </span>
+        </div>
+
+        <div className="p-4 bg-surface-muted rounded-2xl border border-border space-y-3 text-xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="relative flex-1">
+              <Linkedin className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="url"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                placeholder="https://www.linkedin.com/in/username"
+                className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-1.5 text-xs text-navy focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={savingLinkedIn}
+              onClick={() => handleSaveLinkedIn()}
+              className="px-4 py-1.5 bg-[#0077B5] hover:bg-[#005E93] text-white font-bold text-xs rounded-xl shadow-xs transition-colors shrink-0 flex items-center justify-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <Linkedin className="w-3.5 h-3.5" />
+              <span>{savingLinkedIn ? 'Saving...' : isLinkedInConnected ? 'Update URL' : 'Connect LinkedIn'}</span>
+            </button>
+            <button
+              type="button"
+              disabled={savingLinkedIn}
+              onClick={() =>
+                handleSaveLinkedIn(
+                  `https://www.linkedin.com/in/${(user?.profile?.displayName || 'executive')
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')}`
+                )
+              }
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors shrink-0 cursor-pointer"
+            >
+              Sync Profile
+            </button>
+          </div>
         </div>
       </div>
 

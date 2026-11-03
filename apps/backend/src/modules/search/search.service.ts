@@ -416,7 +416,72 @@ export function autoCorrectB2BWord(rawWord: string): { corrected: string; wasCor
   return { corrected: rawWord, wasCorrected: false };
 }
 
+export const AI_SYNONYM_CLUSTERS: Record<
+  string,
+  {
+    category: string;
+    synonyms: string[];
+    dbIndustries: string[];
+    recommendedQueries: string[];
+  }
+> = {
+  hospitality: {
+    category: 'Hospitality, Travel & Leisure',
+    synonyms: ['Hotels & Resorts', 'Food & Beverage', 'Travel & Tourism', 'Airport Lounges & Concessions', 'FMCG Consumer Amenities', 'Retail & Catering'],
+    dbIndustries: ['FMCG & Consumer Goods', 'Supply Chain & Logistics', 'Enterprise Software & AI'],
+    recommendedQueries: ['Hotels & Resorts sourcing', 'Food & Beverage procurement', 'Travel retail supply chain', 'Airport lounge & concessions'],
+  },
+  hotel: {
+    category: 'Hotels & Accommodation',
+    synonyms: ['Hospitality & Leisure', 'Resorts', 'Food & Beverage', 'Travel Amenities', 'Facility Management'],
+    dbIndustries: ['FMCG & Consumer Goods', 'Supply Chain & Logistics'],
+    recommendedQueries: ['Hospitality procurement', 'Food & Beverage leaders', 'Luxury resort amenities'],
+  },
+  tourism: {
+    category: 'Travel & Tourism',
+    synonyms: ['Hospitality', 'Aviation & Lounges', 'Travel Retail', 'Leisure & Entertainment'],
+    dbIndustries: ['Supply Chain & Logistics', 'Enterprise Software & AI', 'FMCG & Consumer Goods'],
+    recommendedQueries: ['Travel retail distribution', 'Aviation lounge services', 'Hospitality commercial heads'],
+  },
+  travel: {
+    category: 'Travel & Mobility',
+    synonyms: ['Hospitality', 'Tourism', 'Aviation', 'Travel Retail', 'Fleet & Logistics'],
+    dbIndustries: ['Supply Chain & Logistics', 'Enterprise Software & AI', 'Automotive & EV Systems'],
+    recommendedQueries: ['Travel retail procurement', 'Aviation logistics', 'Hospitality operations'],
+  },
+  restaurant: {
+    category: 'Food Service & Restaurants',
+    synonyms: ['Food & Beverage', 'Hospitality', 'FMCG', 'Catering', 'Cold Chain Logistics'],
+    dbIndustries: ['FMCG & Consumer Goods', 'Supply Chain & Logistics'],
+    recommendedQueries: ['Food & Beverage procurement', 'Commercial kitchen supply chain', 'Cold chain distribution'],
+  },
+  catering: {
+    category: 'Catering & Food Services',
+    synonyms: ['Food & Beverage', 'Hospitality', 'FMCG', 'Cold Storage', 'Institutional Supply'],
+    dbIndustries: ['FMCG & Consumer Goods', 'Supply Chain & Logistics'],
+    recommendedQueries: ['Institutional food supply', 'Cold chain logistics', 'FMCG procurement'],
+  },
+  aviation: {
+    category: 'Aviation & Aerospace',
+    synonyms: ['Aerospace Manufacturing', 'Airport Lounges', 'Air Freight & Cargo', 'Defense Systems'],
+    dbIndustries: ['Industrial Manufacturing', 'Supply Chain & Logistics', 'Semiconductors & Electronics'],
+    recommendedQueries: ['Aerospace precision components', 'Air freight cargo logistics', 'Airport lounge operations'],
+  },
+};
+
 export const INDUSTRY_TERMS_MAP: Record<string, string> = {
+  hospitality: 'FMCG & Consumer Goods',
+  hotel: 'FMCG & Consumer Goods',
+  hotels: 'FMCG & Consumer Goods',
+  resort: 'FMCG & Consumer Goods',
+  resorts: 'FMCG & Consumer Goods',
+  tourism: 'FMCG & Consumer Goods',
+  travel: 'Supply Chain & Logistics',
+  restaurant: 'FMCG & Consumer Goods',
+  restaurants: 'FMCG & Consumer Goods',
+  catering: 'FMCG & Consumer Goods',
+  concessions: 'FMCG & Consumer Goods',
+  lodging: 'FMCG & Consumer Goods',
   food: 'FMCG & Consumer Goods',
   beverage: 'FMCG & Consumer Goods',
   beverages: 'FMCG & Consumer Goods',
@@ -1410,6 +1475,9 @@ function resolveFunctionFilterTerms(fn: string): string[] {
 
 function resolveIndustryFilterTerms(ind: string): string[] {
   const lower = ind.toLowerCase().trim();
+  if (lower.includes('hospitality') || lower.includes('hotel') || lower.includes('resort') || lower.includes('tourism') || lower.includes('catering') || lower.includes('lodging')) {
+    return ['Hospitality & Consumer Goods', 'FMCG & Consumer Goods', 'Food & Beverage', 'Supply Chain & Logistics', 'Consumer Goods'];
+  }
   if (lower.includes('logistic') || lower.includes('supply chain') || lower.includes('cold-chain') || lower.includes('coldchain') || lower.includes('freight') || lower.includes('warehouse') || lower.includes('warehousing') || lower.includes('shipping')) {
     return ['Supply Chain & Logistics', 'Logistics & Supply Chain', 'Logistics', 'Supply Chain'];
   }
@@ -1927,6 +1995,8 @@ export class SearchService {
     let totalMatchingCount = 0;
     let candidates: any[] = [];
     let matchedCompanyData: any = null;
+    let relaxationInfo: SearchRelaxationNotice | null = null;
+    let activeSynonymRecommendation: any = null;
 
     // P1 & P2: Entity Disentanglement & Company Anchor Engine
     if (query && query.trim() !== '' && parsedQueryData) {
@@ -2389,6 +2459,92 @@ export class SearchService {
             candidateList = tier2Candidates;
           }
 
+          // Tier 3: AI Synonym & Semantic Industry Expansion (when 0 direct matches found)
+          if (query && candidateList.length === 0) {
+            const lowerQ = query.toLowerCase();
+            const matchedKey = Object.keys(AI_SYNONYM_CLUSTERS).find((k) => lowerQ.includes(k));
+            const cluster = matchedKey ? AI_SYNONYM_CLUSTERS[matchedKey] : null;
+
+            if (cluster) {
+              const synonymOr: any[] = [];
+              cluster.dbIndustries.forEach((ind) => {
+                const root = ind.split('&')[0].trim();
+                synonymOr.push({ industry: { contains: root, mode: 'insensitive' as const } });
+                synonymOr.push({ company: { industry: { contains: root, mode: 'insensitive' as const } } });
+              });
+
+              synonymOr.push({ headline: { contains: 'Procurement', mode: 'insensitive' as const } });
+              synonymOr.push({ headline: { contains: 'Supply Chain', mode: 'insensitive' as const } });
+              synonymOr.push({ currentTitle: { contains: 'Director', mode: 'insensitive' as const } });
+
+              const synonymCandidates = await this.prisma.professionalProfile.findMany({
+                where: {
+                  ...whereConditions,
+                  OR: synonymOr,
+                },
+                include: candidateIncludes,
+                take: 24,
+                orderBy: [{ completenessScore: 'desc' }, { createdAt: 'desc' }],
+              });
+
+              synonymCandidates.forEach((cand: any) => {
+                (cand as any)._isRelaxed = true;
+                (cand as any)._relaxationTag = 'INDUSTRY_LOOKALIKE_RELAXATION';
+                (cand as any)._aiRecommended = true;
+                (cand as any)._synonymCategory = cluster.category;
+              });
+
+              activeSynonymRecommendation = {
+                originalQuery: query,
+                category: cluster.category,
+                synonyms: cluster.synonyms,
+                recommendedQueries: cluster.recommendedQueries,
+                explanation: `No exact profiles with the label "${query}" were found. Showing verified decision-makers in related industries: ${cluster.synonyms.slice(0, 3).join(', ')}.`,
+              };
+
+              relaxationInfo = {
+                isRelaxed: true,
+                level: 3,
+                type: 'INDUSTRY_LOOKALIKE_RELAXATION',
+                title: `Showing AI recommended decision-makers in adjacent industries for "${query}"`,
+                message: `Direct taxonomy for "${query}" returned 0 exact hits. Expanded to verified decision-makers in ${cluster.synonyms.slice(0, 3).join(', ')}.`,
+                suggestion: `Connect with verified leaders in adjacent sectors: ${cluster.synonyms.slice(0, 3).join(', ')}.`,
+                actionType: 'ADJACENT_INDUSTRY',
+                originalQuery: query,
+                relaxedField: 'industry',
+              };
+
+              candidateList = synonymCandidates;
+            } else {
+              // General AI Semantic Relaxation
+              const fallbackCandidates = await this.prisma.professionalProfile.findMany({
+                where: whereConditions,
+                include: candidateIncludes,
+                take: 12,
+                orderBy: [{ completenessScore: 'desc' }, { createdAt: 'desc' }],
+              });
+
+              fallbackCandidates.forEach((cand: any) => {
+                (cand as any)._isRelaxed = true;
+                (cand as any)._relaxationTag = 'INDUSTRY_LOOKALIKE_RELAXATION';
+              });
+
+              relaxationInfo = {
+                isRelaxed: true,
+                level: 3,
+                type: 'INDUSTRY_LOOKALIKE_RELAXATION',
+                title: `No exact matches for "${query}". Showing top verified commercial decision-makers.`,
+                message: `Direct keyword search returned zero exact records across active directory.`,
+                suggestion: `Explore alternative executive mandates below or try a 1-click suggested query.`,
+                actionType: 'ADJACENT_INDUSTRY',
+                originalQuery: query,
+                relaxedField: 'industry',
+              };
+
+              candidateList = fallbackCandidates;
+            }
+          }
+
           candidates = candidateList;
           totalMatchingCount = candidateList.length;
         }
@@ -2421,8 +2577,6 @@ export class SearchService {
       totalMatchingCount = count;
       candidates = list;
     }
-
-    const relaxationInfo: SearchRelaxationNotice | null = null;
 
     const requesterProfile = await this.prisma.professionalProfile.findUnique({
       where: { userId },
@@ -3855,6 +4009,7 @@ export class SearchService {
       interpretedIntent: interpreted,
       detectedPriority: priorityInfo,
       relaxation: relaxationInfo,
+      synonymRecommendations: activeSynonymRecommendation,
       clarification: clarificationData,
       queryCorrection: parsedQueryData?.queryCorrection || null,
       syntaxTips: buildProactiveSyntaxTips(query, parsedQueryData),

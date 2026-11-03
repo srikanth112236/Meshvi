@@ -8,7 +8,7 @@ import {
   Building2,
   Users,
 } from 'lucide-react';
-import { ProductDemoPlayer } from './ProductDemoPlayer';
+import { AnimatedVideoModal } from './AnimatedVideoModal';
 
 type TileKind = 'search' | 'company' | 'filters' | 'chat' | 'network' | 'story';
 
@@ -157,8 +157,8 @@ const TilePreview = ({ kind }: { kind: TileKind }) => {
 
 export const VideoShowcase = () => {
   const [open, setOpen] = useState(false);
-  const [startAt, setStartAt] = useState(0);
-  const [mode, setMode] = useState<'single' | 'full'>('single');
+  const [_startAt, setStartAt] = useState(0);
+  const [_mode, setMode] = useState<'single' | 'full'>('single');
 
   const playDemo = (chapter: number) => {
     setStartAt(chapter);
@@ -267,10 +267,8 @@ export const VideoShowcase = () => {
         ))}
       </div>
 
-      <ProductDemoPlayer
+      <AnimatedVideoModal
         open={open}
-        initialChapter={startAt}
-        mode={mode}
         onClose={() => setOpen(false)}
       />
     </div>

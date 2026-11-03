@@ -9,14 +9,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
-import { GoogleAuthModal } from '../../components/GoogleAuthModal';
+import { launchGoogleOAuth } from '../../services/googleAuth';
+import { GoogleIcon } from '../../components/GoogleIcon';
+import { GoogleOneTapBottomSheet } from '../../components/GoogleOneTapBottomSheet';
 
 interface RegisterScreenProps {
   onLogin: (email?: string) => void;
@@ -32,7 +35,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
   onBack,
 }) => {
   const insets = useSafeAreaInsets();
-  const { registerInit, quickDemoLogin, loginWithGoogle } = useAuth();
+  const { registerInit, loginWithGoogle, loginWithToken } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -40,16 +43,51 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [isGoogleSheetVisible, setIsGoogleSheetVisible] = useState(false);
   const [existingAccountInfo, setExistingAccountInfo] = useState<{
     email: string;
     message: string;
   } | null>(null);
 
-  const handleGoogleRegister = () => {
+  // Direct Google OAuth: executes native Google Play Services SDK or dynamic Expo browser fallback
+  const handleGoogleRegister = async () => {
     setError('');
-    setShowGoogleModal(true);
+    setGoogleLoading(true);
+    try {
+      const res = await launchGoogleOAuth({ promptSelectAccount: true });
+      if (res?.cancelled) {
+        return;
+      }
+      if (res?.type === 'show_one_tap') {
+        setIsGoogleSheetVisible(true);
+        return;
+      }
+      if (res?.type === 'native' && res.idToken) {
+        // Direct Native SDK Success: verify token with backend immediately
+        const authRes = await loginWithGoogle({
+          idToken: res.idToken,
+          email: res.user?.email,
+          displayName: res.user?.name,
+          avatarUrl: res.user?.photo,
+          googleId: res.user?.id,
+        });
+        if (!authRes.success) {
+          setError(authRes.error || 'Failed to authenticate Google credentials.');
+        }
+        return;
+      }
+      if (res?.type === 'browser_session' && res.token) {
+        // Direct In-App Browser Session Success (Expo Go / dynamic return)
+        await loginWithToken(res.token, res.user, res.refreshToken);
+        return;
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Unable to launch Google authentication session.');
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleRegister = async () => {
@@ -94,14 +132,14 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* TOP GRADIENT HEADER (Matching Reference UI) */}
+      {/* TOP GRADIENT HEADER */}
       <LinearGradient
         colors={['#071120', '#0B1D3A', '#0284C7']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.headerGradient, { paddingTop: Math.max(insets.top, 20) + 8 }]}
       >
-        {/* Top Action Row: Back Button & "Already have an account? Sign In" */}
+        {/* Top Action Row */}
         <View style={styles.topNavRow}>
           <TouchableOpacity
             onPress={onBack}
@@ -113,7 +151,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
           </TouchableOpacity>
 
           <View style={styles.loginPromptRow}>
-            <Text style={styles.loginPromptText}>Already have an account?</Text>
+            <Text style={styles.loginPromptText}>Already registered?</Text>
             <TouchableOpacity
               onPress={() => onLogin(email)}
               style={styles.signInPill}
@@ -131,7 +169,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
         </View>
       </LinearGradient>
 
-      {/* BOTTOM FLOATING WHITE CARD (Matching Reference UI) */}
+      {/* FLOATING WHITE REGISTRATION CARD */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
@@ -142,11 +180,11 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
           showsVerticalScrollIndicator={false}
           bounces={false}
         >
-          <View style={[styles.mainCard, { paddingBottom: Math.max(insets.bottom, 20) + 20 }]}>
+          <View style={[styles.mainCard, { paddingBottom: Math.max(insets.bottom, 20) + 24 }]}>
             {/* Header Titles */}
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Create Account</Text>
-              <Text style={styles.cardSubtitle}>Enter your details below</Text>
+              <Text style={styles.cardSubtitle}>Enter your corporate details below</Text>
             </View>
 
             {/* Error Message */}
@@ -179,6 +217,30 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
               </View>
             ) : null}
 
+            {/* 1. Official Google OAuth Button (Positioned at Top, Matching Web) */}
+            <TouchableOpacity
+              onPress={handleGoogleRegister}
+              disabled={googleLoading || loading}
+              style={styles.googleOAuthBtn}
+              activeOpacity={0.8}
+            >
+              {googleLoading ? (
+                <ActivityIndicator size="small" color="#4285F4" style={{ marginRight: 10 }} />
+              ) : (
+                <GoogleIcon size={20} style={{ marginRight: 10 }} />
+              )}
+              <Text style={styles.googleOAuthBtnText}>
+                {googleLoading ? 'Opening Google...' : 'Continue with Google'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or create account with email</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
             {/* Field 1: Full Name */}
             <View style={styles.fieldContainer}>
               <Text style={styles.fieldLabel}>Full Name</Text>
@@ -194,7 +256,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
 
             {/* Field 2: Work Email Address */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Email Address</Text>
+              <Text style={styles.fieldLabel}>Work Email</Text>
               <TextInput
                 style={styles.inputField}
                 placeholder="name@company.com"
@@ -225,7 +287,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
               <Text style={styles.fieldLabel}>Company Name (Optional)</Text>
               <TextInput
                 style={styles.inputField}
-                placeholder="Vanguard Capital / Self-Employed"
+                placeholder="Enterprise / Self-Employed"
                 placeholderTextColor="#94A3B8"
                 value={companyName}
                 onChangeText={setCompanyName}
@@ -260,10 +322,10 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
               </View>
             </View>
 
-            {/* Register Primary CTA Button (LinearGradient) */}
+            {/* Register Primary CTA Button */}
             <TouchableOpacity
               onPress={handleRegister}
-              disabled={loading}
+              disabled={loading || googleLoading}
               activeOpacity={0.85}
               style={styles.submitBtnWrapper}
             >
@@ -280,32 +342,12 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                 )}
               </LinearGradient>
             </TouchableOpacity>
-
-            {/* Divider: Or register with */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Or register with</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Single Google OAuth Button (No Facebook) */}
-            <TouchableOpacity
-              onPress={handleGoogleRegister}
-              disabled={loading}
-              style={styles.googleOAuthBtn}
-              activeOpacity={0.8}
-            >
-              <MaterialCommunityIcons name="google" size={19} color="#EA4335" style={{ marginRight: 8 }} />
-              <Text style={styles.googleOAuthBtnText}>Google</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Google OAuth Modal */}
-      <GoogleAuthModal
-        visible={showGoogleModal}
-        onClose={() => setShowGoogleModal(false)}
+      <GoogleOneTapBottomSheet
+        visible={isGoogleSheetVisible}
+        onClose={() => setIsGoogleSheetVisible(false)}
       />
     </View>
   );
@@ -346,85 +388,84 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   signInPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   signInPillText: {
-    fontSize: 12,
     color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700',
   },
   brandTitleContainer: {
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 6,
+    marginBottom: 10,
   },
   brandTitle: {
     fontSize: 34,
     fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: -0.6,
+    letterSpacing: -0.5,
   },
   brandSubtitle: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.75)',
     marginTop: 2,
-    letterSpacing: 0.2,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   keyboardView: {
     flex: 1,
+    marginTop: -24,
   },
   cardScrollContent: {
     flexGrow: 1,
   },
   mainCard: {
-    flex: 1,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     paddingHorizontal: 24,
-    paddingTop: 30,
+    paddingTop: 28,
+    flex: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
-    shadowRadius: 16,
+    shadowRadius: 12,
     elevation: 8,
   },
   cardHeader: {
-    alignItems: 'center',
     marginBottom: 20,
   },
   cardTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '900',
     color: '#0F172A',
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
   },
   cardSubtitle: {
     fontSize: 13,
     color: '#64748B',
-    marginTop: 4,
+    marginTop: 3,
     fontWeight: '500',
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FFF1F2',
     borderWidth: 1,
     borderColor: '#FECDD3',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
     borderRadius: 12,
-    marginBottom: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 16,
   },
   errorText: {
     fontSize: 12,
-    color: '#B91C1C',
+    color: '#BE123C',
     fontWeight: '600',
     flex: 1,
   },
@@ -432,51 +473,99 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFBEB',
     borderWidth: 1,
     borderColor: '#FDE68A',
-    borderRadius: 14,
+    borderRadius: 12,
     padding: 12,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   existingAccountHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    marginBottom: 8,
   },
   existingAccountTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
     color: '#92400E',
   },
   existingAccountMessage: {
     fontSize: 11,
     color: '#B45309',
     marginTop: 2,
+    lineHeight: 16,
   },
   existingAccountBtn: {
-    marginTop: 8,
     backgroundColor: '#D97706',
-    borderRadius: 10,
-    paddingVertical: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
   existingAccountBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
     color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  googleOAuthBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  googleIconImg: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
+  googleOAuthBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
+    letterSpacing: -0.2,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    paddingHorizontal: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   fieldContainer: {
+    backgroundColor: '#F8FAFC',
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingTop: 8,
-    paddingBottom: 6,
-    marginBottom: 12,
+    paddingBottom: 8,
+    marginBottom: 14,
   },
   fieldLabel: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748B',
-    textTransform: 'capitalize',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
     marginBottom: 2,
   },
   inputRow: {
@@ -484,10 +573,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inputField: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: '#0F172A',
-    paddingVertical: 2,
+    paddingVertical: 3,
+    flex: 1,
   },
   eyeToggleBtn: {
     padding: 6,
@@ -509,44 +599,8 @@ const styles = StyleSheet.create({
   },
   submitBtnText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.2,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 18,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E2E8F0',
-  },
-  dividerText: {
-    fontSize: 12,
-    color: '#94A3B8',
-    paddingHorizontal: 12,
-    fontWeight: '500',
-  },
-  googleOAuthBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.2,
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  googleOAuthBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
   },
 });

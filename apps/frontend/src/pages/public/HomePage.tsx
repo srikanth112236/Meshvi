@@ -2,48 +2,20 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
-  Search,
   Sparkles,
-  ShieldCheck,
   CheckCircle2,
-  Compass,
-  Layers,
-  LayoutDashboard,
-  Handshake,
-  Users,
-  GitPullRequest,
-  MessageSquare,
-  Globe2,
   XCircle,
-  FileText,
   BadgeCheck,
   ChevronRight,
   Play,
-  Film,
-  Clock,
-  SlidersHorizontal,
+  Globe2,
 } from 'lucide-react';
 import { MotionContainer } from '../../components/ui/MotionSection';
-import { ProductDemoPlayer } from '../../components/ui/ProductDemoPlayer';
+import { AnimatedProductShowcase } from '../../components/ui/AnimatedProductShowcase';
+import { AnimatedVideoModal } from '../../components/ui/AnimatedVideoModal';
 
 export const HomePage = () => {
-  // Interactive Product Demo Modal State
-  const [demoPlayerOpen, setDemoPlayerOpen] = useState(false);
-  const [demoChapter, setDemoChapter] = useState(0);
-  const [demoMode, setDemoMode] = useState<'single' | 'full'>('full');
-
-  const launchDemo = (chapter: number, mode: 'single' | 'full' = 'single') => {
-    setDemoChapter(chapter);
-    setDemoMode(mode);
-    setDemoPlayerOpen(true);
-  };
-
-  // Active Workspace Route Tour Tab
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<
-    'home' | 'partnerships' | 'search' | 'connections' | 'introductions' | 'messages'
-  >('home');
-
-  // Simulated Intent Query State
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState(
     'Looking for certified aerospace & titanium forging suppliers with AS9100 Rev D in India or the UK.'
   );
@@ -51,272 +23,120 @@ export const HomePage = () => {
 
   const samplePrompts = [
     {
-      label: 'Aerospace & Titanium Sourcing (India / UK)',
+      label: 'Aerospace & Titanium (India / UK)',
       text: 'Looking for certified aerospace & titanium forging suppliers with AS9100 Rev D in India or the UK.',
-      category: 'Manufacturing',
     },
     {
-      label: 'Renewable CleanTech & BESS (Australia)',
+      label: 'CleanTech & Battery (Australia)',
       text: 'Seeking solar EPC and utility-scale battery storage partners for commercial grid interconnections in Sydney.',
-      category: 'CleanTech',
     },
     {
-      label: 'Pharma Cold Chain Logistics (Europe)',
+      label: 'Pharma Cold Chain (Europe)',
       text: 'Need GDP-certified refrigerated intermodal freight carriers for biopharma distribution across Germany and UK.',
-      category: 'Logistics',
     },
     {
-      label: 'Enterprise AI & ERP Integration (US / Global)',
+      label: 'Enterprise AI & Automation (US / Global)',
       text: 'Identifying CTOs and Heads of Enterprise Automation with SOC-2 compliant autonomous workflow experience.',
-      category: 'Technology',
     },
   ];
-
-  const workspacePillars = [
-    {
-      id: 'home',
-      name: 'Dashboard',
-      route: '/app/home',
-      badge: 'Command Center',
-      icon: LayoutDashboard,
-      headline: 'Executive Portfolio & Commercial Readiness',
-      description:
-        'Your centralized operational command deck. Monitor real-time readiness scores, incoming deal velocity, active deal room milestones, and bilateral connection health at a glance.',
-      features: [
-        'Real-time Readiness Score & Governance Audit',
-        'Active Deal Room milestone tracker',
-        'Incoming and outgoing handshake velocity metrics',
-        'Zero-trust security and role confirmation status',
-      ],
-      previewContent: {
-        title: 'Executive Portfolio Radar',
-        stat1: { label: 'Commercial Readiness', val: '94%' },
-        stat2: { label: 'Active Deal Rooms', val: '6 Live' },
-        stat3: { label: 'Verified Network', val: '500+ Peers' },
-        tagline: 'All signals verified through corporate DNS and bilateral double-opt-in consensus.',
-      },
-    },
-    {
-      id: 'partnerships',
-      name: 'Partnerships',
-      route: '/app/partnerships',
-      badge: 'Deal Rooms & Escrow',
-      icon: Handshake,
-      headline: 'Structured Bilateral Deal Rooms & Executed NDAs',
-      description:
-        'Move far beyond casual chat. MESHVI provides cryptographically anchored deal rooms with built-in Mutual Non-Disclosure Agreements (MNDA), deliverable milestones, and outcome certification.',
-      features: [
-        'One-click Mutual NDA execution between parties',
-        'Milestone-based progress with evidence attachments',
-        'Bilateral confidential document vault',
-        'Certified partnership outcome audit trail',
-      ],
-      previewContent: {
-        title: 'Bilateral Deal Room #DR-8821',
-        stat1: { label: 'Status', val: 'MNDA Signed' },
-        stat2: { label: 'Milestone 2/4', val: 'Sample Audit' },
-        stat3: { label: 'Counterparty', val: 'Dyson UK Tech' },
-        tagline: 'End-to-end commercial governance. Zero unrecorded promises or lost email threads.',
-      },
-    },
-    {
-      id: 'search',
-      name: 'Search',
-      route: '/app/search',
-      badge: 'Intent Engine',
-      icon: Search,
-      headline: 'Intent-Driven Global Discovery Across 500+ Enterprises',
-      description:
-        'Never browse through millions of spammy, scraping-derived lists. Type your objective in plain conversational English. MESHVI scores real, permitted enterprise records using transparent 100-point rubrics.',
-      features: [
-        'Natural language commercial query parsing',
-        'Transparent 100-point deterministic rubric scoring',
-        '500+ diverse decision-makers across India, Australia, UK, US & Europe',
-        'Verified corporate titles and explicit declared intents',
-      ],
-      previewContent: {
-        title: 'Intent Match Engine',
-        stat1: { label: 'Match Score', val: '96 / 100' },
-        stat2: { label: 'Evaluated Rubric', val: 'Function (35) + Geo (25)' },
-        stat3: { label: 'Audited Leads', val: '100% Real' },
-        tagline: 'Explains exactly WHY a profile matches with transparent reason codes.',
-      },
-    },
-    {
-      id: 'connections',
-      name: 'Connections',
-      route: '/app/connections',
-      badge: 'Zero Cold Spam',
-      icon: Users,
-      headline: 'Double-Opt-In High-Trust Network',
-      description:
-        'Say goodbye to uninvited sales pitches and bot sequences. On MESHVI, every connection requires a mandatory commercial note, structured intent, and mutual bilateral acceptance before direct access is granted.',
-      features: [
-        'Mandatory commercial justification on every handshake',
-        'Colleague delegation: handover incoming leads to the right department head',
-        'Formal decline and follow-up reason feedback loops',
-        'Strict rate limiting to protect executive attention',
-      ],
-      previewContent: {
-        title: 'Connection Handshake Guard',
-        stat1: { label: 'Spam Blocked', val: '100%' },
-        stat2: { label: 'Handshake Rate', val: '88% Accepted' },
-        stat3: { label: 'Delegation SLA', val: '< 12 Hours' },
-        tagline: 'Respecting executive time. Every connection is purposeful and pre-qualified.',
-      },
-    },
-    {
-      id: 'introductions',
-      name: 'Introductions',
-      route: '/app/introductions',
-      badge: 'Warm Network Bridges',
-      icon: GitPullRequest,
-      headline: 'Peer-Sponsored Warm Introductions',
-      description:
-        'Cold outreach has a 1% conversion rate; warm peer bridges convert at 70%+. MESHVI visualizes mutual colleagues between enterprise organizations and brokers warm sponsored handshakes with verifiable trust paths.',
-      features: [
-        'Verifiable trust paths through shared organizational peers',
-        'Intermediary endorsement and contextual forward notes',
-        'Privacy-preserving: intermediaries never reveal private contacts without consent',
-        'Corridor bridges between India, Australia, UK, Europe, and Americas',
-      ],
-      previewContent: {
-        title: 'Bilateral Trust Bridge',
-        stat1: { label: 'Bridge Type', val: 'Mutual Colleague' },
-        stat2: { label: 'Trust Velocity', val: 'High-Affinity' },
-        stat3: { label: 'Success Rate', val: '74% Meeting Set' },
-        tagline: 'Sponsor high-trust bilateral deals through shared colleagues with zero cold friction.',
-      },
-    },
-    {
-      id: 'messages',
-      name: 'Messages',
-      route: '/app/messages',
-      badge: 'Deal-Anchored Chat',
-      icon: MessageSquare,
-      headline: 'Encrypted Executive Communication Channels',
-      description:
-        'A dedicated, clean workspace for executive negotiations. No promotional newsletters, no recruiter spam—only verified conversations anchored directly to active partnerships and deal rooms.',
-      features: [
-        'Linked directly to active bilateral Deal Rooms',
-        'Document exchange with automatic cryptographic checksums',
-        'Integrated meeting scheduler and action item tracking',
-        'Direct connection to corporate governance and legal teams',
-      ],
-      previewContent: {
-        title: 'Encrypted Negotiation Channel',
-        stat1: { label: 'Channel Type', val: 'Deal-Linked' },
-        stat2: { label: 'Audit Trail', val: 'Encrypted' },
-        stat3: { label: 'Noise Ratio', val: '0% Bot Spam' },
-        tagline: 'Focused commercial clarity between verified C-Level and Director decision-makers.',
-      },
-    },
-  ];
-
-  const currentTab = workspacePillars.find((t) => t.id === activeWorkspaceTab) || workspacePillars[0];
 
   const faqs = [
     {
-      q: 'Why does MESHVI solve the overcrowding and spam problem of traditional networks?',
-      a: 'Legacy platforms (like LinkedIn or Apollo) operate on open outbound volume: users can send thousands of unsolicited cold emails, and inboxes are dominated by bots. MESHVI enforces three structural barriers: 1) Every member must be verified via corporate domain DNS / corporate email, 2) All connection requests require explicit business context and double-opt-in consensus, and 3) Once approved, both parties transition directly into a structured Deal Room rather than an open social chatter thread.',
+      q: 'How does MESHVI eliminate spam and bot outreach?',
+      a: 'Every member must be verified via their corporate domain DNS and work email. Unsolicited blast outreach is impossible: connections require mutual bilateral double-opt-in before any direct communication or contact details unlock.',
     },
     {
-      q: 'Are the 500+ companies and executives in the search engine real and verified?',
-      a: 'Yes. Every single profile is mapped to real corporate entities across India, Australia, the UK, Europe, and the US with confirmed seniorities, verified email provenance, and explicit declared operational capabilities. There is zero scraped web garbage or hallucinated contact records.',
+      q: 'Are the companies and executives real?',
+      a: 'Yes. 100% of profiles represent verified corporate entities across India, Australia, the UK, Europe, and North America. No scraped contact lists or web-harvested placeholders.',
     },
     {
-      q: 'What is a MESHVI Deal Room, and how does it protect my commercial interests?',
-      a: 'A Deal Room is a bilateral, isolated digital workspace created between two approved counterparties. It includes mutual MNDA e-signatures, secure document exchange, milestone tracking with evidence verification, and bilateral status audits. This ensures sensitive partnership terms remain completely confidential.',
+      q: 'What is a MESHVI Deal Room?',
+      a: 'A Deal Room is a private, encrypted bilateral workspace between two approved parties. It includes built-in mutual NDA e-signatures, confidential document exchange, and milestone progress tracking.',
     },
     {
-      q: 'Can I route incoming opportunities to colleagues if they are better suited?',
-      a: 'Absolutely. MESHVI features an enterprise Colleague Handover & Delegation protocol. If a C-level executive receives a proposal relevant to procurement or engineering, they can delegate the connection to an authorized colleague with a private internal note in one click.',
-    },
-    {
-      q: 'How does MESHVI handle cross-border compliance between India, Australia, and the UK?',
-      a: 'MESHVI includes built-in compliance workflows adhering to GDPR (UK/EU), DPDP (India), and the Australian Privacy Act. Corporate domains are validated cryptographically, and right-to-erasure and data residency protocols are baked into the core architecture.',
+      q: 'How does intent-first discovery work?',
+      a: 'Instead of guessing job titles or writing Boolean queries, type the exact business outcome you need. Our engine parses the operational context and ranks decision-makers with transparent match confidence.',
     },
   ];
 
   return (
-    <div className="space-y-24 pb-24">
+    <div className="space-y-20 pb-20">
       {/* ========================================================================= */}
-      {/* SECTION 1: HERO SECTION - WHERE HIGH-STAKES PARTNERSHIPS CLOSE */}
+      {/* 1. HERO SECTION: MINIMAL, PUNCHY, HIGH-CONVERTING */}
       {/* ========================================================================= */}
-      <section className="relative pt-12 md:pt-20 overflow-hidden bg-grid-pattern">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-primary/10 blur-[130px] rounded-full pointer-events-none -z-10" />
+      <section className="relative pt-12 md:pt-18 overflow-hidden bg-grid-pattern">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[360px] bg-primary/10 blur-[130px] rounded-full pointer-events-none -z-10" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <MotionContainer>
-            <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-surface glass-card text-navy text-xs font-bold mb-6 shadow-sm border border-border">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-surface glass-card text-navy text-xs font-bold mb-6 shadow-xs border border-border">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <BadgeCheck className="w-4 h-4 text-primary" />
-              <span>The Zero-Noise B2B Partnership Platform</span>
-              <span className="text-text-muted">&bull; 100% Verified Identities</span>
+              <span>Intent-First Enterprise Network</span>
+              <span className="text-text-muted hidden sm:inline">&bull; 100% Verified Identities</span>
             </div>
           </MotionContainer>
 
           <MotionContainer delay={0.1}>
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-navy tracking-tight max-w-5xl mx-auto leading-[1.08] sm:leading-[1.08]">
+            <h1 className="text-4xl sm:text-6xl font-black text-navy tracking-tight max-w-4xl mx-auto leading-[1.1]">
               Where High-Stakes B2B Partnerships <span className="shimmer-text">Actually Close</span>.
             </h1>
           </MotionContainer>
 
           <MotionContainer delay={0.2}>
-            <p className="mt-6 text-lg sm:text-xl text-text-muted max-w-3xl mx-auto leading-relaxed font-normal">
-              No overcrowded feeds. Zero automated sales bot spam. MESHVI is the purpose-built network for C-Suite, VP,
-              and Procurement leaders to discover verified counterparties, execute bilateral NDAs, and launch high-trust
-              deals across <strong>India, Australia, the UK & worldwide</strong>.
+            <p className="mt-5 text-base sm:text-lg text-text-muted max-w-2xl mx-auto leading-relaxed font-normal">
+              Search strategic outcomes in plain English. Discover DNS-verified executives and execute bilateral
+              agreements with zero cold spam.
             </p>
           </MotionContainer>
 
           <MotionContainer delay={0.3}>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 to="/register"
-                className="w-full sm:w-auto px-7 py-3.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all flex items-center justify-center group text-base cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-md shadow-primary/25 transition-all flex items-center justify-center text-sm cursor-pointer"
               >
                 <span>Enter Workspace Free</span>
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
               <button
                 type="button"
-                onClick={() => launchDemo(0, 'full')}
-                className="w-full sm:w-auto px-6 py-3.5 bg-white/95 hover:bg-white text-navy font-bold border-2 border-primary/30 hover:border-primary rounded-xl transition-all shadow-md flex items-center justify-center space-x-2 text-base cursor-pointer group"
+                onClick={() => setVideoModalOpen(true)}
+                className="w-full sm:w-auto px-5 py-3 bg-surface hover:bg-surface-muted text-navy font-bold border border-border rounded-xl transition-all shadow-xs flex items-center justify-center space-x-2 text-sm cursor-pointer group"
               >
-                <span className="w-6 h-6 rounded-full bg-primary/10 group-hover:bg-primary text-primary group-hover:text-white flex items-center justify-center transition-colors">
-                  <Play className="w-3.5 h-3.5 fill-current" />
+                <Play className="w-3.5 h-3.5 text-primary fill-primary group-hover:scale-110 transition-transform" />
+                <span>Watch Animated Video</span>
+                <span className="text-[10px] font-mono font-bold bg-primary-soft text-primary px-1.5 py-0.5 rounded-full">
+                  0:30
                 </span>
-                <span>Watch Interactive Tour</span>
-                <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-primary-soft text-primary font-mono">1:30</span>
               </button>
               <Link
                 to="/search-showcase"
-                className="w-full sm:w-auto px-5 py-3.5 bg-surface hover:bg-surface-muted text-navy font-bold border border-border rounded-xl transition-all shadow-sm flex items-center justify-center text-base"
+                className="w-full sm:w-auto px-5 py-3 text-text-muted hover:text-navy font-semibold text-sm transition-colors flex items-center justify-center"
               >
                 <span>Live Sandbox &rarr;</span>
               </Link>
             </div>
           </MotionContainer>
 
-          {/* Quick Metrics Bar */}
+          {/* Quick Metrics Strip */}
           <MotionContainer delay={0.4}>
-            <div className="mt-10 pt-6 border-t border-border/60 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div className="p-3">
-                <div className="text-2xl font-black text-navy">500+</div>
-                <div className="text-xs text-text-muted font-medium mt-0.5">Verified Global Decision-Makers</div>
+            <div className="mt-8 pt-5 border-t border-border/60 max-w-3xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className="p-2">
+                <div className="text-xl sm:text-2xl font-black text-navy">500+</div>
+                <div className="text-[11px] text-text-muted font-medium">Verified Leaders</div>
               </div>
-              <div className="p-3">
-                <div className="text-2xl font-black text-emerald-600">0%</div>
-                <div className="text-xs text-text-muted font-medium mt-0.5">Cold Bot Spam or InMail Blast</div>
+              <div className="p-2">
+                <div className="text-xl sm:text-2xl font-black text-emerald-600">0%</div>
+                <div className="text-[11px] text-text-muted font-medium">Cold Spam</div>
               </div>
-              <div className="p-3">
-                <div className="text-2xl font-black text-primary">100%</div>
-                <div className="text-xs text-text-muted font-medium mt-0.5">Double-Opt-In Bilateral Consensus</div>
+              <div className="p-2">
+                <div className="text-xl sm:text-2xl font-black text-primary">100%</div>
+                <div className="text-[11px] text-text-muted font-medium">Double-Opt-In</div>
               </div>
-              <div className="p-3">
-                <div className="text-2xl font-black text-navy">4 Corridors</div>
-                <div className="text-xs text-text-muted font-medium mt-0.5">India &bull; Australia &bull; UK &bull; Americas</div>
+              <div className="p-2">
+                <div className="text-xl sm:text-2xl font-black text-navy">4 Corridors</div>
+                <div className="text-[11px] text-text-muted font-medium">India &bull; AU &bull; UK &bull; US</div>
               </div>
             </div>
           </MotionContainer>
@@ -324,845 +144,249 @@ export const HomePage = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION: INTERACTIVE PEOPLE & DECISION-MAKER DISCOVERY DEMOS */}
+      {/* 2. MODERN ANIMATED PRODUCT SHOWCASE CONTAINER */}
       {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl bg-gradient-to-b from-slate-50 via-white to-slate-50/80 border border-slate-200/90 p-6 sm:p-10 shadow-xl overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-3xl rounded-full pointer-events-none" />
-
-          {/* Section Header */}
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 pb-6 border-b border-slate-200">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-soft text-primary text-xs font-bold mb-3 border border-primary/20">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Interactive Decision-Maker & People Discovery Lab</span>
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-black text-navy tracking-tight leading-tight">
-                See How Executives Discover Verified People in 15 Seconds
-              </h2>
-              <p className="mt-2 text-sm sm:text-base text-text-muted leading-relaxed">
-                Experience high-velocity intent matching, transparent 100-point rubric scoring, and zero-spam bilateral handshakes. Click any demo below to test-drive live.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => launchDemo(0, 'full')}
-                className="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all flex items-center space-x-2 cursor-pointer group"
-              >
-                <Film className="w-4 h-4" />
-                <span>Play Full Platform Tour</span>
-                <span className="text-[11px] bg-white/20 px-1.5 py-0.5 rounded font-mono">1:30</span>
-              </button>
-            </div>
-          </div>
-
-          {/* 6 Responsive Demo Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {/* Demo 1: Mandate Search */}
-            <div
-              onClick={() => launchDemo(1, 'single')}
-              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-md bg-sky-50 text-sky-700 text-[10px] font-black uppercase tracking-wider border border-sky-200">
-                    Search by Mandate
-                  </span>
-                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
-                    <Clock className="w-3 h-3" />
-                    <span>0:15</span>
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
-                  <span>Describe the Outcome</span>
-                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
-                </h3>
-
-                <p className="text-xs text-text-muted leading-relaxed">
-                  Type your strategic objective in plain conversational English. The console parses intent and ranks matching C-Level executives instantly.
-                </p>
-
-                {/* Micro Preview Pill */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                      <strong className="text-navy">Dr. Vikram Malhotra</strong> · COO
-                    </span>
-                    <span className="text-emerald-700 font-bold shrink-0">96 / 100</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 truncate font-mono">
-                    Bharat Precision Metallurgy &bull; Aerospace Forging
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
-                <span>Test-Drive Demo</span>
-                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  &rarr;
-                </span>
-              </div>
-            </div>
-
-            {/* Demo 2: Verified Person Dossier */}
-            <div
-              onClick={() => launchDemo(2, 'single')}
-              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider border border-emerald-200">
-                    Corporate DNS Verified
-                  </span>
-                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
-                    <Clock className="w-3 h-3" />
-                    <span>0:15</span>
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
-                  <span>People & Company Dossiers</span>
-                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
-                </h3>
-
-                <p className="text-xs text-text-muted leading-relaxed">
-                  Type a company or person to pull instant cryptographic proof, corporate email provenance, and verified operational capabilities.
-                </p>
-
-                {/* Micro Preview Pill */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <strong className="text-navy">Alistair Sterling</strong> · VP Supply Chain
-                    </span>
-                    <span className="text-sky-700 font-bold shrink-0">93 / 100</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 truncate font-mono">
-                    Sterling Alloys UK &bull; Sheffield Aerospace Cluster
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
-                <span>Test-Drive Demo</span>
-                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  &rarr;
-                </span>
-              </div>
-            </div>
-
-            {/* Demo 3: Filter Decision-Makers */}
-            <div
-              onClick={() => launchDemo(3, 'single')}
-              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 text-[10px] font-black uppercase tracking-wider border border-purple-200">
-                    Decision-Maker Filters
-                  </span>
-                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
-                    <Clock className="w-3 h-3" />
-                    <span>0:15</span>
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
-                  <span>Narrow 4,218 People to 24</span>
-                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
-                </h3>
-
-                <p className="text-xs text-text-muted leading-relaxed">
-                  Start broad, then layer industry, trade corridor, seniority, and live intent signals to pinpoint the exact 24 target decision-makers.
-                </p>
-
-                {/* Micro Preview Pill */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <strong className="text-navy">Sarah Jenkins</strong> · VP Alliances
-                    </span>
-                    <span className="text-purple-700 font-bold shrink-0">91 / 100</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 truncate font-mono">
-                    Pacific CleanTech &bull; Sydney Commercial Interconnection
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
-                <span>Test-Drive Demo</span>
-                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  &rarr;
-                </span>
-              </div>
-            </div>
-
-            {/* Demo 4: Double-Opt-In Handshake */}
-            <div
-              onClick={() => launchDemo(4, 'single')}
-              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider border border-emerald-200">
-                    Double-Opt-In
-                  </span>
-                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
-                    <Clock className="w-3 h-3" />
-                    <span>0:30</span>
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
-                  <span>Close a Handshake</span>
-                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
-                </h3>
-
-                <p className="text-xs text-text-muted leading-relaxed">
-                  Send a protected commercial note. Direct contact details unlock only upon mutual acceptance, then launch directly into an executed Deal Room.
-                </p>
-
-                {/* Micro Preview Pill */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <Handshake className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <strong className="text-navy">Mutual Consent Locked</strong>
-                    </span>
-                    <span className="text-emerald-700 font-bold shrink-0">Zero Spam</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 truncate font-mono">
-                    Protected Details &bull; Bilateral MNDA &bull; Encrypted Vault
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
-                <span>Test-Drive Demo</span>
-                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  &rarr;
-                </span>
-              </div>
-            </div>
-
-            {/* Demo 5: Warm Introductions */}
-            <div
-              onClick={() => launchDemo(5, 'single')}
-              className="group cursor-pointer rounded-2xl bg-white border border-slate-200 hover:border-primary/60 p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-wider border border-amber-200">
-                    Trust Graph Bridges
-                  </span>
-                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
-                    <Clock className="w-3 h-3" />
-                    <span>0:15</span>
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
-                  <span>Warm Introductions</span>
-                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
-                </h3>
-
-                <p className="text-xs text-text-muted leading-relaxed">
-                  Bridge cross-border deals via shared organizational peers. Route requests with private sponsor endorsements for 74%+ conversion.
-                </p>
-
-                {/* Micro Preview Pill */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <GitPullRequest className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                      <strong className="text-navy">Mutual Colleague Bridge</strong>
-                    </span>
-                    <span className="text-amber-700 font-bold shrink-0">74% Meeting Rate</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 truncate font-mono">
-                    India &bull; Australia &bull; UK Verified Peer Sponsorship
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
-                <span>Test-Drive Demo</span>
-                <span className="w-6 h-6 rounded-full bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  &rarr;
-                </span>
-              </div>
-            </div>
-
-            {/* Demo 6: Brand Film */}
-            <div
-              onClick={() => launchDemo(0, 'single')}
-              className="group cursor-pointer rounded-2xl bg-gradient-to-br from-primary-soft/50 via-white to-primary-soft/30 border border-primary/30 hover:border-primary p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 relative overflow-hidden"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-md bg-primary text-white text-[10px] font-black uppercase tracking-wider">
-                    Brand Film
-                  </span>
-                  <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-500 font-mono">
-                    <Clock className="w-3 h-3" />
-                    <span>0:15</span>
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-black text-navy group-hover:text-primary transition-colors flex items-center justify-between">
-                  <span>MESHVI in 15 Seconds</span>
-                  <Play className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity fill-primary" />
-                </h3>
-
-                <p className="text-xs text-text-muted leading-relaxed">
-                  The brand story: why bilateral intent beats open directories, how verified identity protects executive time, and why real deals close here.
-                </p>
-
-                {/* Micro Preview Pill */}
-                <div className="p-3 rounded-xl bg-white/80 border border-primary/20 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <strong className="text-navy">Intent-Driven Platform</strong>
-                    </span>
-                    <span className="text-primary font-bold shrink-0">100% Signal</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 truncate font-mono">
-                    Zero Cold Spam &bull; Cryptographic Provenance &bull; Global
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-primary/20 flex items-center justify-between text-xs font-bold text-primary group-hover:text-primary-hover">
-                <span>Play Brand Film</span>
-                <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center transition-transform group-hover:scale-110">
-                  <Play className="w-2.5 h-2.5 fill-current" />
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <AnimatedProductShowcase onWatchVideoClick={() => setVideoModalOpen(true)} />
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 2: INTERACTIVE WORKSPACE TOUR - ALL 6 CORE ROUTES */}
+      {/* 3. THE 3-STEP REALITY: HOW MESHVI WORKS */}
       {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-primary-soft text-primary text-xs font-bold uppercase tracking-wider mb-3">
-            <Layers className="w-3.5 h-3.5" />
-            <span>Interactive Platform Tour</span>
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-primary-soft text-primary text-xs font-bold mb-2">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Simple 3-Step Process</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-navy tracking-tight">
-            One Unified Workspace. Six High-Velocity Pillars.
+          <h2 className="text-2xl sm:text-4xl font-black text-navy tracking-tight">
+            How Deals Move on MESHVI
           </h2>
-          <p className="mt-3 text-base text-text-muted leading-relaxed">
-            Every route in the MESHVI workspace is engineered with a single goal: converting commercial intent into verified,
-            executed bilateral agreements without noise or distraction.
+          <p className="mt-2 text-sm text-text-muted">
+            From conversational requirement to executed bilateral agreement in three clean steps.
           </p>
         </div>
 
-        {/* Tab Navigation Pill Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 bg-surface-muted rounded-2xl max-w-4xl mx-auto border border-border shadow-inner">
-          {workspacePillars.map((pillar) => {
-            const Icon = pillar.icon;
-            const isSelected = activeWorkspaceTab === pillar.id;
-            return (
-              <button
-                key={pillar.id}
-                onClick={() => setActiveWorkspaceTab(pillar.id as any)}
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-surface text-navy shadow-md border border-border/80 scale-[1.02]'
-                    : 'text-text-muted hover:text-navy hover:bg-surface/50'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isSelected ? 'text-primary' : 'text-text-muted'}`} />
-                <span>{pillar.name}</span>
-                {isSelected && (
-                  <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Active Route Showcase Card */}
-        <div className="mt-8 max-w-6xl mx-auto bg-surface glass-card rounded-3xl border border-border shadow-xl overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-            {/* Left Content Column */}
-            <div className="lg:col-span-6 p-6 sm:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-border">
-              <div>
-                <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-soft text-primary text-xs font-bold mb-4">
-                  <span className="font-mono">{currentTab.route}</span>
-                  <span>&bull;</span>
-                  <span>{currentTab.badge}</span>
-                </div>
-
-                <h3 className="text-2xl sm:text-3xl font-black text-navy tracking-tight leading-snug">
-                  {currentTab.headline}
-                </h3>
-
-                <p className="mt-4 text-sm sm:text-base text-text-muted leading-relaxed">
-                  {currentTab.description}
-                </p>
-
-                <div className="mt-6 space-y-3">
-                  <div className="text-xs font-bold uppercase tracking-wider text-navy">Key Platform Capabilities:</div>
-                  <ul className="space-y-2.5">
-                    {currentTab.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-start text-xs sm:text-sm text-slate-700">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 mr-2 shrink-0 mt-0.5" />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
-                <Link
-                  to={currentTab.route}
-                  className="inline-flex items-center space-x-2 text-sm font-bold text-primary hover:text-primary-hover group"
-                >
-                  <span>Open {currentTab.name} in Workspace</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-
-                <span className="text-[11px] font-semibold text-text-muted bg-surface-muted px-2.5 py-1 rounded-md border border-border">
-                  Live in MESHVI v2.0
-                </span>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Step 1 */}
+          <div className="p-6 rounded-2xl bg-surface glass-card border border-border shadow-xs hover:shadow-md transition-shadow space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary font-black text-sm flex items-center justify-center">
+              01
             </div>
-
-            {/* Right Interactive Mockup Simulation */}
-            <div className="lg:col-span-6 p-6 sm:p-10 bg-slate-900 text-white flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[90px] rounded-full pointer-events-none" />
-
-              {/* Window Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                  <span className="ml-2 font-mono text-xs text-slate-400">meshvi-workspace{currentTab.route}</span>
-                </div>
-                <div className="flex items-center space-x-1.5 text-[11px] text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Authenticated</span>
-                </div>
-              </div>
-
-              {/* Simulation Content Body */}
-              <div className="my-8 space-y-6">
-                <div>
-                  <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">
-                    {currentTab.previewContent.title}
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-white">
-                    {currentTab.name} Operational Hub
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700">
-                    <div className="text-[10px] text-slate-400 uppercase font-bold">
-                      {currentTab.previewContent.stat1.label}
-                    </div>
-                    <div className="text-lg sm:text-xl font-black text-primary-light mt-1">
-                      {currentTab.previewContent.stat1.val}
-                    </div>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700">
-                    <div className="text-[10px] text-slate-400 uppercase font-bold">
-                      {currentTab.previewContent.stat2.label}
-                    </div>
-                    <div className="text-lg sm:text-xl font-black text-emerald-400 mt-1">
-                      {currentTab.previewContent.stat2.val}
-                    </div>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700">
-                    <div className="text-[10px] text-slate-400 uppercase font-bold">
-                      {currentTab.previewContent.stat3.label}
-                    </div>
-                    <div className="text-lg sm:text-xl font-black text-white mt-1">
-                      {currentTab.previewContent.stat3.val}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
-                  <div className="flex items-center space-x-2 text-xs font-bold text-slate-300">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <span>Algorithmic Safeguard Active:</span>
-                  </div>
-                  <p className="text-xs text-slate-400 leading-relaxed font-mono">
-                    {currentTab.previewContent.tagline}
-                  </p>
-                </div>
-              </div>
-
-              {/* Bottom Quick-Action Bar */}
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-mono">Status: Verified Zero-Trust Boundary</span>
-                <button
-                  type="button"
-                  onClick={() => launchDemo(0, 'full')}
-                  className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg transition-colors flex items-center cursor-pointer space-x-1"
-                >
-                  <Play className="w-3 h-3 fill-white" />
-                  <span>Interactive Tour (1:30)</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* SECTION 3: WHY MESHVI SETS APART - THE ANTI-OVERCROWDING STANDARD */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-3 border border-emerald-200">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>The Anti-Overcrowding Standard</span>
-          </div>
-          <h2 className="text-3xl sm:text-5xl font-black text-navy tracking-tight">
-            Why MESHVI Sets Itself Completely Apart
-          </h2>
-          <p className="mt-4 text-base sm:text-lg text-text-muted leading-relaxed">
-            Traditional professional platforms have degraded into noisy, automated cold-sales directories where real
-            decision-makers tune out. Here is why enterprise leaders rely on MESHVI.
-          </p>
-        </div>
-
-        {/* Side-by-Side Comparison Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {/* Column 1: The Broken Status Quo */}
-          <div className="bg-rose-50/50 border-2 border-rose-200 rounded-3xl p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-rose-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
-                  <XCircle className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-navy">Overcrowded Social Networks</h3>
-                  <p className="text-xs text-rose-700 font-semibold">LinkedIn, Apollo, ZoomInfo Directories</p>
-                </div>
-              </div>
-              <span className="text-[10px] uppercase font-black bg-rose-200/80 text-rose-800 px-2.5 py-1 rounded-md">
-                Stale & Cluttered
-              </span>
-            </div>
-
-            <ul className="space-y-4">
-              <li className="flex items-start space-y-0.5">
-                <XCircle className="w-5 h-5 text-rose-500 mr-3 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-sm font-bold text-navy">Inboxes flooded with automated bot pitches</div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    Executives receive dozens of irrelevant messages every day from mass mailers with &lt;1% reply rate.
-                  </div>
-                </div>
-              </li>
-              <li className="flex items-start space-y-0.5">
-                <XCircle className="w-5 h-5 text-rose-500 mr-3 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-sm font-bold text-navy">Unverified, self-declared job titles</div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    Anyone can claim to be a "CPO" or "Partner" with zero enterprise corporate confirmation.
-                  </div>
-                </div>
-              </li>
-              <li className="flex items-start space-y-0.5">
-                <XCircle className="w-5 h-5 text-rose-500 mr-3 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-sm font-bold text-navy">Zero transactional governance or NDAs</div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    Conversations end in chat. Commercial contracts, NDA signatures, and milestones get scattered across emails.
-                  </div>
-                </div>
-              </li>
-              <li className="flex items-start space-y-0.5">
-                <XCircle className="w-5 h-5 text-rose-500 mr-3 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-sm font-bold text-navy">Personal data scraped and resold</div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    Contact details harvested without consent, triggering endless spam calls and unsolicited sales pipelines.
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 2: The MESHVI Standard */}
-          <div className="bg-emerald-50/50 border-2 border-emerald-300 rounded-3xl p-6 sm:p-8 space-y-6 shadow-lg shadow-emerald-500/5">
-            <div className="flex items-center justify-between pb-4 border-b border-emerald-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-navy">The MESHVI Standard</h3>
-                  <p className="text-xs text-emerald-700 font-semibold">100% Verified Bilateral Partnerships</p>
-                </div>
-              </div>
-              <span className="text-[10px] uppercase font-black bg-emerald-200/80 text-emerald-900 px-2.5 py-1 rounded-md">
-                Zero Spam
-              </span>
-            </div>
-
-            <ul className="space-y-4">
-              <li className="flex items-start space-y-0.5">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 mr-3 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-sm font-bold text-navy">100% Double-Opt-In & Commercial Context</div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    No unsolicited outreach. Every connection requires structured commercial intent and counterparty acceptance.
-                  </div>
-                </div>
-              </li>
-              <li className="flex items-start space-y-0.5">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 mr-3 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-sm font-bold text-navy">Enterprise Domain DNS & Identity Verification</div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    Companies and decision-makers are verified via corporate work email and DNS TXT challenges.
-                  </div>
-                </div>
-              </li>
-              <li className="flex items-start space-y-0.5">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 mr-3 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-sm font-bold text-navy">Built-In Deal Rooms with Mutual NDAs</div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    Transition from handshake to signed bilateral NDA, document vault, and milestone delivery within one platform.
-                  </div>
-                </div>
-              </li>
-              <li className="flex items-start space-y-0.5">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 mr-3 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-sm font-bold text-navy">Strict Executive Privacy & Sovereign Compliance</div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    No data scraping or reselling. Compliant with GDPR, DPDP, and the Australian Privacy Act by design.
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* SECTION 4: GLOBAL CORRIDORS - 500+ VERIFIED ENTERPRISES */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-navy text-white rounded-3xl p-8 sm:p-14 relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 w-full max-w-lg h-[500px] bg-primary/20 blur-[130px] rounded-full pointer-events-none" />
-
-          <div className="max-w-3xl mb-12">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary/20 text-primary-light text-xs font-bold mb-4 border border-primary/30">
-              <Globe2 className="w-3.5 h-3.5" />
-              <span>International Trade Infrastructure</span>
-            </div>
-            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-              Pre-Seeded with 500+ Verified Leaders across Global Corridors
-            </h2>
-            <p className="mt-4 text-base text-slate-300 leading-relaxed">
-              MESHVI powers cross-border B2B engagements across 14 high-value industrial sectors, directly connecting decision-makers
-              across major commercial corridors.
+            <h3 className="text-lg font-bold text-navy">Search with Intent</h3>
+            <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+              State what you need in plain English. No rigid keywords or scraping tools—our engine extracts intent and finds matching decision-makers.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* India Hub */}
-            <div className="p-6 rounded-2xl bg-slate-800/60 border border-slate-700/80 hover:border-primary/60 transition-colors">
-              <div className="text-2xl mb-2">🇮🇳</div>
-              <h3 className="text-lg font-black text-white">India Corridor</h3>
-              <p className="text-xs text-slate-400 font-mono mt-1">Bengaluru, Mumbai, Delhi, Hyderabad, Chennai</p>
-              <div className="mt-4 pt-4 border-t border-slate-700 space-y-1.5 text-xs text-slate-300">
-                <div>&bull; Aerospace & Defense Precision</div>
-                <div>&bull; Enterprise Software & AI Scaling</div>
-                <div>&bull; CleanTech & EV Subsystems</div>
-              </div>
+          {/* Step 2 */}
+          <div className="p-6 rounded-2xl bg-surface glass-card border border-border shadow-xs hover:shadow-md transition-shadow space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 font-black text-sm flex items-center justify-center border border-emerald-200">
+              02
             </div>
-
-            {/* Australia Hub */}
-            <div className="p-6 rounded-2xl bg-slate-800/60 border border-slate-700/80 hover:border-primary/60 transition-colors">
-              <div className="text-2xl mb-2">🇦🇺</div>
-              <h3 className="text-lg font-black text-white">Australia Corridor</h3>
-              <p className="text-xs text-slate-400 font-mono mt-1">Sydney, Melbourne, Brisbane, Perth, Adelaide</p>
-              <div className="mt-4 pt-4 border-t border-slate-700 space-y-1.5 text-xs text-slate-300">
-                <div>&bull; Critical Minerals & Clean Energy</div>
-                <div>&bull; Pacific Freight & Cold Chain</div>
-                <div>&bull; AgTech & Bulk Commodities</div>
-              </div>
-            </div>
-
-            {/* UK & Europe Hub */}
-            <div className="p-6 rounded-2xl bg-slate-800/60 border border-slate-700/80 hover:border-primary/60 transition-colors">
-              <div className="text-2xl mb-2">🇬🇧 🇪🇺</div>
-              <h3 className="text-lg font-black text-white">UK & Europe Corridor</h3>
-              <p className="text-xs text-slate-400 font-mono mt-1">London, Manchester, Berlin, Munich, Zurich</p>
-              <div className="mt-4 pt-4 border-t border-slate-700 space-y-1.5 text-xs text-slate-300">
-                <div>&bull; BioPharma & Class II Medical</div>
-                <div>&bull; Precision Machinery & Robotics</div>
-                <div>&bull; Corporate Banking & Trade Escrow</div>
-              </div>
-            </div>
-
-            {/* North America Hub */}
-            <div className="p-6 rounded-2xl bg-slate-800/60 border border-slate-700/80 hover:border-primary/60 transition-colors">
-              <div className="text-2xl mb-2">🇺🇸 🇨🇦</div>
-              <h3 className="text-lg font-black text-white">Americas Corridor</h3>
-              <p className="text-xs text-slate-400 font-mono mt-1">San Francisco, New York, Austin, Toronto</p>
-              <div className="mt-4 pt-4 border-t border-slate-700 space-y-1.5 text-xs text-slate-300">
-                <div>&bull; Tier-1 Enterprise Cloud Infra</div>
-                <div>&bull; Advanced Microelectronics</div>
-                <div>&bull; Multichannel Commercial Distribution</div>
-              </div>
-            </div>
+            <h3 className="text-lg font-bold text-navy">Bilateral Opt-In</h3>
+            <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+              Every request requires mutual consent. Counterparties review your commercial context before direct access is granted.
+            </p>
           </div>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-slate-800 gap-4">
-            <span className="text-xs text-slate-400">
-              All 500 members pre-indexed with verified intent rubrics, expertise tags, and corporate affiliations.
-            </span>
-            <Link
-              to="/app/search"
-              className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl transition-colors shadow-md"
-            >
-              Test Live Search Across Corridors &rarr;
-            </Link>
+          {/* Step 3 */}
+          <div className="p-6 rounded-2xl bg-surface glass-card border border-border shadow-xs hover:shadow-md transition-shadow space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 font-black text-sm flex items-center justify-center border border-amber-200">
+              03
+            </div>
+            <h3 className="text-lg font-bold text-navy">Private Deal Room</h3>
+            <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+              Execute mutual NDAs, exchange confidential documents, and track milestones in an encrypted bilateral vault.
+            </p>
           </div>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 5: SIMULATE OBJECTIVE SEARCH SANDBOX */}
+      {/* 4. ANTI-SPAM COMPARISON (CLEAN & MINIMAL) */}
       {/* ========================================================================= */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-primary-soft text-primary text-xs font-bold uppercase tracking-wider mb-3">
-            <Compass className="w-3.5 h-3.5" />
-            <span>Interactive Objective Simulator</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-navy tracking-tight">
-            State What You Need in Plain English
+        <div className="text-center max-w-xl mx-auto mb-8">
+          <h2 className="text-2xl sm:text-3xl font-black text-navy tracking-tight">
+            Why Leaders Choose MESHVI
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-text-muted leading-relaxed">
-            MESHVI’s intent normalizer translates natural language into deterministic multi-dimensional rubrics,
-            matching permitted corporate records with explainable reason codes.
+          <p className="mt-1.5 text-xs sm:text-sm text-text-muted">
+            The difference between noisy social directories and an intent-governed network.
           </p>
         </div>
 
-        {/* Prompt Selector Chips */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-          {samplePrompts.map((p, idx) => (
-            <button
-              key={idx}
-              onClick={() => setSelectedPrompt(p.text)}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
-                selectedPrompt === p.text
-                  ? 'bg-primary text-white border-primary shadow-sm'
-                  : 'bg-surface text-slate-600 border-border hover:border-primary/40'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Interactive Query Box */}
-        <div className="bg-surface glass-card rounded-2xl border border-border shadow-xl p-5 sm:p-7">
-          <div className="flex items-center space-x-2 text-xs font-bold text-navy uppercase tracking-wider mb-3">
-            <Search className="w-4 h-4 text-primary" />
-            <span>Simulate Search Query</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          {/* Cold Email Scrapers */}
+          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+            <div className="flex items-center space-x-2 text-rose-600 font-bold">
+              <XCircle className="w-4 h-4" />
+              <span>Cold Email Scrapers</span>
+            </div>
+            <ul className="space-y-2 text-text-muted">
+              <li>&bull; Stale, harvested email lists</li>
+              <li>&bull; High bounce rates &amp; spam traps</li>
+              <li>&bull; Ignored mass blast outreach</li>
+            </ul>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          {/* Social InMail */}
+          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+            <div className="flex items-center space-x-2 text-rose-600 font-bold">
+              <XCircle className="w-4 h-4" />
+              <span>Social Networks</span>
+            </div>
+            <ul className="space-y-2 text-text-muted">
+              <li>&bull; Inboxes flooded with automated bots</li>
+              <li>&bull; Unverified, self-declared titles</li>
+              <li>&bull; Casual chat with no NDAs or deals</li>
+            </ul>
+          </div>
+
+          {/* MESHVI */}
+          <div className="p-5 rounded-2xl bg-emerald-50/70 border-2 border-emerald-300 space-y-3 shadow-xs">
+            <div className="flex items-center space-x-2 text-emerald-800 font-bold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>The MESHVI Standard</span>
+            </div>
+            <ul className="space-y-2 text-slate-700 font-medium">
+              <li>&bull; 100% corporate DNS verified</li>
+              <li>&bull; Mandatory double-opt-in consensus</li>
+              <li>&bull; Built-in mutual NDAs &amp; Deal Rooms</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 5. INTERACTIVE OBJECTIVE SIMULATOR */}
+      {/* ========================================================================= */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="p-6 sm:p-8 rounded-3xl bg-surface glass-card border border-border shadow-md space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="text-lg font-black text-navy">Try Intent Search</h3>
+              <p className="text-xs text-text-muted">Pick a sample objective or type your own:</p>
+            </div>
+            <span className="text-[11px] font-mono text-primary bg-primary-soft px-2.5 py-1 rounded-full border border-primary/20 self-start sm:self-auto">
+              Live Demo
+            </span>
+          </div>
+
+          {/* Quick Select Prompts */}
+          <div className="flex flex-wrap gap-1.5">
+            {samplePrompts.map((p, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setSelectedPrompt(p.text)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                  selectedPrompt === p.text
+                    ? 'bg-primary text-white border-primary shadow-xs'
+                    : 'bg-surface-muted text-slate-600 border-border hover:border-primary/40'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2 pt-1">
             <input
               type="text"
               value={selectedPrompt}
               onChange={(e) => setSelectedPrompt(e.target.value)}
-              className="flex-1 px-4 py-3 bg-surface-muted border border-border rounded-xl text-xs sm:text-sm text-navy focus:outline-none focus:ring-2 focus:ring-primary font-medium"
-              placeholder="e.g. Need AS9100 certified aerospace machining suppliers in India or UK..."
+              className="flex-1 px-3.5 py-2.5 bg-surface-muted border border-border rounded-xl text-xs sm:text-sm text-navy focus:outline-none focus:ring-2 focus:ring-primary font-medium"
+              placeholder="e.g. Need AS9100 certified aerospace machining suppliers..."
             />
             <Link
               to={`/app/search?q=${encodeURIComponent(selectedPrompt)}`}
-              className="px-6 py-3 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-md flex items-center justify-center shrink-0"
+              className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-xs flex items-center justify-center shrink-0 cursor-pointer"
             >
-              <span>Execute Match</span>
+              <span>Search Matches</span>
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Link>
-          </div>
-
-          {/* Reason Code Pill Preview */}
-          <div className="mt-5 pt-4 border-t border-border flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">
-              Active Evaluation Rubric:
-            </span>
-            <span className="text-[11px] bg-primary-soft text-primary font-semibold px-2.5 py-1 rounded-md border border-primary/20">
-              Exact Function Match (35 pts)
-            </span>
-            <span className="text-[11px] bg-primary-soft text-primary font-semibold px-2.5 py-1 rounded-md border border-primary/20">
-              Corridor Geography (25 pts)
-            </span>
-            <span className="text-[11px] bg-primary-soft text-primary font-semibold px-2.5 py-1 rounded-md border border-primary/20">
-              Industry Cluster (20 pts)
-            </span>
-            <span className="text-[11px] bg-emerald-50 text-emerald-700 font-semibold px-2.5 py-1 rounded-md border border-emerald-200">
-              Declared Intent Alignment (10 pts)
-            </span>
           </div>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 6: FREQUENTLY ASKED QUESTIONS */}
+      {/* 6. GLOBAL TRADE CORRIDORS STRIP */}
       {/* ========================================================================= */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-primary-soft text-primary text-xs font-bold uppercase tracking-wider mb-3">
-            <FileText className="w-3.5 h-3.5" />
-            <span>Frequently Asked Questions</span>
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-navy text-white rounded-3xl p-6 sm:p-10 relative overflow-hidden shadow-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-lg">
+              <div className="inline-flex items-center space-x-1.5 text-xs text-primary-light font-bold">
+                <Globe2 className="w-3.5 h-3.5" />
+                <span>Global Corridors</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-white">
+                Active Across 4 Strategic Regions
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300">
+                Pre-indexed with 500+ verified decision-makers across high-value industrial sectors.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700">
+                <span className="text-lg">🇮🇳</span>
+                <div className="text-xs font-bold text-white mt-1">India</div>
+                <div className="text-[10px] text-slate-400">Aerospace &amp; Tech</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700">
+                <span className="text-lg">🇦🇺</span>
+                <div className="text-xs font-bold text-white mt-1">Australia</div>
+                <div className="text-[10px] text-slate-400">Clean Energy &amp; Ag</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700">
+                <span className="text-lg">🇬🇧 🇪🇺</span>
+                <div className="text-xs font-bold text-white mt-1">UK &amp; Europe</div>
+                <div className="text-[10px] text-slate-400">Pharma &amp; Advanced</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700">
+                <span className="text-lg">🇺🇸</span>
+                <div className="text-xs font-bold text-white mt-1">Americas</div>
+                <div className="text-[10px] text-slate-400">Enterprise Cloud</div>
+              </div>
+            </div>
           </div>
-          <h2 className="text-3xl font-black text-navy tracking-tight">
-            Clear Answers for Executive Decision-Makers
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 7. FREQUENTLY ASKED QUESTIONS */}
+      {/* ========================================================================= */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-black text-navy tracking-tight">
+            Frequently Asked Questions
           </h2>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {faqs.map((faq, idx) => {
             const isOpen = openFaq === idx;
             return (
               <div
                 key={idx}
-                className="bg-surface glass-card rounded-2xl border border-border overflow-hidden transition-all shadow-sm"
+                className="bg-surface glass-card rounded-xl border border-border overflow-hidden transition-all"
               >
                 <button
                   type="button"
                   onClick={() => setOpenFaq(isOpen ? null : idx)}
-                  className="w-full px-6 py-4.5 text-left flex items-center justify-between text-sm sm:text-base font-bold text-navy hover:text-primary transition-colors cursor-pointer"
+                  className="w-full px-5 py-3.5 text-left flex items-center justify-between text-xs sm:text-sm font-bold text-navy hover:text-primary transition-colors cursor-pointer"
                 >
                   <span>{faq.q}</span>
                   <ChevronRight
-                    className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ml-4 ${
+                    className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ml-3 ${
                       isOpen ? 'rotate-90 text-primary' : ''
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-6 pb-5 text-xs sm:text-sm text-text-muted leading-relaxed border-t border-border/50 pt-3">
+                  <div className="px-5 pb-4 text-xs text-text-muted leading-relaxed border-t border-border/50 pt-2.5">
                     {faq.a}
                   </div>
                 )}
@@ -1173,59 +397,39 @@ export const HomePage = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 7: FINAL EXECUTIVE CALL TO ACTION */}
+      {/* 8. FINAL EXECUTIVE CTA BANNER */}
       {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl bg-gradient-to-br from-navy via-slate-900 to-navy text-white p-8 sm:p-14 text-center overflow-hidden shadow-2xl border border-slate-800">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl h-[300px] bg-primary/25 blur-[120px] rounded-full pointer-events-none" />
-
-          <div className="relative z-10 max-w-3xl mx-auto space-y-6">
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-surface/10 text-primary-light text-xs font-bold border border-white/10">
-              <Sparkles className="w-4 h-4" />
-              <span>Experience Zero-Spam B2B Deal-Making</span>
-            </div>
-
-            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-              Ready to Build Meaningful, High-Value Bilateral Partnerships?
-            </h2>
-
-            <p className="text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Join hundreds of verified executives from India, Australia, the UK, Europe, and the US already executing
-              commercial agreements on MESHVI.
-            </p>
-
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/register"
-                className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center justify-center text-base cursor-pointer"
-              >
-                <span>Create Your Verified Account Free</span>
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-              <button
-                type="button"
-                onClick={() => launchDemo(0, 'full')}
-                className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl border border-white/20 transition-all text-base flex items-center justify-center space-x-2 cursor-pointer"
-              >
-                <Play className="w-4 h-4 fill-white" />
-                <span>Watch Product Tour (1:30)</span>
-              </button>
-            </div>
-
-            <div className="pt-4 text-xs text-slate-400 flex items-center justify-center space-x-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>No credit card required &bull; 100% Verified Identity &bull; Free Pilot Tier</span>
-            </div>
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-3xl bg-gradient-to-br from-navy via-slate-900 to-navy text-white p-8 sm:p-12 text-center border border-slate-800 shadow-xl space-y-5">
+          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+            Ready to Build Meaningful B2B Partnerships?
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto">
+            Join hundreds of verified executives already executing high-trust bilateral deals on MESHVI.
+          </p>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/register"
+              className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-md transition-all text-sm cursor-pointer"
+            >
+              <span>Get Started Free</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setVideoModalOpen(true)}
+              className="w-full sm:w-auto px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl border border-white/20 transition-all text-sm flex items-center justify-center space-x-1.5 cursor-pointer"
+            >
+              <Play className="w-3.5 h-3.5 fill-white" />
+              <span>Watch Video (30s)</span>
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Interactive Product Demo Player Modal */}
-      <ProductDemoPlayer
-        open={demoPlayerOpen}
-        initialChapter={demoChapter}
-        mode={demoMode}
-        onClose={() => setDemoPlayerOpen(false)}
+      {/* Modern 30s Animated Video Modal */}
+      <AnimatedVideoModal
+        open={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
       />
     </div>
   );

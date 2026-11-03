@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertCircle, ArrowLeft, CheckCircle2, ExternalLink } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { getStoredOAuthRedirectUri, clearOAuthHandshakeState } from '../../utils/oauthUtils';
@@ -12,8 +12,8 @@ export const GoogleCallbackPage = () => {
   const { showToast } = useNotifications();
 
   const [error, setError] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
   const [mobileLink, setMobileLink] = useState<string | null>(null);
-  const [targetPath, setTargetPath] = useState<string>('/app/home');
   const hasExchangedRef = useRef(false);
 
   useEffect(() => {
@@ -48,11 +48,10 @@ export const GoogleCallbackPage = () => {
       const refreshToken = resData.refreshToken;
       const portalScope = resData.portalScope || 'CONSUMER';
       const isNew = !!resData.isNewUser;
-      const onboardingCompleted =
-        resData.onboardingCompleted ?? user?.onboardingCompleted ?? false;
 
       // Save token and user in AuthContext
       login(token, user, refreshToken, portalScope);
+      setIsVerified(true);
 
       showToast({
         title: isNew ? 'Welcome to Meshvi' : 'Welcome back',
@@ -60,23 +59,52 @@ export const GoogleCallbackPage = () => {
         type: 'success',
       });
 
-      const nextRoute = isNew || !onboardingCompleted ? '/app/onboarding' : '/app/home';
-      setTargetPath(nextRoute);
+      // Handle mobile deep link handoff with dynamic scheme detection (Expo Go vs Standalone)
+      const isMobile = state && (state.startsWith('mobile_') || state.includes('mobile'));
 
-      // If OAuth was initiated by Meshvi Mobile, hand off session via deep link
-      if (state && (state.startsWith('mobile_') || state.includes('mobile'))) {
+      if (isMobile) {
+        let targetReturnUrl = 'meshvi://auth';
+
+        // Extract and decode return scheme from state if provided (e.g. exp://192.168.1.6:8081/--/auth)
+        const parts = state.split('_');
+        if (parts.length >= 2 && parts[1]) {
+          try {
+            let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4) base64 += '=';
+            const decoded = atob(base64);
+            if (
+              decoded.startsWith('exp://') ||
+              decoded.startsWith('exps://') ||
+              decoded.startsWith('meshvi://') ||
+              decoded.startsWith('http://') ||
+              decoded.startsWith('https://')
+            ) {
+              targetReturnUrl = decoded;
+            }
+          } catch {}
+        }
+
+        const deepLink = `${targetReturnUrl}${targetReturnUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(
+          token
+        )}&refreshToken=${encodeURIComponent(refreshToken || '')}&user=${encodeURIComponent(
+          JSON.stringify(user)
+        )}`;
+
+        setMobileLink(deepLink);
+
+        // Auto-navigate to app scheme
         try {
-          const deepLink = `meshvi://auth?token=${encodeURIComponent(token)}&refreshToken=${encodeURIComponent(
-            refreshToken || ''
-          )}&user=${encodeURIComponent(JSON.stringify(user))}`;
-          setMobileLink(deepLink);
+          window.location.replace(deepLink);
+        } catch {
           window.location.href = deepLink;
-        } catch {}
+        }
         return;
       }
 
-      // Web: Instantly move to dashboard (or onboarding for first-time user)
-      navigate(nextRoute, { replace: true });
+      // Web: Automatically transition directly to dashboard after brief verification feedback
+      setTimeout(() => {
+        navigate('/app/home', { replace: true });
+      }, 700);
     };
 
     if (code) {
@@ -135,54 +163,56 @@ export const GoogleCallbackPage = () => {
             <span>Return to Sign In</span>
           </button>
         </div>
-      ) : mobileLink ? (
-        <div className="w-full max-w-sm bg-surface border border-border rounded-2xl p-6 shadow-sm text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-100">
-            <CheckCircle2 className="w-6 h-6" />
+      ) : (
+        /* Sleek, modern verification & redirect loading screen */
+        <div className="flex flex-col items-center justify-center space-y-4 text-center animate-in fade-in duration-300 max-w-sm w-full mx-auto p-4">
+          <div className="relative">
+            {isVerified ? (
+              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-100 shadow-sm animate-in zoom-in-95 duration-200">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+            ) : (
+              <img
+                src="/meshvi-mark.png"
+                alt="Meshvi"
+                className="w-16 h-16 object-contain animate-pulse"
+              />
+            )}
           </div>
+
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-navy">Google Verified!</h3>
+            <h2 className="text-base font-bold text-navy">
+              {isVerified ? 'Login Verified!' : 'Verifying Google credentials...'}
+            </h2>
             <p className="text-xs text-text-muted">
-              Returning to MESHVI Mobile App. If your app did not open automatically, tap below.
+              {mobileLink
+                ? mobileLink.startsWith('exp://')
+                  ? 'Returning to Expo Go...'
+                  : 'Returning to MESHVI App...'
+                : isVerified
+                ? 'Connecting securely to your dashboard...'
+                : 'Signing you in securely'}
             </p>
           </div>
 
-          <a
-            href={mobileLink}
-            className="w-full py-2.5 px-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center space-x-2 shadow-sm"
-          >
-            <ExternalLink className="w-4 h-4" />
-            <span>Open MESHVI Mobile App</span>
-          </a>
-
-          <button
-            type="button"
-            onClick={() => navigate(targetPath, { replace: true })}
-            className="text-xs text-text-muted hover:text-navy font-medium underline cursor-pointer pt-2"
-          >
-            Or continue in Web Browser
-          </button>
-        </div>
-      ) : (
-        /* Simple, clean, effective loading state */
-        <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <div className="relative">
-            <img
-              src="/meshvi-mark.png"
-              alt="Meshvi"
-              className="w-16 h-16 object-contain animate-pulse"
+          {/* Smooth, subtle loading progress bar */}
+          <div className="w-52 bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200">
+            <div
+              className={`h-1.5 rounded-full transition-all duration-500 ${
+                isVerified ? 'bg-emerald-500 w-full' : 'bg-primary w-2/3 animate-[pulse_1s_ease-in-out_infinite]'
+              }`}
             />
           </div>
 
-          <div className="space-y-1">
-            <h2 className="text-base font-bold text-navy">Loading dashboard...</h2>
-            <p className="text-xs text-text-muted">Signing you in securely</p>
-          </div>
-
-          {/* Smooth subtle loading bar */}
-          <div className="w-48 bg-slate-200 rounded-full h-1 overflow-hidden">
-            <div className="bg-primary h-1 rounded-full w-2/3 animate-[pulse_1s_ease-in-out_infinite]" />
-          </div>
+          {/* 1-Tap fallback button to ensure 100% reliable opening on all device browsers */}
+          {mobileLink && (
+            <a
+              href={mobileLink}
+              className="w-full mt-3 py-2.5 px-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 shadow-sm"
+            >
+              <span>{mobileLink.startsWith('exp://') ? 'Open in Expo Go' : 'Open in MESHVI App'}</span>
+            </a>
+          )}
         </div>
       )}
     </div>

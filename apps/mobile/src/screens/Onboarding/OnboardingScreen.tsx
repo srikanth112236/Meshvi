@@ -89,6 +89,7 @@ export const OnboardingScreen: React.FC = () => {
   const [displayName, setDisplayName] = useState(user?.profile?.displayName || user?.name || 'Aditi Park');
   const [avatarUrl, setAvatarUrl] = useState(user?.profile?.avatarUrl || user?.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80');
   const [headline, setHeadline] = useState(user?.profile?.headline || 'VP of Global Strategic Sourcing & Partnerships');
+  const [phoneNumber, setPhoneNumber] = useState(user?.profile?.phoneNumber || '+65 9123 4567');
   const [summary, setSummary] = useState(user?.profile?.summary || 'Seasoned decision maker leading strategic sourcing and cross-border commercial corridors across global hubs.');
   const [mediaPickerVisible, setMediaPickerVisible] = useState(false);
 
@@ -162,6 +163,7 @@ export const OnboardingScreen: React.FC = () => {
       headline,
       summary,
       avatarUrl,
+      phoneNumber,
       currentCompanyName: currentCompany,
       countryCode: selectedCountry.code,
       city: selectedCity,
@@ -173,7 +175,7 @@ export const OnboardingScreen: React.FC = () => {
       isCompleted: false,
     });
     setLoading(false);
-    setStep((prev) => Math.min(prev + 1, 5));
+    setStep((prev) => Math.min(prev + 1, 3));
   };
 
   const handleBack = () => {
@@ -216,7 +218,7 @@ export const OnboardingScreen: React.FC = () => {
           />
           <View>
             <Text style={styles.brandTitle}>MESHVI</Text>
-            <Text style={styles.brandSubtitle}>Executive Onboarding &bull; Step {step}/5</Text>
+            <Text style={styles.brandSubtitle}>Executive Onboarding &bull; Step {step}/3</Text>
           </View>
         </View>
 
@@ -230,7 +232,7 @@ export const OnboardingScreen: React.FC = () => {
 
       {/* Stepper Navigation Pills */}
       <View style={styles.stepperContainer}>
-        {['Identity', 'Scope', 'Intent', 'Firewall', 'Review'].map((title, idx) => {
+        {['1. Identity', '2. Scope', '3. Mandates & Launch'].map((title, idx) => {
           const stepNum = idx + 1;
           const isActive = step === stepNum;
           const isPassed = step > stepNum;
@@ -337,6 +339,25 @@ export const OnboardingScreen: React.FC = () => {
                   </TouchableOpacity>
                 ))}
               </View>
+            </View>
+
+            {/* Direct Phone Number (Bilateral Verified Field) */}
+            <View style={styles.fieldGroup}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <Text style={styles.fieldLabel}>Direct Mobile Number *</Text>
+                <Text style={{ fontSize: 10, color: '#10B981', fontWeight: '700' }}>🔒 Bilateral Clearance Only</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                placeholder="+65 9123 4567 or +91 98765 43210"
+                placeholderTextColor={COLORS.textMuted}
+                keyboardType="phone-pad"
+              />
+              <Text style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 4 }}>
+                Revealed only after mutual agreement between connecting executives.
+              </Text>
             </View>
 
             {/* Executive Summary */}
@@ -466,17 +487,17 @@ export const OnboardingScreen: React.FC = () => {
         )}
 
         {/* ======================================================== */}
-        {/* STEP 3: COMMERCIAL BUSINESS INTENT                       */}
+        {/* STEP 3: STRATEGIC MANDATES, FIREWALL & LAUNCH            */}
         {/* ======================================================== */}
         {step === 3 && (
           <View style={styles.cardContainer}>
             <View style={styles.stepHeader}>
-              <View style={styles.stepIconWrap}>
-                <MaterialCommunityIcons name="target" size={20} color={COLORS.primary} />
+              <View style={[styles.stepIconWrap, { backgroundColor: '#ECFDF5' }]}>
+                <MaterialCommunityIcons name="target" size={20} color={COLORS.emerald} />
               </View>
               <View>
-                <Text style={styles.stepTitle}>Commercial Business Intent</Text>
-                <Text style={styles.stepSubtitle}>Calibrate MESHVI's AI Synergy Radar.</Text>
+                <Text style={styles.stepTitle}>Strategic Mandates & Noise Firewall</Text>
+                <Text style={styles.stepSubtitle}>Calibrate AI bilateral synergy radar and perimeter pitch firewall.</Text>
               </View>
             </View>
 
@@ -526,36 +547,10 @@ export const OnboardingScreen: React.FC = () => {
               ))}
             </View>
 
-            {/* Synergy Guarantee Strip */}
-            <View style={styles.guaranteeStrip}>
-              <MaterialCommunityIcons name="radar" size={18} color={COLORS.primary} style={{ marginRight: 8 }} />
-              <Text style={styles.guaranteeText}>
-                <Text style={{ fontWeight: '800', color: COLORS.text }}>Synergy Radar: </Text>
-                Counterparties are matched by bilateral reciprocal alignment. Zero cold spam.
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* ======================================================== */}
-        {/* STEP 4: ANTI-SPAM PITCH FIREWALL & RECEPTION PROTOCOL    */}
-        {/* ======================================================== */}
-        {step === 4 && (
-          <View style={styles.cardContainer}>
-            <View style={styles.stepHeader}>
-              <View style={[styles.stepIconWrap, { backgroundColor: '#FFF1F2' }]}>
-                <Feather name="shield" size={18} color={COLORS.rose} />
-              </View>
-              <View>
-                <Text style={styles.stepTitle}>Anti-Spam Pitch Firewall</Text>
-                <Text style={styles.stepSubtitle}>Intercept unsolicited pitches at the perimeter.</Text>
-              </View>
-            </View>
-
-            {/* Active Blocked Tags Cloud */}
+            {/* Anti-Spam Pitch Firewall Tags */}
             <View style={styles.firewallCard}>
               <View style={styles.firewallCardHeader}>
-                <Text style={styles.firewallCardTitle}>Active Blocked Tags ({firewallTags.length})</Text>
+                <Text style={styles.firewallCardTitle}>Anti-Spam Noise Firewall ({firewallTags.length})</Text>
                 <Text style={styles.firewallCardHint}>Tap ✕ to unblock</Text>
               </View>
 
@@ -616,159 +611,7 @@ export const OnboardingScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Reception Protocols */}
-            <View style={styles.protocolCard}>
-              <View style={styles.protocolCardHeader}>
-                <Text style={styles.protocolTitle}>Default Reception Protocol</Text>
-                <Text style={styles.protocolBadge}>
-                  {selectedProtocols.length === 2 ? 'Both Protocols Active ✓' : '1 Active'}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                onPress={() => toggleProtocol('DEAL_ROOM')}
-                style={[
-                  styles.protocolItem,
-                  selectedProtocols.includes('DEAL_ROOM') && styles.protocolItemActive,
-                ]}
-                activeOpacity={0.7}
-              >
-                <View style={{ flex: 1 }}>
-                  <View style={styles.protocolRowTitle}>
-                    <Feather name="lock" size={14} color={COLORS.primary} style={{ marginRight: 6 }} />
-                    <Text style={styles.protocolName}>Micro Deal Room First</Text>
-                  </View>
-                  <Text style={styles.protocolDesc}>
-                    Require mutual agenda & bilateral NDA before releasing calendar.
-                  </Text>
-                </View>
-                <View style={[styles.checkCircle, selectedProtocols.includes('DEAL_ROOM') && styles.checkCircleActive]}>
-                  {selectedProtocols.includes('DEAL_ROOM') && <Feather name="check" size={12} color={COLORS.white} />}
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => toggleProtocol('SCHEDULED_CALL')}
-                style={[
-                  styles.protocolItem,
-                  selectedProtocols.includes('SCHEDULED_CALL') && styles.protocolItemActive,
-                ]}
-                activeOpacity={0.7}
-              >
-                <View style={{ flex: 1 }}>
-                  <View style={styles.protocolRowTitle}>
-                    <Feather name="calendar" size={14} color={COLORS.primary} style={{ marginRight: 6 }} />
-                    <Text style={styles.protocolName}>Direct Calendar Slot Lock</Text>
-                  </View>
-                  <Text style={styles.protocolDesc}>
-                    Permit 1-click in-stream calendar slot locks upon verified match.
-                  </Text>
-                </View>
-                <View style={[styles.checkCircle, selectedProtocols.includes('SCHEDULED_CALL') && styles.checkCircleActive]}>
-                  {selectedProtocols.includes('SCHEDULED_CALL') && <Feather name="check" size={12} color={COLORS.white} />}
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Perimeter Seal Bar */}
-            <View style={styles.perimeterSeal}>
-              <Feather name="shield" size={16} color={COLORS.emerald} style={{ marginRight: 8 }} />
-              <Text style={styles.perimeterSealText}>
-                <Text style={{ fontWeight: '800', color: COLORS.emerald }}>Perimeter Engaged: </Text>
-                100% of matching unsolicited proposals blocked automatically.
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* ======================================================== */}
-        {/* STEP 5: EXECUTIVE DOSSIER REVIEW                         */}
-        {/* ======================================================== */}
-        {step === 5 && (
-          <View style={styles.cardContainer}>
-            <View style={styles.stepHeader}>
-              <View style={[styles.stepIconWrap, { backgroundColor: '#ECFDF5' }]}>
-                <Feather name="check-circle" size={18} color={COLORS.emerald} />
-              </View>
-              <View>
-                <Text style={styles.stepTitle}>Executive Dossier & Credential Review</Text>
-                <Text style={styles.stepSubtitle}>Review verified parameters before initializing workspace.</Text>
-              </View>
-            </View>
-
-            {/* Dossier Card */}
-            <View style={styles.dossierCard}>
-              <View style={styles.dossierHeader}>
-                <Image source={{ uri: avatarUrl }} style={styles.dossierAvatar} />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={styles.dossierName}>{displayName}</Text>
-                    <View style={styles.verifiedNodeBadge}>
-                      <Text style={styles.verifiedNodeText}>Verified Node ✓</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.dossierHeadline}>{headline}</Text>
-                  <Text style={styles.dossierOrg}>
-                    {currentCompany} &bull; {selectedCity}, {selectedCountry.code}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Department Scope Chips */}
-              <View style={styles.dossierSection}>
-                <View style={styles.dossierSectionHeader}>
-                  <Text style={styles.dossierSectionTitle}>Authorized Department Scope ({selectedDepartments.length}/5):</Text>
-                  <TouchableOpacity onPress={() => setStep(2)}>
-                    <Text style={styles.editLink}>Edit</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.deptChipRow}>
-                  {selectedDepartments.map((dept) => (
-                    <View key={dept} style={styles.dossierDeptChip}>
-                      <Text style={styles.dossierDeptText}>{dept}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              {/* Intent Summary */}
-              <View style={styles.dossierSection}>
-                <View style={styles.dossierSectionHeader}>
-                  <Text style={styles.dossierSectionTitle}>Bilateral Mandate:</Text>
-                  <TouchableOpacity onPress={() => setStep(3)}>
-                    <Text style={styles.editLink}>Edit</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.dossierIntentItem}>
-                  <Text style={{ fontWeight: '800', color: COLORS.text }}>Seeking: </Text>
-                  {lookingFor}
-                </Text>
-                <Text style={styles.dossierIntentItem}>
-                  <Text style={{ fontWeight: '800', color: COLORS.text }}>Offering: </Text>
-                  {offering}
-                </Text>
-              </View>
-
-              {/* Firewall & Protocols */}
-              <View style={styles.dossierSection}>
-                <View style={styles.dossierSectionHeader}>
-                  <Text style={styles.dossierSectionTitle}>Firewall & Protocol:</Text>
-                  <TouchableOpacity onPress={() => setStep(4)}>
-                    <Text style={styles.editLink}>Edit</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.dossierIntentItem}>
-                  <Text style={{ fontWeight: '800', color: COLORS.rose }}>Blocked: </Text>
-                  {firewallTags.slice(0, 3).join(', ')} +{Math.max(0, firewallTags.length - 3)} more
-                </Text>
-                <Text style={styles.dossierIntentItem}>
-                  <Text style={{ fontWeight: '800', color: COLORS.primary }}>Reception: </Text>
-                  {selectedProtocols.map((p) => (p === 'DEAL_ROOM' ? 'Micro Deal Room' : 'Calendar Lock')).join(' & ')}
-                </Text>
-              </View>
-            </View>
-
-            {/* Launch Workspace Button */}
+            {/* Launch Workspace CTA Button */}
             <TouchableOpacity
               style={styles.launchBtn}
               onPress={handleLaunchWorkspace}
@@ -799,7 +642,7 @@ export const OnboardingScreen: React.FC = () => {
           <Text style={styles.bottomStepLabel}>Step 1: Executive Identity</Text>
         )}
 
-        {step < 5 ? (
+        {step < 3 ? (
           <TouchableOpacity
             style={styles.bottomNextBtn}
             onPress={handleNext}

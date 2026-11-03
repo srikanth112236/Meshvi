@@ -58,7 +58,6 @@ const SLIDES = [
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) => {
   const insets = useSafeAreaInsets();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const { quickDemoLogin } = useAuth();
 
   const slide = SLIDES[currentSlide];
 
@@ -144,17 +143,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegiste
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={onLogin} activeOpacity={0.85}>
           <Text style={styles.secondaryBtnText}>Sign In to Node</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.demoBtn}
-          onPress={async () => {
-            await quickDemoLogin();
-          }}
-          activeOpacity={0.8}
-        >
-          <Feather name="zap" size={13} color={COLORS.primary} style={{ marginRight: 5 }} />
-          <Text style={styles.demoBtnText}>Instant Executive Demo Mode (Rajiv Menon)</Text>
         </TouchableOpacity>
       </View>
     </View>

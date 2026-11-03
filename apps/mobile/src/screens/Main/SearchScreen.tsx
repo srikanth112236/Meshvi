@@ -1495,8 +1495,8 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
             onPress={() => executeSearch(1, false)}
             activeOpacity={0.8}
           >
-            <MaterialCommunityIcons name="star-four-points" size={11} color="#FDE047" style={{ marginRight: 3 }} />
-            <Text style={styles.compactSearchBtnText}>Search</Text>
+            <MaterialCommunityIcons name="star-four-points" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
+            <Text style={styles.compactSearchBtnText}>Search Directory</Text>
           </TouchableOpacity>
         </View>
 
@@ -1735,10 +1735,17 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
 
                         {/* Middle: Profile details */}
                         <View style={{ flex: 1, minWidth: 0 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Text style={styles.webCardName} numberOfLines={1}>{dm.displayName}</Text>
-                            <Text style={styles.webCardFlag}>{dm.flag}</Text>
-                            <MaterialCommunityIcons name="check-decagram" size={13} color="#166534" style={{ marginLeft: 3 }} />
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                              <Text style={styles.webCardName} numberOfLines={1}>{dm.displayName}</Text>
+                              <Text style={styles.webCardFlag}>{dm.flag}</Text>
+                              <MaterialCommunityIcons name="check-decagram" size={13} color="#166534" style={{ marginLeft: 3 }} />
+                            </View>
+                            {Boolean(dm.fitScore) && (
+                              <View style={styles.webFitScorePill}>
+                                <Text style={styles.webFitScoreText}>{dm.fitScore}% Match</Text>
+                              </View>
+                            )}
                           </View>
 
                           <Text style={styles.webCardSubtitle} numberOfLines={1}>
@@ -2975,11 +2982,16 @@ const styles = StyleSheet.create({
   compactSearchBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: MeshviColors.textPrimary,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 7,
+    backgroundColor: '#0284C7',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
     marginLeft: 6,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
   },
   compactSearchBtnText: {
     fontSize: 11,
@@ -5419,15 +5431,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   webFitScorePill: {
-    backgroundColor: 'rgba(15, 118, 110, 0.1)',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 4,
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 12,
     marginLeft: 6,
   },
   webFitScoreText: {
     fontSize: 9.5,
     fontWeight: '800',
-    color: MeshviColors.accent,
+    color: '#0284C7',
   },
 });

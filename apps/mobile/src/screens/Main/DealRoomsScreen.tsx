@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import { useModal } from '../../context/ModalContext';
+import { useAuth } from '../../context/AuthContext';
+import { apiRequest } from '../../services/api';
 import { DealRoom } from '../../types';
+import { DealRoomDetailModal } from '../../components/DealRoomDetailModal';
 import {
   createGoogleMeetSession,
   openGoogleMeet,
@@ -56,8 +59,52 @@ export interface DealRoomsScreenProps {
 
 export const DealRoomsScreen: React.FC<DealRoomsScreenProps> = ({ onBack }) => {
   const insets = useSafeAreaInsets();
+  const { token } = useAuth();
   const { showSuccess, showInfo } = useModal();
   const [rooms, setRooms] = useState<DealRoom[]>(DEMO_ROOMS);
+  const [selectedDealRoom, setSelectedDealRoom] = useState<DealRoom | null>(null);
+
+  // Fetch live deal rooms from backend and merge with high-synergy corridors
+  const fetchLiveDealRooms = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await apiRequest<any[]>('/deal-rooms', { token });
+      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        const mapped: DealRoom[] = res.data.map((r: any, idx: number) => {
+          const cp = r.partnerProfile || r.initiatorProfile || {};
+          const cpUser = r.partner || r.initiator || {};
+          return {
+            id: r.id || `live-dr-${idx}`,
+            counterpartyName: cp.displayName || cpUser.name || 'Executive Counterparty',
+            counterpartyCompany: cp.company?.name || cp.companyName || 'Corporate Enterprise',
+            counterpartyAvatar: cp.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+            ndaStatus: r.mndaExecuted || r.status === 'ACTIVE' ? 'SIGNED' : 'MUTUAL_REVIEW',
+            mutualSynergy: r.mutualSynergy || 95,
+            primaryAgenda: r.initiatorGoal || r.partnerGoal || r.title || 'Cross-Border Supply Chain & Enterprise Procurement Agreement',
+            unlockedAt: 'Recently Active',
+            lastActivity: 'Active',
+            calendarSlotBooked: r.calendarSlotBooked,
+            meetUrl: r.meetUrl || 'https://meet.google.com/qmv-rtws-kpa',
+            googleCalendarUrl: r.googleCalendarUrl,
+            status: r.status || 'ACTIVE',
+            milestones: r.milestones,
+          };
+        });
+        setRooms(mapped);
+      }
+    } catch {
+      // Fallback preserved
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchLiveDealRooms();
+  }, [fetchLiveDealRooms]);
+
+  const handleUpdateRoom = (updated: DealRoom) => {
+    setRooms((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    setSelectedDealRoom(updated);
+  };
 
   const handleLockSlot = (room: DealRoom) => {
     const session = createGoogleMeetSession({
@@ -117,11 +164,7 @@ export const DealRoomsScreen: React.FC<DealRoomsScreenProps> = ({ onBack }) => {
   };
 
   const handleEnterDealRoom = (room: DealRoom) => {
-    showInfo(
-      'Deal Room Corridor Active',
-      `Secure E2E corridor active for ${room.counterpartyCompany}. NDA status: ${room.ndaStatus === 'SIGNED' ? 'Countersigned & Verified' : 'Under Mutual Review'}.`,
-      'Proceed'
-    );
+    setSelectedDealRoom(room);
   };
 
   return (
@@ -270,6 +313,14 @@ export const DealRoomsScreen: React.FC<DealRoomsScreenProps> = ({ onBack }) => {
           );
         })}
       </ScrollView>
+
+      {/* Interactive Bilateral Micro Deal Room Workspace Modal */}
+      <DealRoomDetailModal
+        visible={!!selectedDealRoom}
+        dealRoom={selectedDealRoom}
+        onClose={() => setSelectedDealRoom(null)}
+        onUpdateRoom={handleUpdateRoom}
+      />
     </View>
   );
 };

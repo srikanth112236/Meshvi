@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSearchHistory } from '../../context/SearchHistoryContext';
@@ -8,10 +8,17 @@ import {
   Plus,
   Send,
   X,
+  Handshake,
+  Users,
+  ArrowRight,
+  Building2,
+  Play,
+  Sparkles,
+  CheckCircle2,
 } from 'lucide-react';
 import { AddCompanyModal } from '../../components/ui/AddCompanyModal';
 import { CreatePartnershipPostModal } from '../../components/ui/CreatePartnershipPostModal';
-import { VideoShowcase } from '../../components/ui/VideoShowcase';
+import { AnimatedVideoModal } from '../../components/ui/AnimatedVideoModal';
 
 interface StatsState {
   connectionsCount: number;
@@ -24,10 +31,129 @@ interface StatsState {
 
 export const AppHomePage = () => {
   const { user, token } = useAuth();
-  const { startNewSearchSession, activeSessionId } = useSearchHistory();
+  const { startNewSearchSession, activeSessionId, recent } = useSearchHistory();
   const profile = user?.profile;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  const latestQuery = recent && recent.length > 0 ? recent[0].query : '';
+  const lowerLatest = latestQuery.toLowerCase();
+
+  const recommendedProfiles = useMemo(() => {
+    if (
+      lowerLatest.includes('hospit') ||
+      lowerLatest.includes('hotel') ||
+      lowerLatest.includes('resort') ||
+      lowerLatest.includes('tourism')
+    ) {
+      return [
+        {
+          id: 'rec-1',
+          name: 'Rajiv Sharma',
+          title: 'SVP Global Procurement & Amenities',
+          company: 'Tata Consumer & Taj Luxury Group',
+          location: 'Mumbai, India',
+          badge: 'Signatory Authority',
+          reason: `Recommended based on your recent search for "${latestQuery}"`,
+          avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+        },
+        {
+          id: 'rec-2',
+          name: 'Priya Sundaram',
+          title: 'Head of Airport Concessions & Hospitality',
+          company: 'Changi Airport Group',
+          location: 'Singapore',
+          badge: 'Commercial Lead',
+          reason: `Matched via hospitality & travel amenities search`,
+          avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
+        },
+        {
+          id: 'rec-3',
+          name: 'Elena Rostova',
+          title: 'Director of Food & Beverage Sourcing',
+          company: 'Boreal Food Retail & Hospitality',
+          location: 'Berlin, Germany',
+          badge: 'FMCG Mandate',
+          reason: `Verified decision-maker in related consumer goods`,
+          avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
+        },
+      ];
+    }
+
+    if (
+      lowerLatest.includes('logistic') ||
+      lowerLatest.includes('supply') ||
+      lowerLatest.includes('freight')
+    ) {
+      return [
+        {
+          id: 'rec-4',
+          name: 'Vikram Al-Mansoor',
+          title: 'VP Supply Chain Logistics & Cold Chain',
+          company: 'Apex Freight Logistics',
+          location: 'Dubai, UAE',
+          badge: 'Logistics Signatory',
+          reason: `Recommended based on your recent search for "${latestQuery}"`,
+          avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+        },
+        {
+          id: 'rec-5',
+          name: 'Kenji Sato',
+          title: 'Chief Procurement Officer',
+          company: 'Yamato Global Systems',
+          location: 'Tokyo, Japan',
+          badge: 'C-Level Mandate',
+          reason: `Matched via supply chain trade corridor`,
+          avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
+        },
+        {
+          id: 'rec-6',
+          name: 'Sophie Laurent',
+          title: 'Head of Strategic Bilateral Sourcing',
+          company: 'CMA CGM Europe',
+          location: 'Paris, France',
+          badge: 'Bilateral Lead',
+          reason: `Cross-border procurement leader in EU trade`,
+          avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+        },
+      ];
+    }
+
+    return [
+      {
+        id: 'rec-7',
+        name: 'Aarav Mehta',
+        title: 'Chief Commercial Officer',
+        company: 'Indo-ASEAN Strategic Alliance',
+        location: 'Singapore',
+        badge: 'C-Level Signatory',
+        reason: latestQuery
+          ? `Recommended match based on "${latestQuery}"`
+          : 'High-mandate commercial leader in your bilateral trade corridor',
+        avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80',
+      },
+      {
+        id: 'rec-8',
+        name: 'Mei Ling Tan',
+        title: 'Director of Strategic Partnerships',
+        company: 'Pacific Rim Trade Solutions',
+        location: 'Kuala Lumpur, Malaysia',
+        badge: 'Trade Director',
+        reason: 'Cross-border alliance leader active in your network',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      },
+      {
+        id: 'rec-9',
+        name: 'David Zimmermann',
+        title: 'Head of Industrial Supply & Procurement',
+        company: 'Vanguard Industrial Corp',
+        location: 'Frankfurt, Germany',
+        badge: 'Audited Procurement',
+        reason: 'Verified decision-maker with active bilateral requirements',
+        avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80',
+      },
+    ];
+  }, [lowerLatest, latestQuery]);
 
   const [stats, setStats] = useState<StatsState>({
     connectionsCount: 0,
@@ -42,6 +168,7 @@ export const AppHomePage = () => {
   const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
   const [isPartnershipModalOpen, setIsPartnershipModalOpen] = useState(false);
   const [searchHighlighted, setSearchHighlighted] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchCardRef = useRef<HTMLDivElement>(null);
@@ -273,8 +400,195 @@ export const AppHomePage = () => {
         </div>
       </div>
 
-      {/* 3. FULL-WIDTH VIDEO SHOWCASE & PLATFORM DEMOS (AS REQUESTED) */}
-      <VideoShowcase />
+      {/* 3. COMPACT OPERATIONAL ACTION HUB */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 max-w-5xl mx-auto w-full pt-1">
+        {/* Card 1: Active Deal Rooms */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-primary/40 transition-all flex flex-col justify-between space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="p-2 rounded-xl bg-primary-soft text-primary">
+                <Handshake className="w-4 h-4" />
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                {stats.dealRoomsCount} Active
+              </span>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-navy">Bilateral Deal Rooms</h3>
+              <p className="text-xs text-text-muted mt-0.5">
+                Mutual NDAs signed, milestone tracking, and bilateral escrow vault.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/app/partnerships"
+            className="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1 pt-2 border-t border-slate-100"
+          >
+            <span>Open Deal Rooms</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* Card 2: Handshakes & Connections */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-emerald-500/40 transition-all flex flex-col justify-between space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
+                <Users className="w-4 h-4" />
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                {stats.connectionsCount} Verified Peers
+              </span>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-navy">Executive Handshakes</h3>
+              <p className="text-xs text-text-muted mt-0.5">
+                {stats.inboundRequestsCount > 0
+                  ? `${stats.inboundRequestsCount} inbound handshake request waiting.`
+                  : 'Zero cold spam. Bilateral double-opt-in consensus active.'}
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/app/connections"
+            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-2 border-t border-slate-100"
+          >
+            <span>Review Handshakes</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* Card 3: Quick Action Hub & Video */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="p-2 rounded-xl bg-amber-50 text-amber-700">
+                <Sparkles className="w-4 h-4" />
+              </span>
+              <button
+                type="button"
+                onClick={() => setVideoOpen(true)}
+                className="text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:text-primary bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
+                title="Watch 30s Animated Video"
+              >
+                <Play className="w-2.5 h-2.5 fill-current" />
+                <span>Video (0:30)</span>
+              </button>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-navy">Fast Actions</h3>
+              <p className="text-xs text-text-muted mt-0.5">
+                Launch a commercial post, add an enterprise entity, or explore.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsPartnershipModalOpen(true)}
+              className="flex-1 py-1 px-2 bg-primary-soft hover:bg-primary/20 text-primary font-bold text-[11px] rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Post Deal</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsAddCompanyOpen(true)}
+              className="flex-1 py-1 px-2 bg-slate-100 hover:bg-slate-200 text-navy font-bold text-[11px] rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <Building2 className="w-3 h-3 text-slate-500" />
+              <span>Add Firm</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. RECOMMENDED CONNECTIONS BASED ON RECENT SEARCHES */}
+      <div className="max-w-5xl mx-auto w-full space-y-3 pt-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+              <Sparkles className="w-4 h-4 text-primary" />
+            </span>
+            <div>
+              <h2 className="text-sm font-extrabold text-navy">
+                Recommended Connections
+              </h2>
+              <p className="text-[11px] text-text-muted">
+                {latestQuery
+                  ? `Curated decision-makers based on your recent search for "${latestQuery}"`
+                  : 'High-mandate commercial decision-makers matching your trade corridor'}
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/app/search"
+            className="text-xs font-bold text-primary hover:underline flex items-center space-x-1"
+          >
+            <span>Explore All</span>
+            <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {recommendedProfiles.map((person) => (
+            <div
+              key={person.id}
+              className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-primary/40 transition-all flex flex-col justify-between space-y-3"
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-start justify-between">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-navy to-[#1E3A8A] text-white font-black text-sm flex items-center justify-center shrink-0 overflow-hidden">
+                    {person.avatarUrl ? (
+                      <img src={person.avatarUrl} alt={person.name} className="w-full h-full object-cover" />
+                    ) : (
+                      person.name[0]
+                    )}
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                    {person.badge || 'Verified Mandate'}
+                  </span>
+                </div>
+                <div>
+                  <div className="flex items-center space-x-1">
+                    <h3 className="font-extrabold text-xs text-navy truncate">{person.name}</h3>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  </div>
+                  <p className="text-[11px] font-medium text-slate-700 truncate">{person.title}</p>
+                  <p className="text-[11px] text-text-muted truncate">{person.company} &bull; {person.location}</p>
+                </div>
+                <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-100 text-[10px] text-slate-600 font-medium">
+                  {person.reason}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/app/search?q=${encodeURIComponent(person.name)}`)}
+                  className="text-[11px] font-bold text-slate-600 hover:text-navy transition-colors cursor-pointer"
+                >
+                  View Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/app/search?q=${encodeURIComponent(person.name)}`)}
+                  className="px-2.5 py-1 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg text-[11px] flex items-center space-x-1 shadow-2xs transition-colors cursor-pointer"
+                >
+                  <Handshake className="w-3 h-3" />
+                  <span>Connect</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Video Modal */}
+      <AnimatedVideoModal
+        open={videoOpen}
+        onClose={() => setVideoOpen(false)}
+      />
 
       {/* 4. MODALS */}
       <AddCompanyModal

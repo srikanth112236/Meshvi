@@ -9,14 +9,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
-import { GoogleAuthModal } from '../../components/GoogleAuthModal';
+import { launchGoogleOAuth } from '../../services/googleAuth';
+import { GoogleIcon } from '../../components/GoogleIcon';
+import { GoogleOneTapBottomSheet } from '../../components/GoogleOneTapBottomSheet';
 
 interface LoginScreenProps {
   onRegister: () => void;
@@ -32,13 +35,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   initialEmail,
 }) => {
   const insets = useSafeAreaInsets();
-  const { login, quickDemoLogin } = useAuth();
-  const [email, setEmail] = useState(initialEmail || 'aditi.park@novus-infrastructure-101-singapore.com');
-  const [password, setPassword] = useState('Password123!');
+  const { login, loginWithGoogle, loginWithToken } = useAuth();
+  const [email, setEmail] = useState(initialEmail || '');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [isGoogleSheetVisible, setIsGoogleSheetVisible] = useState(false);
 
   useEffect(() => {
     if (initialEmail) {
@@ -46,9 +50,43 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   }, [initialEmail]);
 
-  const handleGoogleLogin = () => {
+  // Direct Google OAuth: executes native Google Play Services SDK or dynamic Expo browser fallback
+  const handleGoogleLogin = async () => {
     setError('');
-    setShowGoogleModal(true);
+    setGoogleLoading(true);
+    try {
+      const res = await launchGoogleOAuth({ promptSelectAccount: true });
+      if (res?.cancelled) {
+        return;
+      }
+      if (res?.type === 'show_one_tap') {
+        setIsGoogleSheetVisible(true);
+        return;
+      }
+      if (res?.type === 'native' && res.idToken) {
+        // Direct Native SDK Success: verify token with backend immediately
+        const authRes = await loginWithGoogle({
+          idToken: res.idToken,
+          email: res.user?.email,
+          displayName: res.user?.name,
+          avatarUrl: res.user?.photo,
+          googleId: res.user?.id,
+        });
+        if (!authRes.success) {
+          setError(authRes.error || 'Failed to authenticate Google credentials.');
+        }
+        return;
+      }
+      if (res?.type === 'browser_session' && res.token) {
+        // Direct In-App Browser Session Success (Expo Go / dynamic return)
+        await loginWithToken(res.token, res.user, res.refreshToken);
+        return;
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Unable to launch Google authentication session.');
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleLogin = async () => {
@@ -69,14 +107,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* TOP GRADIENT HEADER (Matching Reference UI) */}
+      {/* TOP GRADIENT HEADER (Executive Meshvi Branding) */}
       <LinearGradient
         colors={['#071120', '#0B1D3A', '#0284C7']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.headerGradient, { paddingTop: Math.max(insets.top, 20) + 8 }]}
       >
-        {/* Top Action Row: Back Button & "Don't have an account? Get Started" */}
+        {/* Top Action Row */}
         <View style={styles.topNavRow}>
           <TouchableOpacity
             onPress={onBack}
@@ -106,7 +144,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         </View>
       </LinearGradient>
 
-      {/* BOTTOM FLOATING WHITE CARD (Matching Reference UI) */}
+      {/* FLOATING WHITE AUTH CARD */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
@@ -132,13 +170,37 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </View>
             ) : null}
 
+            {/* 1. Official Google OAuth Button (Positioned at Top, Matching Web) */}
+            <TouchableOpacity
+              onPress={handleGoogleLogin}
+              disabled={googleLoading || loading}
+              style={styles.googleOAuthBtn}
+              activeOpacity={0.8}
+            >
+              {googleLoading ? (
+                <ActivityIndicator size="small" color="#4285F4" style={{ marginRight: 10 }} />
+              ) : (
+                <GoogleIcon size={20} style={{ marginRight: 10 }} />
+              )}
+              <Text style={styles.googleOAuthBtnText}>
+                {googleLoading ? 'Opening Google...' : 'Continue with Google'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Divider: or sign in with email */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or sign in with email</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
             {/* Field 1: Email Address */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Email Address</Text>
+              <Text style={styles.fieldLabel}>Work Email</Text>
               <View style={styles.inputRow}>
                 <TextInput
                   style={styles.inputField}
-                  placeholder="name@company.com"
+                  placeholder="executive@company.com"
                   placeholderTextColor="#94A3B8"
                   value={email}
                   onChangeText={setEmail}
@@ -177,10 +239,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </View>
             </View>
 
-            {/* Sign In Primary CTA Button (LinearGradient) */}
+            {/* Sign In Primary CTA Button */}
             <TouchableOpacity
               onPress={handleLogin}
-              disabled={loading}
+              disabled={loading || googleLoading}
               activeOpacity={0.85}
               style={styles.submitBtnWrapper}
             >
@@ -206,42 +268,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             >
               <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
             </TouchableOpacity>
-
-            {/* Divider: Or sign in with */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Or sign in with</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Single Google OAuth Button (No Facebook) */}
-            <TouchableOpacity
-              onPress={handleGoogleLogin}
-              disabled={loading}
-              style={styles.googleOAuthBtn}
-              activeOpacity={0.8}
-            >
-              <MaterialCommunityIcons name="google" size={19} color="#EA4335" style={{ marginRight: 8 }} />
-              <Text style={styles.googleOAuthBtnText}>Google</Text>
-            </TouchableOpacity>
-
-            {/* Quick Demo Pre-fill Option */}
-            <TouchableOpacity
-              onPress={quickDemoLogin}
-              style={styles.quickDemoPill}
-              activeOpacity={0.7}
-            >
-              <Feather name="zap" size={12} color="#0284C7" style={{ marginRight: 4 }} />
-              <Text style={styles.quickDemoText}>Instant Demo Clearance (Aditi Park, VP)</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Google OAuth Modal */}
-      <GoogleAuthModal
-        visible={showGoogleModal}
-        onClose={() => setShowGoogleModal(false)}
+      <GoogleOneTapBottomSheet
+        visible={isGoogleSheetVisible}
+        onClose={() => setIsGoogleSheetVisible(false)}
       />
     </View>
   );
@@ -282,103 +314,148 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   getStartedPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   getStartedPillText: {
-    fontSize: 12,
     color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700',
   },
   brandTitleContainer: {
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 6,
+    marginBottom: 10,
   },
   brandTitle: {
     fontSize: 34,
     fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: -0.6,
+    letterSpacing: -0.5,
   },
   brandSubtitle: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.75)',
     marginTop: 2,
-    letterSpacing: 0.2,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   keyboardView: {
     flex: 1,
+    marginTop: -24,
   },
   cardScrollContent: {
     flexGrow: 1,
   },
   mainCard: {
-    flex: 1,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     paddingHorizontal: 24,
-    paddingTop: 30,
+    paddingTop: 28,
+    flex: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
-    shadowRadius: 16,
+    shadowRadius: 12,
     elevation: 8,
   },
   cardHeader: {
-    alignItems: 'center',
     marginBottom: 20,
   },
   cardTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '900',
     color: '#0F172A',
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
   },
   cardSubtitle: {
     fontSize: 13,
     color: '#64748B',
-    marginTop: 4,
+    marginTop: 3,
     fontWeight: '500',
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FFF1F2',
     borderWidth: 1,
     borderColor: '#FECDD3',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
     borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     marginBottom: 16,
   },
   errorText: {
     fontSize: 12,
-    color: '#B91C1C',
+    color: '#BE123C',
     fontWeight: '600',
     flex: 1,
   },
+  googleOAuthBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  googleIconImg: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
+  googleOAuthBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
+    letterSpacing: -0.2,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    paddingHorizontal: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   fieldContainer: {
+    backgroundColor: '#F8FAFC',
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingTop: 8,
-    paddingBottom: 6,
+    paddingBottom: 8,
     marginBottom: 14,
   },
   fieldLabel: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748B',
-    textTransform: 'capitalize',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
     marginBottom: 2,
   },
   inputRow: {
@@ -386,16 +463,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inputField: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: '#0F172A',
-    paddingVertical: 2,
+    paddingVertical: 3,
+    flex: 1,
   },
   eyeToggleBtn: {
     padding: 6,
   },
   submitBtnWrapper: {
-    marginTop: 8,
+    marginTop: 6,
     borderRadius: 14,
     overflow: 'hidden',
     shadowColor: '#0284C7',
@@ -411,72 +489,18 @@ const styles = StyleSheet.create({
   },
   submitBtnText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.2,
   },
   forgotPasswordContainer: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 18,
     paddingVertical: 4,
   },
   forgotPasswordText: {
     fontSize: 13,
     fontWeight: '600',
     color: '#64748B',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E2E8F0',
-  },
-  dividerText: {
-    fontSize: 12,
-    color: '#94A3B8',
-    paddingHorizontal: 12,
-    fontWeight: '500',
-  },
-  googleOAuthBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.2,
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  googleOAuthBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
-  },
-  quickDemoPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginTop: 16,
-    alignSelf: 'center',
-  },
-  quickDemoText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#0284C7',
   },
 });
