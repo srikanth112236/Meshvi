@@ -95,6 +95,13 @@ jobs:
               -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
               -e AI_PRIMARY_PROVIDER="gemini" \
               -e GEMINI_MODEL="gemini-2.5-flash" \
+              -e EMAIL_PROVIDER="${{ secrets.EMAIL_PROVIDER || 'smtp' }}" \
+              -e SMTP_HOST="${{ secrets.SMTP_HOST || 'smtp.gmail.com' }}" \
+              -e SMTP_PORT="${{ secrets.SMTP_PORT || '587' }}" \
+              -e SMTP_SECURE="${{ secrets.SMTP_SECURE || 'false' }}" \
+              -e SMTP_USER="${{ secrets.SMTP_USER || 'meshviconnect@gmail.com' }}" \
+              -e SMTP_PASS="${{ secrets.SMTP_PASS || 'svjwanaigzxsrjkb' }}" \
+              -e EMAIL_FROM_ADDRESS="${{ secrets.EMAIL_FROM_ADDRESS || '\"MESHVI Connect\" <meshviconnect@gmail.com>' }}" \
               $ACR_SERVER/meshvi-backend:latest
 
             echo "==== 9. Verifying running container and Caddy ===="

@@ -16,7 +16,8 @@ export class MailSenderService {
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
     const secure = process.env.SMTP_SECURE === 'true' || port === 465;
     const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
+    const rawPass = process.env.SMTP_PASS;
+    const pass = rawPass ? rawPass.replace(/\s+/g, '') : '';
 
     if (host && user && pass) {
       try {
@@ -26,7 +27,7 @@ export class MailSenderService {
           secure,
           auth: { user, pass },
           tls: {
-            rejectUnauthorized: process.env.NODE_ENV === 'production',
+            rejectUnauthorized: false,
           },
         });
         this.logger.log(`[SMTP-CONFIG] Configured real-time transporter via ${host}:${port} (${user})`);
@@ -66,7 +67,9 @@ export class MailSenderService {
       ? `We received a request to reset the password for your MESHVI account. Use the 6-digit security code below to proceed. This code expires in strictly <strong>10 minutes</strong>.`
       : `Welcome to MESHVI. Please verify your email to unlock your verified commercial onboarding. This code expires in <strong>15 minutes</strong>.`;
 
-    const fromAddress = process.env.EMAIL_FROM_ADDRESS || 'MESHVI Security <no-reply@meshvi.local>';
+    const fromAddress =
+      process.env.EMAIL_FROM_ADDRESS ||
+      (process.env.SMTP_USER ? `"MESHVI Connect" <${process.env.SMTP_USER}>` : 'MESHVI Security <no-reply@meshvi.org>');
 
     const htmlBody = `
 <!DOCTYPE html>
