@@ -101,7 +101,7 @@ jobs:
               -e SMTP_SECURE="${{ secrets.SMTP_SECURE || 'false' }}" \
               -e SMTP_USER="${{ secrets.SMTP_USER || 'meshviconnect@gmail.com' }}" \
               -e SMTP_PASS="${{ secrets.SMTP_PASS || 'svjwanaigzxsrjkb' }}" \
-              -e EMAIL_FROM_ADDRESS="${{ secrets.EMAIL_FROM_ADDRESS || '\"MESHVI Connect\" <meshviconnect@gmail.com>' }}" \
+              -e EMAIL_FROM_ADDRESS="${{ secrets.EMAIL_FROM_ADDRESS || 'meshviconnect@gmail.com' }}" \
               $ACR_SERVER/meshvi-backend:latest
 
             echo "==== 9. Verifying running container and Caddy ===="

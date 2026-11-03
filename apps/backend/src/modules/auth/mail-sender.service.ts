@@ -67,9 +67,9 @@ export class MailSenderService {
       ? `We received a request to reset the password for your MESHVI account. Use the 6-digit security code below to proceed. This code expires in strictly <strong>10 minutes</strong>.`
       : `Welcome to MESHVI. Please verify your email to unlock your verified commercial onboarding. This code expires in <strong>15 minutes</strong>.`;
 
-    const fromAddress =
-      process.env.EMAIL_FROM_ADDRESS ||
-      (process.env.SMTP_USER ? `"MESHVI Connect" <${process.env.SMTP_USER}>` : 'MESHVI Security <no-reply@meshvi.org>');
+    let rawFrom = process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'no-reply@meshvi.org';
+    rawFrom = rawFrom.trim().replace(/^["']|["']$/g, '');
+    const fromAddress = rawFrom.includes('<') ? rawFrom : `"MESHVI Connect" <${rawFrom}>`;
 
     const htmlBody = `
 <!DOCTYPE html>
