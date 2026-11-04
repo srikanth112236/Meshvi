@@ -19,6 +19,7 @@ import {
 import { AddCompanyModal } from '../../components/ui/AddCompanyModal';
 import { CreatePartnershipPostModal } from '../../components/ui/CreatePartnershipPostModal';
 import { AnimatedVideoModal } from '../../components/ui/AnimatedVideoModal';
+import { OnboardingChecklistWidget } from '../../components/ui/OnboardingChecklistWidget';
 
 interface StatsState {
   connectionsCount: number;
@@ -309,6 +310,12 @@ export const AppHomePage = () => {
         </div>
       </div>
 
+      {/* 1.5 INTERACTIVE CHECKLIST FOR NEW USERS */}
+      <OnboardingChecklistWidget
+        connectionsCount={stats.connectionsCount}
+        onOpenCreatePost={() => setIsPartnershipModalOpen(true)}
+      />
+
       {/* 2. CHAT & MAIN PAGE HERO — "HEY! 👋, WHAT'S ON YOUR MIND NOW?" (COMPACT & MODERN) */}
       <div
         ref={searchCardRef}
@@ -326,13 +333,6 @@ export const AppHomePage = () => {
           <h1 className="text-3xl sm:text-5xl font-black text-[#38BDF8] tracking-tight leading-tight">
             What’s on your mind Now?
           </h1>
-          <div className="pt-0.5">
-            <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-[10px] font-semibold text-slate-500 border border-slate-200">
-              <span className="uppercase text-[9px] font-bold text-slate-400">Monthly Quota:</span>
-              <strong className="text-navy">{stats.quotaUsed} / {stats.quotaLimit}</strong>
-              <span>Used</span>
-            </span>
-          </div>
         </div>
 
         {/* Sleek Floating Pill Input Bar (Matching Image 3) */}

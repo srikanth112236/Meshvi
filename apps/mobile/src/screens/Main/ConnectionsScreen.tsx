@@ -577,60 +577,13 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
           activeOpacity={0.85}
         >
           <Feather name="send" size={13} color={MeshviColors.white} style={{ marginRight: 5 }} />
-          <Text style={styles.findContactsBtnText}>Find Contacts</Text>
+          <Text style={styles.findContactsBtnText}>
+            {connections.length === 0 ? 'Find your first Connection' : 'Find Contacts'}
+          </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
-        {/* ========================================================
-            2. QUOTA & GOVERNANCE STRIP (Exact Web Replica)
-           ======================================================== */}
-        <View style={styles.governanceCard}>
-          <View style={styles.governanceTopRow}>
-            <View style={styles.governanceIconBox}>
-              <Feather name="shield" size={18} color={MeshviColors.accent} />
-            </View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                <Text style={styles.governanceTitle}>Anti-Spam Outreach Allowance</Text>
-                <View style={styles.verifiedExecBadge}>
-                  <Text style={styles.verifiedExecBadgeText}>
-                    {quota.isVerified ? 'Verified Executive' : 'Standard Quota'}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.governanceDesc}>
-                Rolling 7-day governance limits to ensure prompt response times and zero executive spam.
-              </Text>
-            </View>
-          </View>
-
-          {/* Weekly Capacity Progress Box */}
-          <View style={styles.capacityBox}>
-            <View style={styles.capacityHeaderRow}>
-              <Text style={styles.capacityLabel}>Weekly Capacity</Text>
-              <Text style={styles.capacityVal}>
-                {quota.used} / {quota.limit} used
-              </Text>
-            </View>
-            <View style={styles.capacityTrack}>
-              <View
-                style={[
-                  styles.capacityFill,
-                  {
-                    width: `${Math.min(100, (quota.used / Math.max(1, quota.limit)) * 100)}%`,
-                    backgroundColor:
-                      quota.remaining === 0 ? '#E11D48' : quota.remaining <= 2 ? '#F59E0B' : MeshviColors.accent,
-                  },
-                ]}
-              />
-            </View>
-            <Text style={styles.capacityRemaining}>
-              {quota.remaining} slots available this cycle
-            </Text>
-          </View>
-        </View>
-
         {/* ========================================================
             3. THREE STATUS KPI METRIC CARDS (Exact Web Replica)
            ======================================================== */}
@@ -800,21 +753,78 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
         ) : activeTab === 'CONNECTIONS' ? (
           /* ---------------- TAB 1: ACTIVE CONNECTIONS ---------------- */
           filteredConnections.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <MaterialCommunityIcons name="account-group-outline" size={44} color={MeshviColors.textSecondary} style={{ opacity: 0.5 }} />
-              <Text style={styles.emptyTitle}>No Connections Found</Text>
-              <Text style={styles.emptyDesc}>
+            <View style={[styles.emptyCard, { paddingVertical: 24, paddingHorizontal: 16 }]}>
+              <View
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 26,
+                  backgroundColor: '#E0F2FE',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 10,
+                }}
+              >
+                <Feather name="users" size={24} color="#0284C7" />
+              </View>
+              <Text style={[styles.emptyTitle, { fontSize: 16, fontWeight: '800', color: '#0F172A' }]}>
+                Find Your First Connection
+              </Text>
+              <Text style={[styles.emptyDesc, { fontSize: 11.5, color: '#64748B', maxWidth: 280, textAlign: 'center' }]}>
                 {searchQuery
                   ? `No contacts match "${searchQuery}".`
-                  : "You haven't established any connections yet. Use Intent Search to find decision makers."}
+                  : "Start building your verified business network by discovering key executives and decision-makers."}
               </Text>
+
               <TouchableOpacity
-                style={[styles.findContactsBtn, { marginTop: 12, alignSelf: 'center' }]}
-                onPress={() => onNavigateTab ? onNavigateTab('search') : null}
+                style={[
+                  styles.findContactsBtn,
+                  {
+                    marginTop: 14,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 12,
+                    backgroundColor: '#0284C7',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  },
+                ]}
+                onPress={() => (onNavigateTab ? onNavigateTab('search') : null)}
+                activeOpacity={0.85}
               >
-                <Feather name="search" size={12} color={MeshviColors.white} style={{ marginRight: 5 }} />
-                <Text style={styles.findContactsBtnText}>Explore Decision Makers</Text>
+                <Feather name="search" size={13} color="#FFFFFF" style={{ marginRight: 6 }} />
+                <Text style={[styles.findContactsBtnText, { fontSize: 12, fontWeight: '800' }]}>
+                  Find your first Connection
+                </Text>
               </TouchableOpacity>
+
+              {!searchQuery && (
+                <View style={{ marginTop: 18, width: '100%', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 9.5, fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 8 }}>
+                    Recommended Mandate Searches
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 }}>
+                    {['Airport Retail', 'Cold Brew Sourcing', 'Enterprise AI'].map((term) => (
+                      <TouchableOpacity
+                        key={term}
+                        onPress={() => (onNavigateTab ? onNavigateTab('search', term) : null)}
+                        style={{
+                          backgroundColor: '#F1F5F9',
+                          borderWidth: 1,
+                          borderColor: '#CBD5E1',
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: 14,
+                        }}
+                      >
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: '#334155' }}>
+                          🔍 {term}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
             </View>
           ) : viewMode === 'cards' ? (
             /* Card Grid View */

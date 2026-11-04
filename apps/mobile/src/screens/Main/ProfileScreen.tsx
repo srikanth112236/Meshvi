@@ -87,6 +87,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
   const [editActiveTab, setEditActiveTab] = useState<'IDENTITY' | 'COMPANY' | 'MANDATES'>('IDENTITY');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Modular Profile Tab State (Part 1, 2, 3, 4)
+  const [activeTab, setActiveTab] = useState<'BASIC' | 'BUSINESS' | 'VERIFICATION' | 'PREFERENCES'>('BASIC');
+
   // Edit Fields State (Prepopulated from user profile or onboarding defaults)
   const [editDisplayName, setEditDisplayName] = useState(
     profile?.displayName || user?.name || 'Aditi Park'
@@ -265,6 +268,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
 
   const currentCountry = COUNTRIES.find((c) => c.code === editCountryCode) || COUNTRIES[0];
 
+  const isBasicDone = Boolean(editDisplayName && editHeadline);
+  const isBusinessDone = Boolean(editLookingFor && editOffering);
+  const isVerificationDone = Boolean(editDomain && editCompanyName);
+  const isPrefDone = protocols.length > 0;
+  const mobileProfilePercent = Math.round(
+    (((isBasicDone ? 1 : 0) + (isBusinessDone ? 1 : 0) + (isVerificationDone ? 1 : 0) + (isPrefDone ? 1 : 0)) / 4) * 100
+  );
+
   return (
     <View style={[styles.container, { paddingTop: Math.max(insets.top, 10) }]}>
       {/* 1. Standard Top Header with Back Button */}
@@ -362,161 +373,323 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
           </View>
         </View>
 
-        {/* 3. Company & Corporate Credentials Section */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Feather name="briefcase" size={15} color={MeshviColors.primary} style={{ marginRight: 6 }} />
-              <Text style={styles.sectionTitle}>Company & Corporate Affiliation</Text>
+        {/* ========================================================
+            PROFILE COMPLETENESS PROGRESS BAR & 4-PART TABS
+           ======================================================== */}
+        <View style={styles.mobileProfileProgressCard}>
+          <View style={styles.mobileProfileProgressHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Feather name="award" size={16} color="#0284C7" style={{ marginRight: 6 }} />
+              <Text style={styles.mobileProfileProgressTitle}>Profile Completeness</Text>
             </View>
-            <TouchableOpacity onPress={() => { setEditActiveTab('COMPANY'); setIsEditModalVisible(true); }}>
-              <Text style={styles.sectionEditLink}>Edit</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.gridInfoBox}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoRowLabel}>Entity Name:</Text>
-              <Text style={styles.infoRowVal}>{profile?.currentCompanyName || editCompanyName}</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoRowLabel}>Corporate Lineage:</Text>
-              <Text style={styles.infoRowVal}>
-                {profile?.corporateLineage || editCorporateLineage}
-              </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoRowLabel}>Industry Sector:</Text>
-              <Text style={styles.infoRowVal}>{profile?.industry || editIndustry}</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoRowLabel}>Sub-Sector:</Text>
-              <Text style={styles.infoRowVal}>{profile?.subIndustry || editSubIndustry}</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoRowLabel}>Headquarters:</Text>
-              <Text style={styles.infoRowVal}>
-                {currentCountry.flag} {profile?.city || editCity}, {currentCountry.name}
-              </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoRowLabel}>Verified Domain:</Text>
-              <Text style={[styles.infoRowVal, { color: MeshviColors.accent }]}>
-                {profile?.domain || editDomain}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 4. Strategic Commercial Mandates Section */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Feather name="target" size={15} color="#059669" style={{ marginRight: 6 }} />
-              <Text style={styles.sectionTitle}>Strategic Commercial Mandates</Text>
-            </View>
-            <TouchableOpacity onPress={() => { setEditActiveTab('MANDATES'); setIsEditModalVisible(true); }}>
-              <Text style={styles.sectionEditLink}>Edit</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.mandateBox}>
-            <Text style={styles.mandateHeader}>Seeking Alliances (Looking For)</Text>
-            <Text style={styles.mandateBody}>"{editLookingFor}"</Text>
-          </View>
-
-          <View style={[styles.mandateBox, { marginTop: 8 }]}>
-            <Text style={styles.mandateHeader}>Capabilities & Supply (Offering)</Text>
-            <Text style={styles.mandateBody}>"{editOffering}"</Text>
-          </View>
-        </View>
-
-        {/* 5. Live Pitch Firewall Manager */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Feather name="shield" size={15} color={COLORS.rose} style={{ marginRight: 6 }} />
-              <Text style={styles.sectionTitle}>Anti-Spam Pitch Firewall</Text>
-            </View>
-            <Text style={styles.sectionCount}>{firewallTags.length} Interceptors</Text>
-          </View>
-
-          <Text style={styles.sectionDesc}>
-            Incoming proposals containing these keywords are automatically intercepted and quarantined.
-          </Text>
-
-          {/* Tags Cloud */}
-          <View style={styles.tagCloud}>
-            {firewallTags.map((tag) => (
-              <View key={tag} style={styles.tagPill}>
-                <Text style={styles.tagPillText}>✕ {tag}</Text>
-                <TouchableOpacity onPress={() => removeTag(tag)} style={{ marginLeft: 6 }}>
-                  <Feather name="x" size={12} color={COLORS.rose} />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-
-          {/* Add Tag */}
-          <View style={styles.addTagRow}>
-            <TextInput
-              style={styles.tagInput}
-              value={newTag}
-              onChangeText={setNewTag}
-              placeholder="Add blocked topic or vendor category..."
-              placeholderTextColor={COLORS.textMuted}
-            />
-            <TouchableOpacity style={styles.addTagBtn} onPress={addTag} activeOpacity={0.8}>
-              <Text style={styles.addTagBtnText}>Add</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 6. Reception Protocols */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Feather name="lock" size={15} color={COLORS.primary} style={{ marginRight: 6 }} />
-              <Text style={styles.sectionTitle}>Reception Protocols</Text>
-            </View>
-            <Text style={styles.protocolCount}>
-              {protocols.length === 2 ? 'Both Protocols Active' : '1 Active'}
+            <Text style={styles.mobileProfileProgressScore}>
+              {mobileProfilePercent}% Complete
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={[styles.protocolRow, protocols.includes('DEAL_ROOM') && styles.protocolRowActive]}
-            onPress={() => toggleProtocol('DEAL_ROOM')}
-            activeOpacity={0.7}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.protocolName}>Micro Deal Room First</Text>
-              <Text style={styles.protocolSub}>Require mutual agenda and NDA before unlocking calendar.</Text>
-            </View>
-            <View style={[styles.checkCircle, protocols.includes('DEAL_ROOM') && styles.checkCircleActive]}>
-              {protocols.includes('DEAL_ROOM') && <Feather name="check" size={12} color={COLORS.white} />}
-            </View>
-          </TouchableOpacity>
+          {/* Progress Bar Track */}
+          <View style={styles.mobileProfileProgressTrack}>
+            <View
+              style={[
+                styles.mobileProfileProgressFill,
+                { width: `${Math.max(12, mobileProfilePercent)}%` },
+              ]}
+            />
+          </View>
 
-          <TouchableOpacity
-            style={[styles.protocolRow, protocols.includes('SCHEDULED_CALL') && styles.protocolRowActive]}
-            onPress={() => toggleProtocol('SCHEDULED_CALL')}
-            activeOpacity={0.7}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.protocolName}>Direct Calendar Slot Lock</Text>
-              <Text style={styles.protocolSub}>Allow 1-click in-stream calendar reservations upon verified match.</Text>
-            </View>
-            <View style={[styles.checkCircle, protocols.includes('SCHEDULED_CALL') && styles.checkCircleActive]}>
-              {protocols.includes('SCHEDULED_CALL') && <Feather name="check" size={12} color={COLORS.white} />}
-            </View>
-          </TouchableOpacity>
+          {/* 4 Navigation Segmented Pills */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mobileProfileTabsRow}>
+            <TouchableOpacity
+              style={[styles.mobileProfileTabPill, activeTab === 'BASIC' && styles.mobileProfileTabPillActive]}
+              onPress={() => setActiveTab('BASIC')}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.mobileProfileTabPillText, activeTab === 'BASIC' && styles.mobileProfileTabPillTextActive]}>
+                1. Basic {isBasicDone ? '✓' : ''}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.mobileProfileTabPill, activeTab === 'BUSINESS' && styles.mobileProfileTabPillActive]}
+              onPress={() => setActiveTab('BUSINESS')}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.mobileProfileTabPillText, activeTab === 'BUSINESS' && styles.mobileProfileTabPillTextActive]}>
+                2. Business Interest {isBusinessDone ? '✓' : ''}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.mobileProfileTabPill, activeTab === 'VERIFICATION' && styles.mobileProfileTabPillActive]}
+              onPress={() => setActiveTab('VERIFICATION')}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.mobileProfileTabPillText, activeTab === 'VERIFICATION' && styles.mobileProfileTabPillTextActive]}>
+                3. Verification {isVerificationDone ? '✓' : ''}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.mobileProfileTabPill, activeTab === 'PREFERENCES' && styles.mobileProfileTabPillActive]}
+              onPress={() => setActiveTab('PREFERENCES')}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.mobileProfileTabPillText, activeTab === 'PREFERENCES' && styles.mobileProfileTabPillTextActive]}>
+                4. Preferences {isPrefDone ? '✓' : ''}
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
+
+        {/* ========================================================
+            PART 1: BASIC PROFILE CONTENT
+           ======================================================== */}
+        {activeTab === 'BASIC' && (
+          <View style={{ gap: 10 }}>
+            <View style={styles.mobileChecklistCard}>
+              <Text style={styles.mobileChecklistTitle}>Part 1 Checklist: Basic Identity</Text>
+              <View style={styles.mobileChecklistRow}>
+                <View style={styles.mobileChecklistItem}>
+                  <Feather name={isBasicDone ? 'check-circle' : 'circle'} size={12} color={isBasicDone ? '#16A34A' : '#94A3B8'} />
+                  <Text style={styles.mobileChecklistText}>Photo & Name</Text>
+                </View>
+                <View style={styles.mobileChecklistItem}>
+                  <Feather name={isBasicDone ? 'check-circle' : 'circle'} size={12} color={isBasicDone ? '#16A34A' : '#94A3B8'} />
+                  <Text style={styles.mobileChecklistText}>Title & Clearance</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleRow}>
+                  <Feather name="user" size={15} color={MeshviColors.primary} style={{ marginRight: 6 }} />
+                  <Text style={styles.sectionTitle}>Executive Overview</Text>
+                </View>
+                <TouchableOpacity onPress={() => { setEditActiveTab('IDENTITY'); setIsEditModalVisible(true); }}>
+                  <Text style={styles.sectionEditLink}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.sectionDesc}>
+                {profile?.summary || editSummary || 'Verified corporate decision-maker.'}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* ========================================================
+            PART 2: BUSINESS INTEREST (WHAT AM I LOOKING FOR?)
+           ======================================================== */}
+        {activeTab === 'BUSINESS' && (
+          <View style={{ gap: 10 }}>
+            <View style={styles.mobileChecklistCard}>
+              <Text style={styles.mobileChecklistTitle}>Part 2 Checklist: Business Interest</Text>
+              <View style={styles.mobileChecklistRow}>
+                <View style={styles.mobileChecklistItem}>
+                  <Feather name={Boolean(editLookingFor) ? 'check-circle' : 'circle'} size={12} color={Boolean(editLookingFor) ? '#16A34A' : '#94A3B8'} />
+                  <Text style={styles.mobileChecklistText}>Seeking Alliances</Text>
+                </View>
+                <View style={styles.mobileChecklistItem}>
+                  <Feather name={Boolean(editOffering) ? 'check-circle' : 'circle'} size={12} color={Boolean(editOffering) ? '#16A34A' : '#94A3B8'} />
+                  <Text style={styles.mobileChecklistText}>Capabilities / Offering</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* 4. Strategic Commercial Mandates Section */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleRow}>
+                  <Feather name="target" size={15} color="#059669" style={{ marginRight: 6 }} />
+                  <Text style={styles.sectionTitle}>What am I looking for?</Text>
+                </View>
+                <TouchableOpacity onPress={() => { setEditActiveTab('MANDATES'); setIsEditModalVisible(true); }}>
+                  <Text style={styles.sectionEditLink}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.mandateBox}>
+                <Text style={styles.mandateHeader}>Seeking Alliances (Looking For)</Text>
+                <Text style={styles.mandateBody}>"{editLookingFor}"</Text>
+              </View>
+
+              <View style={[styles.mandateBox, { marginTop: 8 }]}>
+                <Text style={styles.mandateHeader}>Capabilities & Supply (Offering)</Text>
+                <Text style={styles.mandateBody}>"{editOffering}"</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ========================================================
+            PART 3: VERIFICATION
+           ======================================================== */}
+        {activeTab === 'VERIFICATION' && (
+          <View style={{ gap: 10 }}>
+            <View style={styles.mobileChecklistCard}>
+              <Text style={styles.mobileChecklistTitle}>Part 3 Checklist: Verification</Text>
+              <View style={styles.mobileChecklistRow}>
+                <View style={styles.mobileChecklistItem}>
+                  <Feather name={isVerificationDone ? 'check-circle' : 'circle'} size={12} color={isVerificationDone ? '#16A34A' : '#94A3B8'} />
+                  <Text style={styles.mobileChecklistText}>Corporate Affiliation</Text>
+                </View>
+                <View style={styles.mobileChecklistItem}>
+                  <Feather name={isVerificationDone ? 'check-circle' : 'circle'} size={12} color={isVerificationDone ? '#16A34A' : '#94A3B8'} />
+                  <Text style={styles.mobileChecklistText}>Domain Verified ✓</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* 3. Company & Corporate Credentials Section */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleRow}>
+                  <Feather name="briefcase" size={15} color={MeshviColors.primary} style={{ marginRight: 6 }} />
+                  <Text style={styles.sectionTitle}>Company & Corporate Affiliation</Text>
+                </View>
+                <TouchableOpacity onPress={() => { setEditActiveTab('COMPANY'); setIsEditModalVisible(true); }}>
+                  <Text style={styles.sectionEditLink}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.gridInfoBox}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoRowLabel}>Entity Name:</Text>
+                  <Text style={styles.infoRowVal}>{profile?.currentCompanyName || editCompanyName}</Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoRowLabel}>Corporate Lineage:</Text>
+                  <Text style={styles.infoRowVal}>
+                    {profile?.corporateLineage || editCorporateLineage}
+                  </Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoRowLabel}>Industry Sector:</Text>
+                  <Text style={styles.infoRowVal}>{profile?.industry || editIndustry}</Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoRowLabel}>Headquarters:</Text>
+                  <Text style={styles.infoRowVal}>
+                    {currentCountry.flag} {profile?.city || editCity}, {currentCountry.name}
+                  </Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoRowLabel}>Verified Domain:</Text>
+                  <Text style={[styles.infoRowVal, { color: MeshviColors.accent }]}>
+                    {profile?.domain || editDomain}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ========================================================
+            PART 4: PREFERENCES & GOVERNANCE
+           ======================================================== */}
+        {activeTab === 'PREFERENCES' && (
+          <View style={{ gap: 10 }}>
+            <View style={styles.mobileChecklistCard}>
+              <Text style={styles.mobileChecklistTitle}>Part 4 Checklist: Security & Governance</Text>
+              <View style={styles.mobileChecklistRow}>
+                <View style={styles.mobileChecklistItem}>
+                  <Feather name="check-circle" size={12} color="#16A34A" />
+                  <Text style={styles.mobileChecklistText}>Pitch Firewall</Text>
+                </View>
+                <View style={styles.mobileChecklistItem}>
+                  <Feather name="check-circle" size={12} color="#16A34A" />
+                  <Text style={styles.mobileChecklistText}>Reception Protocols</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* 5. Live Pitch Firewall Manager */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleRow}>
+                  <Feather name="shield" size={15} color={COLORS.rose} style={{ marginRight: 6 }} />
+                  <Text style={styles.sectionTitle}>Anti-Spam Pitch Firewall</Text>
+                </View>
+                <Text style={styles.sectionCount}>{firewallTags.length} Interceptors</Text>
+              </View>
+
+              <Text style={styles.sectionDesc}>
+                Incoming proposals containing these keywords are automatically intercepted and quarantined.
+              </Text>
+
+              {/* Tags Cloud */}
+              <View style={styles.tagCloud}>
+                {firewallTags.map((tag) => (
+                  <View key={tag} style={styles.tagPill}>
+                    <Text style={styles.tagPillText}>✕ {tag}</Text>
+                    <TouchableOpacity onPress={() => removeTag(tag)} style={{ marginLeft: 6 }}>
+                      <Feather name="x" size={12} color={COLORS.rose} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+
+              {/* Add Tag */}
+              <View style={styles.addTagRow}>
+                <TextInput
+                  style={styles.tagInput}
+                  value={newTag}
+                  onChangeText={setNewTag}
+                  placeholder="Add blocked topic..."
+                  placeholderTextColor={COLORS.textMuted}
+                />
+                <TouchableOpacity style={styles.addTagBtn} onPress={addTag} activeOpacity={0.8}>
+                  <Text style={styles.addTagBtnText}>Add</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* 6. Reception Protocols */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleRow}>
+                  <Feather name="lock" size={15} color={COLORS.primary} style={{ marginRight: 6 }} />
+                  <Text style={styles.sectionTitle}>Reception Protocols</Text>
+                </View>
+                <Text style={styles.protocolCount}>
+                  {protocols.length === 2 ? 'Both Protocols Active' : '1 Active'}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.protocolRow, protocols.includes('DEAL_ROOM') && styles.protocolRowActive]}
+                onPress={() => toggleProtocol('DEAL_ROOM')}
+                activeOpacity={0.7}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.protocolName}>Micro Deal Room First</Text>
+                  <Text style={styles.protocolSub}>Require mutual agenda and NDA before unlocking calendar.</Text>
+                </View>
+                <View style={[styles.checkCircle, protocols.includes('DEAL_ROOM') && styles.checkCircleActive]}>
+                  {protocols.includes('DEAL_ROOM') && <Feather name="check" size={12} color={COLORS.white} />}
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.protocolRow, protocols.includes('SCHEDULED_CALL') && styles.protocolRowActive]}
+                onPress={() => toggleProtocol('SCHEDULED_CALL')}
+                activeOpacity={0.7}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.protocolName}>Direct Calendar Slot Lock</Text>
+                  <Text style={styles.protocolSub}>Allow 1-click in-stream calendar reservations upon verified match.</Text>
+                </View>
+                <View style={[styles.checkCircle, protocols.includes('SCHEDULED_CALL') && styles.checkCircleActive]}>
+                  {protocols.includes('SCHEDULED_CALL') && <Feather name="check" size={12} color={COLORS.white} />}
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* 7. Logout Action */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.75}>
@@ -1229,6 +1402,113 @@ const styles = StyleSheet.create({
   checkCircleActive: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
+  },
+
+  // Mobile Profile Completeness Progress & Checklist Styles
+  mobileProfileProgressCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  mobileProfileProgressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  mobileProfileProgressTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  mobileProfileProgressScore: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0284C7',
+    backgroundColor: '#E0F2FE',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  mobileProfileProgressTrack: {
+    width: '100%',
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  mobileProfileProgressFill: {
+    height: '100%',
+    backgroundColor: '#0284C7',
+    borderRadius: 3,
+  },
+  mobileProfileTabsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  mobileProfileTabPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  mobileProfileTabPillActive: {
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
+  },
+  mobileProfileTabPillText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  mobileProfileTabPillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  mobileChecklistCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 10,
+    marginBottom: 4,
+  },
+  mobileChecklistTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0F172A',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  mobileChecklistRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  mobileChecklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  mobileChecklistText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#334155',
   },
 
   // Logout

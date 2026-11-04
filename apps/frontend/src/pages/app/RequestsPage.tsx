@@ -246,9 +246,7 @@ export const RequestsPage = () => {
       if (res.ok && data.success) {
         showToast({
           title: 'Connection Bridge Withdrawn',
-          message: data.data?.quotaRestored
-            ? 'Bridge successfully withdrawn within 24h. 1 weekly quota slot was restored to your balance!'
-            : 'Bridge successfully withdrawn.',
+          message: 'Bridge request successfully withdrawn.',
           type: 'success',
         });
         await fetchRequests();

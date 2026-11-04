@@ -13,7 +13,6 @@ import {
   MessageSquare,
   Calendar,
   ExternalLink,
-  ShieldCheck,
   Download,
   Inbox,
   ArrowUpRight,
@@ -23,6 +22,7 @@ import {
   Search,
   UserMinus,
   Phone,
+  Sparkles,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DataTable, ColumnDef } from '../../components/ui/DataTable';
@@ -107,7 +107,8 @@ export const ConnectionsPage = () => {
   const [connections, setConnections] = useState<ActiveConnection[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<RequestItem[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<RequestItem[]>([]);
-  const [quota, setQuota] = useState<QuotaState | null>(null);
+  const [_quota, setQuota] = useState<QuotaState | null>(null);
+  void _quota;
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -384,52 +385,10 @@ export const ConnectionsPage = () => {
             className="px-3.5 sm:px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center space-x-1.5"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Find Contacts</span>
+            <span>{connections.length === 0 ? 'Find your first Connection' : 'Find Contacts'}</span>
           </Link>
         </div>
       </div>
-
-      {/* Quota & Governance Strip */}
-      {quota && (
-        <div className="bg-surface border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold text-navy">Anti-Spam Outreach Allowance</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  {quota.isVerified ? 'Verified Executive' : 'Standard Quota'}
-                </span>
-              </div>
-              <p className="text-[11px] text-text-muted mt-0.5">
-                Rolling 7-day governance limits to ensure prompt response times and zero executive spam.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-bg border border-border rounded-xl px-3.5 py-2 min-w-[200px] shrink-0">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-text-muted text-[10px] font-semibold">Weekly Capacity</span>
-              <span className="font-extrabold text-navy text-[11px]">
-                {quota.used} / {quota.limit} used
-              </span>
-            </div>
-            <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-              <div
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  quota.remaining === 0 ? 'bg-danger' : quota.remaining <= 2 ? 'bg-amber-500' : 'bg-primary'
-                }`}
-                style={{ width: `${Math.min(100, (quota.used / Math.max(1, quota.limit)) * 100)}%` }}
-              />
-            </div>
-            <span className="text-[10px] text-text-muted mt-1 block">
-              {quota.remaining} slots available this cycle
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* 3 Status KPI Metric Cards: Active, Pending Inbound, Sent Outgoing */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -621,7 +580,54 @@ export const ConnectionsPage = () => {
         </div>
       ) : activeTab === 'CONNECTIONS' ? (
         /* ================= TAB 1: ACTIVE CONNECTIONS ================= */
-        viewMode === 'table' ? (
+        connections.length === 0 ? (
+          <div className="bg-gradient-to-b from-sky-50/70 via-white to-slate-50/60 border border-sky-200/80 rounded-3xl p-8 sm:p-12 text-center space-y-5 shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-[#0284C7] flex items-center justify-center mx-auto shadow-2xs">
+              <Users className="w-8 h-8 text-[#0284C7]" />
+            </div>
+            <div className="max-w-md mx-auto space-y-2">
+              <h3 className="text-xl font-black text-navy tracking-tight">
+                Build Your Executive Network
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                You haven't established any connections yet. Use the Intent Search to discover verified decision-makers, commercial buyers, and strategic counterparts.
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <Link
+                to="/app/search"
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-[#0284C7] hover:bg-sky-600 text-white font-extrabold text-sm rounded-xl shadow-md hover:shadow-lg hover:shadow-sky-500/25 transition-all cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-sky-200 animate-pulse" />
+                <span>Find your first Connection</span>
+                <Send className="w-3.5 h-3.5 ml-1" />
+              </Link>
+            </div>
+
+            <div className="pt-4 border-t border-slate-200/60 max-w-lg mx-auto">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+                Suggested Partner Searches
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {[
+                  'Airport Retail Concessions',
+                  'Cold Brew Beverage Sourcing',
+                  'Enterprise Software Vendors',
+                  'APAC Supply Chain Logistics',
+                ].map((term) => (
+                  <Link
+                    key={term}
+                    to={`/app/search?q=${encodeURIComponent(term)}`}
+                    className="px-3 py-1 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:border-sky-400 hover:text-[#0284C7] transition-all shadow-2xs"
+                  >
+                    🔍 {term}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : viewMode === 'table' ? (
           <DataTable
             columns={columns}
             data={filteredConnections}
@@ -635,7 +641,7 @@ export const ConnectionsPage = () => {
               item.businessReason.toLowerCase().includes(q)
             }
             emptyTitle="No Connections Found"
-            emptySubtitle="You haven't established any connections yet. Use the Intent Search to find decision makers."
+            emptySubtitle="No connections match your search filter."
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

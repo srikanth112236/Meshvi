@@ -357,7 +357,7 @@ export const SearchGuideModal: React.FC<SearchGuideModalProps> = ({
 
         {/* Footer */}
         <div className="mt-6 pt-3 border-t border-border flex items-center justify-between text-xs">
-          <span className="text-text-muted text-[11px]">Strict 85-Introduction Quotas Enforced</span>
+          <span className="text-text-muted text-[11px]">Direct Executive Discovery & Intent Match</span>
           <button
             type="button"
             onClick={onClose}

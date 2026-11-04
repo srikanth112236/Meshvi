@@ -55,6 +55,9 @@ describe('AuthController', () => {
       email: 'srikanth@vedasynk.local',
       password: 'SecurePassword123!',
       agreeTerms: true,
+      mobile: '+6591234567',
+      designation: 'Director',
+      companyName: 'Acme Corp',
     });
     expect(res.token).toBe('mock_jwt_token');
     expect(res.user.email).toBe('srikanth@vedasynk.local');

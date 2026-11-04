@@ -92,13 +92,14 @@ export class ConnectionsService {
       },
     });
 
+    // Free exploration mode: Weekly capacity does not restrict early user onboarding & discovery
     const remaining = Math.max(0, limit - used);
 
     return {
       limit,
       used,
       remaining,
-      canConnect: remaining > 0,
+      canConnect: true, // Non-restrictive during initial user growth & search discovery
       isVerified,
       resetsInDays: 7,
       windowDays: 7,
@@ -1037,8 +1038,8 @@ export class ConnectionsService {
       success: true,
       quotaRestored: isWithin24h,
       message: isWithin24h
-        ? 'Connection bridge withdrawn within 24 hours. Your weekly quota allocation has been restored (+1).'
-        : 'Connection bridge withdrawn successfully.',
+        ? 'Connection bridge request withdrawn successfully.'
+        : 'Connection bridge request withdrawn successfully.',
       connection: updated,
     };
   }

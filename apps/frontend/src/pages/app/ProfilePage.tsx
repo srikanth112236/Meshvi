@@ -29,6 +29,7 @@ import {
   CheckCheck,
   ExternalLink,
   Linkedin,
+  Settings,
 } from 'lucide-react';
 import { CompanyDossierModal } from '../../components/ui/CompanyDossierModal';
 
@@ -94,6 +95,9 @@ export const ProfilePage = () => {
   const [intentDescription, setIntentDescription] = useState('');
   const [savingIntent, setSavingIntent] = useState(false);
   const [activeIntentFilter, setActiveIntentFilter] = useState<'ALL' | 'LOOKING_FOR' | 'OFFERING' | 'NOT_LOOKING_FOR'>('ALL');
+
+  // Modular Profile Tab State (Part 1, 2, 3, 4)
+  const [activeProfileTab, setActiveProfileTab] = useState<'BASIC' | 'BUSINESS' | 'VERIFICATION' | 'PREFERENCES'>('BASIC');
 
   // Dynamic Partnership Readiness Signal
   const [_readiness, setReadiness] = useState<any>(null);
@@ -626,6 +630,38 @@ export const ProfilePage = () => {
     return intent.intentType === activeIntentFilter;
   });
 
+  // Real-time Profile Checklist & Completeness Computations
+  const basicItems = [
+    { label: 'Display Name & Photo', isDone: Boolean(profile?.displayName) },
+    { label: 'Job Title & Company Affiliation', isDone: Boolean(profile?.currentTitle && (profile?.company?.name || editFormData.currentCompanyName)) },
+    { label: 'Professional Summary & Bio', isDone: Boolean(profile?.headline || profile?.summary || editFormData.summary) },
+  ];
+  const basicDoneCount = basicItems.filter((i) => i.isDone).length;
+
+  const businessItems = [
+    { label: 'Dynamic Partnership Readiness Signal', isDone: Boolean(openMessage?.trim() || readinessStatus !== 'PAUSED') },
+    { label: 'Commercial Objectives (Intent Cards)', isDone: Boolean((profile?.intents?.length || 0) > 0) },
+    { label: 'Specialized Expertise Tags (At least 3)', isDone: Boolean((profile?.expertise?.length || 0) >= 3) },
+  ];
+  const businessDoneCount = businessItems.filter((i) => i.isDone).length;
+
+  const verificationItems = [
+    { label: 'Corporate Work Email Attestation', isDone: Boolean(profile?.isWorkEmailVerified) },
+    { label: 'Verified LinkedIn Identity', isDone: Boolean(profile?.isLinkedInVerified || isLinkedInConnected) },
+    { label: 'Enterprise Role & Domain Attestation', isDone: Boolean(profileDnsVerified || profile?.isRoleConfirmed) },
+  ];
+  const verificationDoneCount = verificationItems.filter((i) => i.isDone).length;
+
+  const preferenceItems = [
+    { label: 'Inbound Connection & Routing Filters', isDone: true },
+    { label: 'Notification Cadence Configured', isDone: true },
+  ];
+  const preferenceDoneCount = preferenceItems.filter((i) => i.isDone).length;
+
+  const totalChecklistItems = basicItems.length + businessItems.length + verificationItems.length + preferenceItems.length;
+  const totalChecklistDone = basicDoneCount + businessDoneCount + verificationDoneCount + preferenceDoneCount;
+  const profileProgressPercent = Math.round((totalChecklistDone / totalChecklistItems) * 100);
+
   if (loading) {
     return (
       <div className="py-20 text-center text-xs text-text-muted">
@@ -738,254 +774,547 @@ export const ProfilePage = () => {
         )}
       </div>
 
-      {/* 2. EXECUTIVE GOVERNANCE, ROUTING & AVAILABILITY ENGINE */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Box A: Messaging Policy & Inbound Connection Routing Toggles */}
-        <div className="p-4 bg-surface rounded-2xl border border-border shadow-xs space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-border">
-            <span className="text-xs font-black text-navy uppercase tracking-wider flex items-center space-x-1.5">
-              <MessageSquare className="w-3.5 h-3.5 text-primary" />
-              <span>Direct Messaging & Inbound Security</span>
-            </span>
-            <span className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md font-bold">
-              Protected
-            </span>
-          </div>
-
-          {/* Toggle: Anyone Can Send Message vs Only Connections */}
-          <div className="p-2.5 bg-surface-muted rounded-xl border border-border flex items-center justify-between gap-3">
-            <div className="space-y-0.5">
-              <span className="text-xs font-bold text-navy block">
-                {onlyConnectionsCanMessage ? 'Only Verified 1st-Degree Connections' : 'Open Network (Anyone Can Message)'}
-              </span>
-              <p className="text-[10.5px] text-text-muted leading-tight">
-                {onlyConnectionsCanMessage
-                  ? 'Guarantees zero unsolicited cold InMail spam. Only mutual connected peers can message.'
-                  : 'Allows direct messages from all platform members without prior mutual bridge.'}
+      {/* ======================================================== */}
+      {/* PROFILE COMPLETENESS PROGRESS BAR & 4-PART TAB SWITCHER  */}
+      {/* ======================================================== */}
+      <div className="bg-gradient-to-r from-sky-50 via-white to-indigo-50 border border-sky-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-[#0284C7] flex items-center justify-center shrink-0 shadow-2xs">
+              <Sparkles className="w-5 h-5 text-[#0284C7]" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-sm font-black text-navy tracking-tight">
+                  Profile Completeness Checklist
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-sky-100 text-[#0369A1] border border-sky-200">
+                  {totalChecklistDone}/{totalChecklistItems} Items ({profileProgressPercent}%)
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {profileProgressPercent >= 80
+                  ? '🌟 Excellent! Your profile is verified, trusted, and prioritized in search discovery.'
+                  : 'Complete each part below to maximize visibility and establish bilateral executive trust.'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                const nextVal = !onlyConnectionsCanMessage;
-                setOnlyConnectionsCanMessage(nextVal);
-                localStorage.setItem('setu_msg_only_connections', String(nextVal));
-                showToast({
-                  title: 'Messaging Policy Updated',
-                  message: nextVal ? 'Restricted to 1st-degree connections only.' : 'Open to directory members.',
-                  type: 'info',
-                });
-              }}
-              className="text-primary hover:text-primary-hover shrink-0"
-              title="Toggle messaging policy"
-            >
-              {onlyConnectionsCanMessage ? (
-                <ToggleRight className="w-7 h-7 text-primary" />
-              ) : (
-                <ToggleLeft className="w-7 h-7 text-text-muted" />
-              )}
-            </button>
           </div>
 
-          {/* Toggle: Require Business Note vs Allow Empty/One-click */}
-          <div className="p-2.5 bg-surface-muted rounded-xl border border-border flex items-center justify-between gap-3">
-            <div className="space-y-0.5">
-              <span className="text-xs font-bold text-navy block">
-                {requireConnectionNote ? 'Require Verified Business Mandate Note' : 'Allow Note-Free 1-Click Connections'}
-              </span>
-              <p className="text-[10.5px] text-text-muted leading-tight">
-                {requireConnectionNote
-                  ? 'Counterparties MUST provide a 2-line business objective to initiate connection proposals.'
-                  : 'Counterparties can send one-click connection requests without a typed reason.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const nextVal = !requireConnectionNote;
-                setRequireConnectionNote(nextVal);
-                localStorage.setItem('setu_conn_require_note', String(nextVal));
-                showToast({
-                  title: 'Inbound Requirement Updated',
-                  message: nextVal ? 'Mandatory business reason enabled.' : 'Note-free connections allowed.',
-                  type: 'info',
-                });
-              }}
-              className="text-primary hover:text-primary-hover shrink-0"
-              title="Toggle note requirement"
-            >
-              {requireConnectionNote ? (
-                <ToggleRight className="w-7 h-7 text-primary" />
-              ) : (
-                <ToggleLeft className="w-7 h-7 text-text-muted" />
-              )}
-            </button>
-          </div>
-
-          {/* Notification Cadence Toggles Strip */}
-          <div className="pt-1 space-y-1.5">
-            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
-              Notification Routing:
-            </span>
-            <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-              <button
-                type="button"
-                onClick={() => {
-                  const nextVal = !notifInstantProposals;
-                  setNotifInstantProposals(nextVal);
-                  localStorage.setItem('setu_notif_proposals', String(nextVal));
-                }}
-                className={`p-1.5 rounded-lg border text-center font-semibold transition-all ${
-                  notifInstantProposals ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-muted'
-                }`}
-              >
-                Instant Proposals {notifInstantProposals ? '✓' : ''}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const nextVal = !notifWeeklyDigest;
-                  setNotifWeeklyDigest(nextVal);
-                  localStorage.setItem('setu_notif_digest', String(nextVal));
-                }}
-                className={`p-1.5 rounded-lg border text-center font-semibold transition-all ${
-                  notifWeeklyDigest ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-muted'
-                }`}
-              >
-                Weekly Digest {notifWeeklyDigest ? '✓' : ''}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const nextVal = !notifWarmIntroductions;
-                  setNotifWarmIntroductions(nextVal);
-                  localStorage.setItem('setu_notif_intros', String(nextVal));
-                }}
-                className={`p-1.5 rounded-lg border text-center font-semibold transition-all ${
-                  notifWarmIntroductions ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-muted'
-                }`}
-              >
-                Warm Intros {notifWarmIntroductions ? '✓' : ''}
-              </button>
-            </div>
+          <div className="w-full sm:w-56 bg-slate-200 rounded-full h-3 overflow-hidden p-0.5 border border-slate-300/40">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#38BDF8] via-[#0284C7] to-emerald-500 transition-all duration-700 ease-out"
+              style={{ width: `${Math.max(10, profileProgressPercent)}%` }}
+            />
           </div>
         </div>
 
-        {/* Box B: Executive Availability & Quota Engine */}
-        <div className="p-4 bg-surface rounded-2xl border border-border shadow-xs space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-border">
-            <span className="text-xs font-black text-navy uppercase tracking-wider flex items-center space-x-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              <span>Executive Availability & Quota Engine</span>
-            </span>
-            <span className="text-[10px] text-text-muted font-bold">
-              {savingStatus ? 'Syncing...' : 'Real-time'}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            {/* Active Mode */}
-            <div className="p-2.5 bg-surface-muted border border-border rounded-xl space-y-1">
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
-                Engagement Mode
+        {/* 4 Modular Tab Selectors */}
+        <div className="pt-3 border-t border-sky-100/90 grid grid-cols-2 md:grid-cols-4 gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveProfileTab('BASIC')}
+            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              activeProfileTab === 'BASIC'
+                ? 'bg-white border-[#0284C7] shadow-xs ring-2 ring-sky-400/20'
+                : 'bg-white/60 border-slate-200/80 hover:bg-white hover:border-slate-300'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-navy flex items-center space-x-1.5">
+                <span>1. Basic Profile</span>
               </span>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-navy truncate">
-                  {isActive ? 'Active' : 'Sabbatical'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus({ isActive: !isActive })}
-                  className="text-primary hover:text-primary-hover"
-                >
-                  {isActive ? (
-                    <ToggleRight className="w-5 h-5 text-primary" />
-                  ) : (
-                    <ToggleLeft className="w-5 h-5 text-text-muted" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Proposal Intake Toggle */}
-            <div className="p-2.5 bg-surface-muted border border-border rounded-xl space-y-1">
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
-                Proposal Intake
-              </span>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-navy truncate">
-                  {proposalAccepting ? 'Accepting' : 'Paused'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus({ proposalAccepting: !proposalAccepting })}
-                  className="text-primary hover:text-primary-hover"
-                >
-                  {proposalAccepting ? (
-                    <ToggleRight className="w-5 h-5 text-primary" />
-                  ) : (
-                    <ToggleLeft className="w-5 h-5 text-text-muted" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Inbound Connection Filter */}
-            <div className="p-2.5 bg-surface-muted border border-border rounded-xl space-y-1">
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
-                Connection Filter
-              </span>
-              <select
-                value={connectionAvailability}
-                onChange={(e) =>
-                  handleUpdateStatus({
-                    connectionAvailability: e.target.value as 'OPEN' | 'SELECTIVE' | 'STEALTH',
-                  })
-                }
-                className="w-full bg-surface border border-border rounded-lg text-xs font-bold text-navy p-1 focus:outline-none"
+              <span
+                className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-md ${
+                  basicDoneCount === basicItems.length
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-slate-100 text-slate-600'
+                }`}
               >
-                <option value="OPEN">Open for Inbound</option>
-                <option value="SELECTIVE">Selective (CXO Only)</option>
-                <option value="STEALTH">Stealth (Unlisted)</option>
-              </select>
-            </div>
-
-            {/* Directory Visibility */}
-            <div className="p-2.5 bg-surface-muted border border-border rounded-xl space-y-1">
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
-                Directory Scope
+                {basicDoneCount}/{basicItems.length} {basicDoneCount === basicItems.length && '✓'}
               </span>
-              <select
-                value={visibility}
-                onChange={(e) =>
-                  handleUpdateStatus({
-                    visibility: e.target.value as 'PUBLIC' | 'SIGNED_IN_ONLY' | 'PRIVATE',
-                  })
-                }
-                className="w-full bg-surface border border-border rounded-lg text-xs font-bold text-navy p-1 focus:outline-none"
-              >
-                <option value="PUBLIC">Public</option>
-                <option value="SIGNED_IN_ONLY">Verified Members</option>
-                <option value="PRIVATE">Private</option>
-              </select>
             </div>
-          </div>
+            <p className="text-[10px] text-slate-500 mt-1 truncate">
+              Identity, bio & media briefs
+            </p>
+          </button>
 
-          {/* Anti-Spam Guarantee & Quota Strip */}
-          <div className="p-2.5 bg-indigo-50/70 border border-indigo-200 rounded-xl flex items-center justify-between text-xs text-indigo-950">
-            <div className="flex items-center space-x-1.5 font-bold text-[11px]">
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-              <span>Anti-Spam Guarantee Active &bull; 85-Intro Cap</span>
+          <button
+            type="button"
+            onClick={() => setActiveProfileTab('BUSINESS')}
+            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              activeProfileTab === 'BUSINESS'
+                ? 'bg-white border-[#0284C7] shadow-xs ring-2 ring-sky-400/20'
+                : 'bg-white/60 border-slate-200/80 hover:bg-white hover:border-slate-300'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-navy flex items-center space-x-1.5">
+                <span>2. Business Interest</span>
+              </span>
+              <span
+                className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-md ${
+                  businessDoneCount === businessItems.length
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-amber-100 text-amber-800'
+                }`}
+              >
+                {businessDoneCount}/{businessItems.length} {businessDoneCount === businessItems.length && '✓'}
+              </span>
             </div>
-            <span className="text-[10px] text-indigo-700 font-semibold">10 Outbound / Wk</span>
-          </div>
+            <p className="text-[10px] text-slate-500 mt-1 truncate">
+              What am I looking for & tags
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveProfileTab('VERIFICATION')}
+            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              activeProfileTab === 'VERIFICATION'
+                ? 'bg-white border-[#0284C7] shadow-xs ring-2 ring-sky-400/20'
+                : 'bg-white/60 border-slate-200/80 hover:bg-white hover:border-slate-300'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-navy flex items-center space-x-1.5">
+                <span>3. Verification</span>
+              </span>
+              <span
+                className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-md ${
+                  verificationDoneCount === verificationItems.length
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {verificationDoneCount}/{verificationItems.length} {verificationDoneCount === verificationItems.length && '✓'}
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1 truncate">
+              Corporate email & LinkedIn
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveProfileTab('PREFERENCES')}
+            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              activeProfileTab === 'PREFERENCES'
+                ? 'bg-white border-[#0284C7] shadow-xs ring-2 ring-sky-400/20'
+                : 'bg-white/60 border-slate-200/80 hover:bg-white hover:border-slate-300'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-navy flex items-center space-x-1.5">
+                <span>4. Preferences</span>
+              </span>
+              <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800">
+                Active ✓
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1 truncate">
+              Routing, filters & privacy
+            </p>
+          </button>
         </div>
       </div>
 
-      {/* 3. DYNAMIC PARTNERSHIP READINESS SIGNAL */}
-      <form onSubmit={handleSaveReadiness} className="p-4 sm:p-5 bg-surface rounded-2xl border border-border shadow-xs space-y-3.5">
+      {/* ======================================================== */}
+      {/* PART 1: BASIC PROFILE TAB CONTENT                        */}
+      {/* ======================================================== */}
+      {activeProfileTab === 'BASIC' && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          {/* Part 1 Checklist Bar */}
+          <div className="bg-surface border border-border rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="font-bold text-navy flex items-center space-x-1.5">
+              <User className="w-3.5 h-3.5 text-primary" />
+              <span>Part 1 Checklist: Basic Profile</span>
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {basicItems.map((item, idx) => (
+                <span
+                  key={idx}
+                  className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-bold ${
+                    item.isDone
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                  }`}
+                >
+                  <CheckCircle2 className={`w-3 h-3 ${item.isDone ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  <span>{item.label}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Executive Media Snippets (Voice & Video Intro) */}
+          <div className="p-4 bg-surface rounded-2xl border border-border shadow-xs space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-border">
+              <span className="text-xs font-black text-navy uppercase tracking-wider flex items-center space-x-1.5">
+                <Volume2 className="w-3.5 h-3.5 text-primary" />
+                <span>Voice & Video Executive Briefs</span>
+              </span>
+              <span className="text-[10px] text-text-muted font-bold">30s Brief</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              {/* Audio Waveform Widget */}
+              <div className="p-3 bg-surface-muted border border-border rounded-xl flex items-center space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPlayingAudio(!isPlayingAudio)}
+                  className="w-8 h-8 rounded-lg bg-navy text-white hover:bg-black flex items-center justify-center shrink-0 shadow-2xs cursor-pointer"
+                >
+                  {isPlayingAudio ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
+                </button>
+                <div className="flex-1 min-w-0">
+                  <span className="font-bold text-navy text-[11px] block truncate">
+                    {isPlayingAudio ? 'Now Playing Commercial Memo...' : '30-Second Commercial Audio Brief'}
+                  </span>
+                  <div className="flex items-center space-x-1 h-3 mt-1">
+                    {[40, 75, 30, 90, 100, 65, 45, 95, 60, 30, 70, 95, 80, 50, 40].map((h, i) => (
+                      <div
+                        key={i}
+                        className={`flex-1 rounded-full ${isPlayingAudio && i < 8 ? 'bg-primary' : 'bg-neutral-300'}`}
+                        style={{ height: `${Math.max(3, Math.round((h / 100) * 12))}px` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Video Pitch Modal Trigger */}
+              <div className="p-3 bg-surface-muted border border-border rounded-xl flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-navy">45s Elevator Video Pitch</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsPlayingVideo(!isPlayingVideo)}
+                    className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
+                  >
+                    {isPlayingVideo ? 'Close Teaser' : 'Preview Pitch'}
+                  </button>
+                </div>
+                {isPlayingVideo ? (
+                  <div className="w-full mt-2 aspect-video bg-neutral-950 rounded-lg flex flex-col items-center justify-center p-2 text-center border border-border">
+                    <Video className="w-5 h-5 text-neutral-400 mb-1" />
+                    <span className="text-white text-xs font-bold">Executive Video Pitch Ready</span>
+                    <span className="text-[9px] text-neutral-400">1080p Encrypted Stream</span>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-text-muted mt-1">
+                    Record or preview your executive video introduction to introduce your commercial mandate.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* PART 4: PREFERENCES & GOVERNANCE TAB CONTENT             */}
+      {/* ======================================================== */}
+      {activeProfileTab === 'PREFERENCES' && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          {/* Part 4 Checklist Bar */}
+          <div className="bg-surface border border-border rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="font-bold text-navy flex items-center space-x-1.5">
+              <Settings className="w-3.5 h-3.5 text-primary" />
+              <span>Part 4 Checklist: Preferences & Governance</span>
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {preferenceItems.map((item, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200"
+                >
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  <span>{item.label}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. EXECUTIVE GOVERNANCE, ROUTING & AVAILABILITY ENGINE */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Box A: Messaging Policy & Inbound Connection Routing Toggles */}
+            <div className="p-4 bg-surface rounded-2xl border border-border shadow-xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <span className="text-xs font-black text-navy uppercase tracking-wider flex items-center space-x-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                  <span>Direct Messaging & Inbound Security</span>
+                </span>
+                <span className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md font-bold">
+                  Protected
+                </span>
+              </div>
+
+              {/* Toggle: Anyone Can Send Message vs Only Connections */}
+              <div className="p-2.5 bg-surface-muted rounded-xl border border-border flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-navy block">
+                    {onlyConnectionsCanMessage ? 'Only Verified 1st-Degree Connections' : 'Open Network (Anyone Can Message)'}
+                  </span>
+                  <p className="text-[10.5px] text-text-muted leading-tight">
+                    {onlyConnectionsCanMessage
+                      ? 'Guarantees zero unsolicited cold InMail spam. Only mutual connected peers can message.'
+                      : 'Allows direct messages from all platform members without prior mutual bridge.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextVal = !onlyConnectionsCanMessage;
+                    setOnlyConnectionsCanMessage(nextVal);
+                    localStorage.setItem('setu_msg_only_connections', String(nextVal));
+                    showToast({
+                      title: 'Messaging Policy Updated',
+                      message: nextVal ? 'Restricted to 1st-degree connections only.' : 'Open to directory members.',
+                      type: 'info',
+                    });
+                  }}
+                  className="text-primary hover:text-primary-hover shrink-0 cursor-pointer"
+                  title="Toggle messaging policy"
+                >
+                  {onlyConnectionsCanMessage ? (
+                    <ToggleRight className="w-7 h-7 text-primary" />
+                  ) : (
+                    <ToggleLeft className="w-7 h-7 text-text-muted" />
+                  )}
+                </button>
+              </div>
+
+              {/* Toggle: Require Business Note vs Allow Empty/One-click */}
+              <div className="p-2.5 bg-surface-muted rounded-xl border border-border flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-navy block">
+                    {requireConnectionNote ? 'Require Verified Business Mandate Note' : 'Allow Note-Free 1-Click Connections'}
+                  </span>
+                  <p className="text-[10.5px] text-text-muted leading-tight">
+                    {requireConnectionNote
+                      ? 'Counterparties MUST provide a 2-line business objective to initiate connection proposals.'
+                      : 'Counterparties can send one-click connection requests without a typed reason.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextVal = !requireConnectionNote;
+                    setRequireConnectionNote(nextVal);
+                    localStorage.setItem('setu_conn_require_note', String(nextVal));
+                    showToast({
+                      title: 'Inbound Requirement Updated',
+                      message: nextVal ? 'Mandatory business reason enabled.' : 'Note-free connections allowed.',
+                      type: 'info',
+                    });
+                  }}
+                  className="text-primary hover:text-primary-hover shrink-0 cursor-pointer"
+                  title="Toggle note requirement"
+                >
+                  {requireConnectionNote ? (
+                    <ToggleRight className="w-7 h-7 text-primary" />
+                  ) : (
+                    <ToggleLeft className="w-7 h-7 text-text-muted" />
+                  )}
+                </button>
+              </div>
+
+              {/* Notification Cadence Toggles Strip */}
+              <div className="pt-1 space-y-1.5">
+                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                  Notification Routing:
+                </span>
+                <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !notifInstantProposals;
+                      setNotifInstantProposals(nextVal);
+                      localStorage.setItem('setu_notif_proposals', String(nextVal));
+                    }}
+                    className={`p-1.5 rounded-lg border text-center font-semibold transition-all cursor-pointer ${
+                      notifInstantProposals ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-muted'
+                    }`}
+                  >
+                    Instant Proposals {notifInstantProposals ? '✓' : ''}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !notifWeeklyDigest;
+                      setNotifWeeklyDigest(nextVal);
+                      localStorage.setItem('setu_notif_digest', String(nextVal));
+                    }}
+                    className={`p-1.5 rounded-lg border text-center font-semibold transition-all cursor-pointer ${
+                      notifWeeklyDigest ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-muted'
+                    }`}
+                  >
+                    Weekly Digest {notifWeeklyDigest ? '✓' : ''}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !notifWarmIntroductions;
+                      setNotifWarmIntroductions(nextVal);
+                      localStorage.setItem('setu_notif_intros', String(nextVal));
+                    }}
+                    className={`p-1.5 rounded-lg border text-center font-semibold transition-all cursor-pointer ${
+                      notifWarmIntroductions ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-muted'
+                    }`}
+                  >
+                    Warm Intros {notifWarmIntroductions ? '✓' : ''}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Box B: Executive Availability & Quota Engine */}
+            <div className="p-4 bg-surface rounded-2xl border border-border shadow-xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <span className="text-xs font-black text-navy uppercase tracking-wider flex items-center space-x-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  <span>Executive Availability & Security Gate</span>
+                </span>
+                <span className="text-[10px] text-text-muted font-bold">
+                  {savingStatus ? 'Syncing...' : 'Real-time'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* Active Mode */}
+                <div className="p-2.5 bg-surface-muted border border-border rounded-xl space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                    Engagement Mode
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-navy truncate">
+                      {isActive ? 'Active' : 'Sabbatical'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus({ isActive: !isActive })}
+                      className="text-primary hover:text-primary-hover cursor-pointer"
+                    >
+                      {isActive ? (
+                        <ToggleRight className="w-5 h-5 text-primary" />
+                      ) : (
+                        <ToggleLeft className="w-5 h-5 text-text-muted" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Proposal Intake Toggle */}
+                <div className="p-2.5 bg-surface-muted border border-border rounded-xl space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                    Proposal Intake
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-navy truncate">
+                      {proposalAccepting ? 'Accepting' : 'Paused'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus({ proposalAccepting: !proposalAccepting })}
+                      className="text-primary hover:text-primary-hover cursor-pointer"
+                    >
+                      {proposalAccepting ? (
+                        <ToggleRight className="w-5 h-5 text-primary" />
+                      ) : (
+                        <ToggleLeft className="w-5 h-5 text-text-muted" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Inbound Connection Filter */}
+                <div className="p-2.5 bg-surface-muted border border-border rounded-xl space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                    Connection Filter
+                  </span>
+                  <select
+                    value={connectionAvailability}
+                    onChange={(e) =>
+                      handleUpdateStatus({
+                        connectionAvailability: e.target.value as 'OPEN' | 'SELECTIVE' | 'STEALTH',
+                      })
+                    }
+                    className="w-full bg-surface border border-border rounded-lg text-xs font-bold text-navy p-1 focus:outline-none"
+                  >
+                    <option value="OPEN">Open for Inbound</option>
+                    <option value="SELECTIVE">Selective (CXO Only)</option>
+                    <option value="STEALTH">Stealth (Unlisted)</option>
+                  </select>
+                </div>
+
+                {/* Directory Visibility */}
+                <div className="p-2.5 bg-surface-muted border border-border rounded-xl space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                    Directory Scope
+                  </span>
+                  <select
+                    value={visibility}
+                    onChange={(e) =>
+                      handleUpdateStatus({
+                        visibility: e.target.value as 'PUBLIC' | 'SIGNED_IN_ONLY' | 'PRIVATE',
+                      })
+                    }
+                    className="w-full bg-surface border border-border rounded-lg text-xs font-bold text-navy p-1 focus:outline-none"
+                  >
+                    <option value="PUBLIC">Public</option>
+                    <option value="SIGNED_IN_ONLY">Verified Members</option>
+                    <option value="PRIVATE">Private</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Bilateral Protection Strip (No unwanted weekly capacity noise) */}
+              <div className="p-2.5 bg-indigo-50/70 border border-indigo-200 rounded-xl flex items-center justify-between text-xs text-indigo-950">
+                <div className="flex items-center space-x-1.5 font-bold text-[11px]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span>Bilateral Protection Active &bull; Encrypted Communication</span>
+                </div>
+                <span className="text-[10px] text-indigo-700 font-bold bg-white px-2 py-0.5 rounded-md border border-indigo-100">
+                  Verified Executive Channel
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* PART 2: BUSINESS INTEREST (WHAT AM I LOOKING FOR?)       */}
+      {/* ======================================================== */}
+      {activeProfileTab === 'BUSINESS' && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          {/* Part 2 Checklist Bar */}
+          <div className="bg-surface border border-border rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="font-bold text-navy flex items-center space-x-1.5">
+              <Target className="w-3.5 h-3.5 text-primary" />
+              <span>Part 2 Checklist: Business Interest & Objectives</span>
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {businessItems.map((item, idx) => (
+                <span
+                  key={idx}
+                  className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-bold ${
+                    item.isDone
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-800 border border-amber-200'
+                  }`}
+                >
+                  <CheckCircle2 className={`w-3 h-3 ${item.isDone ? 'text-emerald-600' : 'text-amber-500'}`} />
+                  <span>{item.label}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. DYNAMIC PARTNERSHIP READINESS SIGNAL */}
+          <form onSubmit={handleSaveReadiness} className="p-4 sm:p-5 bg-surface rounded-2xl border border-border shadow-xs space-y-3.5">
         <div className="flex items-center justify-between pb-2 border-b border-border">
           <div className="flex items-center space-x-2">
             <Zap className="w-4 h-4 text-amber-500" />
@@ -1278,8 +1607,38 @@ export const ProfilePage = () => {
           )}
         </div>
       </div>
+        </div>
+      )}
 
-      {/* 6. COMPACT MEDIA & WORK EMAIL VERIFICATION SECTION */}
+      {/* ======================================================== */}
+      {/* PART 3: VERIFICATION TAB CONTENT                        */}
+      {/* ======================================================== */}
+      {activeProfileTab === 'VERIFICATION' && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          {/* Part 3 Checklist Bar */}
+          <div className="bg-surface border border-border rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="font-bold text-navy flex items-center space-x-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+              <span>Part 3 Checklist: Verification & Credentials</span>
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {verificationItems.map((item, idx) => (
+                <span
+                  key={idx}
+                  className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-bold ${
+                    item.isDone
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                  }`}
+                >
+                  <CheckCircle2 className={`w-3 h-3 ${item.isDone ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  <span>{item.label}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* 6. COMPACT MEDIA & WORK EMAIL VERIFICATION SECTION */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Tier-2 Corporate Work Email Verification */}
         <div className="p-4 bg-surface rounded-2xl border border-border shadow-xs space-y-3">
@@ -1628,6 +1987,8 @@ export const ProfilePage = () => {
           </div>
         </div>
       </div>
+        </div>
+      )}
 
       {/* 7. QUICK EDIT PROFILE MODAL (EDIT DATA COLLECTED FROM ONBOARDING) */}
       {showEditModal && (

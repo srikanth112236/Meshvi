@@ -194,6 +194,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateTab 
   const [partnershipTitleInput, setPartnershipTitleInput] = useState('');
   const [partnershipDescInput, setPartnershipDescInput] = useState('');
   const [isSubmittingPartnership, setIsSubmittingPartnership] = useState(false);
+  const [hasUserPosted, setHasUserPosted] = useState(false);
+  const [isChecklistCollapsed, setIsChecklistCollapsed] = useState(false);
 
   // 1. Refresh real-time counts from APIs
   const refreshStats = useCallback(() => {
@@ -466,10 +468,21 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateTab 
     setTimeout(() => {
       setIsSubmittingPartnership(false);
       setIsPartnershipModalOpen(false);
+      setHasUserPosted(true);
       showSuccess('✨ Mandate Published', 'Your partnership opportunity is now active on the Corporate Deal Exchange.');
       onNavigateTab('partnerships');
     }, 600);
   };
+
+  const isProfileComplete = Boolean(
+    profile?.displayName &&
+    (profile?.headline || profile?.summary) &&
+    (profile?.currentTitle || profile?.industry)
+  );
+  const isPostComplete = hasUserPosted;
+  const isConnectionComplete = stats.connectionsCount > 0;
+  const onboardingStepsDone = (isProfileComplete ? 1 : 0) + (isPostComplete ? 1 : 0) + (isConnectionComplete ? 1 : 0);
+  const onboardingPercent = Math.round((onboardingStepsDone / 3) * 100);
 
   return (
     <View style={[styles.container, { paddingTop: Math.max(insets.top, 10) }]}>
@@ -599,6 +612,196 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateTab 
         </View>
 
         {/* ======================================================== */}
+        {/* 1.5 INTERACTIVE CHECKLIST FOR NEW USERS (MOBILE)        */}
+        {/* ======================================================== */}
+        <View style={styles.mobileOnboardingCard}>
+          <View style={styles.mobileOnboardingHeader}>
+            <View style={styles.mobileOnboardingTitleGroup}>
+              <View style={styles.mobileOnboardingIconBox}>
+                <Feather name="zap" size={15} color="#0284C7" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.mobileOnboardingTitle}>Quick Start Checklist</Text>
+                  <View style={styles.mobileOnboardingBadge}>
+                    <Text style={styles.mobileOnboardingBadgeText}>
+                      {onboardingStepsDone}/3 Done ({onboardingPercent}%)
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.mobileOnboardingSub}>
+                  {onboardingStepsDone === 3
+                    ? '🎉 All 3 steps complete! Profile fully discoverable.'
+                    : 'Complete 3 steps to start receiving direct B2B matches'}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => setIsChecklistCollapsed(!isChecklistCollapsed)}
+              style={styles.mobileOnboardingToggleBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather
+                name={isChecklistCollapsed ? 'chevron-down' : 'chevron-up'}
+                size={16}
+                color="#64748B"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Progress Bar Track */}
+          <View style={styles.mobileOnboardingProgressTrack}>
+            <View
+              style={[
+                styles.mobileOnboardingProgressFill,
+                { width: `${Math.max(10, onboardingPercent)}%` },
+              ]}
+            />
+          </View>
+
+          {/* 3 Interactive Milestones */}
+          {!isChecklistCollapsed && (
+            <View style={styles.mobileOnboardingStepsList}>
+              {/* Step 1 */}
+              <View style={[styles.mobileStepItem, isProfileComplete && styles.mobileStepItemDone]}>
+                <View style={styles.mobileStepLeft}>
+                  <View
+                    style={[
+                      styles.mobileStepIndicator,
+                      isProfileComplete && styles.mobileStepIndicatorDone,
+                    ]}
+                  >
+                    {isProfileComplete ? (
+                      <Feather name="check" size={11} color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.mobileStepNumber}>1</Text>
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        styles.mobileStepTitle,
+                        isProfileComplete && styles.mobileStepTitleDone,
+                      ]}
+                    >
+                      Complete Profile (1/3)
+                    </Text>
+                    <Text style={styles.mobileStepTagline}>Title, bio & focus areas</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.mobileStepActionBtn,
+                    isProfileComplete && styles.mobileStepActionBtnDone,
+                  ]}
+                  onPress={() => onNavigateTab('profile')}
+                >
+                  <Text
+                    style={[
+                      styles.mobileStepActionBtnText,
+                      isProfileComplete && styles.mobileStepActionBtnTextDone,
+                    ]}
+                  >
+                    {isProfileComplete ? 'View' : 'Edit'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Step 2 */}
+              <View style={[styles.mobileStepItem, isPostComplete && styles.mobileStepItemDone]}>
+                <View style={styles.mobileStepLeft}>
+                  <View
+                    style={[
+                      styles.mobileStepIndicator,
+                      isPostComplete && styles.mobileStepIndicatorDone,
+                    ]}
+                  >
+                    {isPostComplete ? (
+                      <Feather name="check" size={11} color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.mobileStepNumber}>2</Text>
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        styles.mobileStepTitle,
+                        isPostComplete && styles.mobileStepTitleDone,
+                      ]}
+                    >
+                      Post Something (2/3)
+                    </Text>
+                    <Text style={styles.mobileStepTagline}>Publish requirement or deal</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.mobileStepActionBtn,
+                    isPostComplete && styles.mobileStepActionBtnDone,
+                  ]}
+                  onPress={() => setIsPartnershipModalOpen(true)}
+                >
+                  <Text
+                    style={[
+                      styles.mobileStepActionBtnText,
+                      isPostComplete && styles.mobileStepActionBtnTextDone,
+                    ]}
+                  >
+                    {isPostComplete ? 'Post' : 'Create'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Step 3 */}
+              <View style={[styles.mobileStepItem, isConnectionComplete && styles.mobileStepItemDone]}>
+                <View style={styles.mobileStepLeft}>
+                  <View
+                    style={[
+                      styles.mobileStepIndicator,
+                      isConnectionComplete && styles.mobileStepIndicatorDone,
+                    ]}
+                  >
+                    {isConnectionComplete ? (
+                      <Feather name="check" size={11} color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.mobileStepNumber}>3</Text>
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        styles.mobileStepTitle,
+                        isConnectionComplete && styles.mobileStepTitleDone,
+                      ]}
+                    >
+                      Make Connections (3/3)
+                    </Text>
+                    <Text style={styles.mobileStepTagline}>Reach out to peer executives</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.mobileStepActionBtn,
+                    isConnectionComplete && styles.mobileStepActionBtnDone,
+                  ]}
+                  onPress={() => onNavigateTab('connections')}
+                >
+                  <Text
+                    style={[
+                      styles.mobileStepActionBtnText,
+                      isConnectionComplete && styles.mobileStepActionBtnTextDone,
+                    ]}
+                  >
+                    {isConnectionComplete ? 'Network' : 'Find'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* ======================================================== */}
         {/* 2. CHAT & MAIN PAGE HERO — "HEY! 👋, WHAT'S ON YOUR MIND" */}
         {/* ======================================================== */}
         <View style={styles.heroMindContainer}>
@@ -608,14 +811,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateTab 
           <Text style={styles.heroMindTitle}>
             What’s on your mind Now?
           </Text>
-
-          <View style={styles.heroMindQuotaRow}>
-            <View style={styles.heroMindQuotaPill}>
-              <Text style={styles.heroMindQuotaPrefix}>MONTHLY QUOTA:</Text>
-              <Text style={styles.heroMindQuotaValue}> {stats.quotaUsed} / {stats.quotaLimit} </Text>
-              <Text style={styles.heroMindQuotaSuffix}>Used</Text>
-            </View>
-          </View>
 
           {/* Sleek Floating Pill Input Bar */}
           <View style={styles.floatingPillBar}>
@@ -1449,6 +1644,159 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+
+  /* 1.5 MOBILE ONBOARDING CHECKLIST */
+  mobileOnboardingCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    padding: 12,
+    marginBottom: 14,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  mobileOnboardingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  mobileOnboardingTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 6,
+  },
+  mobileOnboardingIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(2, 132, 199, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  mobileOnboardingTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  mobileOnboardingBadge: {
+    backgroundColor: '#E0F2FE',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+  },
+  mobileOnboardingBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#0369A1',
+  },
+  mobileOnboardingSub: {
+    fontSize: 10.5,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  mobileOnboardingToggleBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  mobileOnboardingProgressTrack: {
+    width: '100%',
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  mobileOnboardingProgressFill: {
+    height: '100%',
+    backgroundColor: '#0284C7',
+    borderRadius: 4,
+  },
+  mobileOnboardingStepsList: {
+    gap: 8,
+  },
+  mobileStepItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 9,
+  },
+  mobileStepItemDone: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+  },
+  mobileStepLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  mobileStepIndicator: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  mobileStepIndicatorDone: {
+    backgroundColor: '#16A34A',
+    borderColor: '#16A34A',
+  },
+  mobileStepNumber: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+  },
+  mobileStepTitle: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  mobileStepTitleDone: {
+    color: '#166534',
+    textDecorationLine: 'line-through',
+  },
+  mobileStepTagline: {
+    fontSize: 9.5,
+    color: '#64748B',
+    marginTop: 0.5,
+  },
+  mobileStepActionBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: '#0284C7',
+  },
+  mobileStepActionBtnDone: {
+    backgroundColor: '#DCFCE7',
+  },
+  mobileStepActionBtnText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  mobileStepActionBtnTextDone: {
+    color: '#166534',
   },
 
   /* 2. WHAT'S ON YOUR MIND HERO */
