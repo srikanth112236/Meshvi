@@ -695,37 +695,37 @@ export const OnboardingPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col justify-between p-2.5 sm:p-4 overflow-x-hidden md:h-screen md:max-h-screen md:overflow-hidden select-none">
+    <div className="min-h-screen bg-slate-50/70 flex flex-col justify-between p-3 sm:p-6 overflow-y-auto">
       
       {/* ------------------------------------------------------------- */}
-      {/* TOP COMPACT HEADER & STEPPER (Height: ~55px)                  */}
+      {/* TOP COMPACT HEADER & STEPPER                                  */}
       {/* ------------------------------------------------------------- */}
-      <header className="max-w-5xl w-full mx-auto flex items-center justify-between pb-2 border-b border-border shrink-0 gap-2 flex-wrap sm:flex-nowrap">
-        <div className="flex items-center space-x-2 sm:space-x-2.5">
+      <header className="max-w-4xl w-full mx-auto flex items-center justify-between pb-3 border-b border-slate-200/90 shrink-0 gap-3 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center space-x-2.5">
           <img
             src="/meshvi-mark.png"
             alt="Meshvi"
-            className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0"
+            className="w-8 h-8 object-contain shrink-0"
           />
           <div>
-            <div className="flex items-center space-x-1.5 sm:space-x-2">
-              <span className="text-xs sm:text-sm font-black text-navy leading-none">MESHVI</span>
-              <span className="px-2 py-0.2 bg-primary-soft text-primary text-[8.5px] sm:text-[9px] font-extrabold uppercase rounded-full border border-primary/20">
-                Onboarding
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-black text-navy leading-none">MESHVI</span>
+              <span className="px-2 py-0.5 bg-primary-soft text-primary text-[9px] font-extrabold uppercase rounded-full border border-primary/20">
+                Executive Onboarding
               </span>
             </div>
-            <p className="text-[9.5px] sm:text-[10px] text-text-muted leading-tight mt-0.5">
-              Step {step} of 3
+            <p className="text-[10px] text-text-muted leading-tight mt-0.5">
+              Step {step} of 3 &bull; {step === 1 ? 'Identity & Contact' : step === 2 ? 'Affiliation & Scope' : 'Review & Launch'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-1.5 sm:space-x-2">
+        <div className="flex items-center space-x-2">
           {step > 1 && (
             <button
               type="button"
               onClick={handleBack}
-              className="flex items-center space-x-1 px-2 sm:px-2.5 py-1 bg-surface-muted hover:bg-surface text-navy rounded-lg text-xs font-bold border border-border shadow-2xs transition-colors cursor-pointer mr-0.5"
+              className="flex items-center space-x-1 px-2.5 py-1 bg-white hover:bg-slate-50 text-navy rounded-lg text-xs font-bold border border-slate-200 shadow-2xs transition-colors cursor-pointer mr-0.5"
               title="Go back to previous step"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-primary" />
@@ -734,18 +734,18 @@ export const OnboardingPage: React.FC = () => {
           )}
 
           {/* Stepper Navigation Pills */}
-          <nav className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto">
+          <nav className="flex items-center space-x-1.5 overflow-x-auto">
           {stepsList.map((s) => (
             <button
               key={s.num}
               type="button"
               onClick={() => setStep(s.num)}
-              className={`flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 step === s.num
-                  ? 'bg-navy text-white shadow-xs'
+                  ? 'bg-navy text-white shadow-2xs'
                   : step > s.num
-                  ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                  : 'text-text-muted hover:bg-surface-muted hover:text-navy'
+                  ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                  : 'text-text-muted hover:bg-white hover:text-navy'
               }`}
             >
               <span
@@ -754,12 +754,12 @@ export const OnboardingPage: React.FC = () => {
                     ? 'bg-primary text-white'
                     : step > s.num
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-border text-text-muted'
+                    : 'bg-slate-200 text-slate-500'
                 }`}
               >
                 {step > s.num ? <Check className="w-2.5 h-2.5" /> : s.num}
               </span>
-              <span className="hidden md:inline">{s.label}</span>
+              <span className="hidden sm:inline">{s.label}</span>
             </button>
           ))}
           </nav>
@@ -769,16 +769,16 @@ export const OnboardingPage: React.FC = () => {
       {/* ------------------------------------------------------------- */}
       {/* MAIN VIEWPORT CARD CONTAINER */}
       {/* ------------------------------------------------------------- */}
-      <main className="max-w-5xl w-full mx-auto flex-1 my-1.5 sm:my-2 bg-surface border border-border rounded-xl sm:rounded-2xl shadow-xs flex flex-col justify-between overflow-hidden">
+      <main className="max-w-4xl w-full mx-auto my-3 bg-white border border-slate-200/90 rounded-2xl shadow-sm flex flex-col overflow-hidden">
         
-        {/* Inner Step Body: Scrollable with Clean Layout */}
-        <div className="p-3.5 sm:p-5 flex-1 flex flex-col justify-start overflow-y-auto md:max-h-[calc(100vh-140px)]">
+        {/* Inner Step Body: Clean Compact Layout */}
+        <div className="p-4 sm:p-6 flex-1 flex flex-col justify-start">
 
           {/* ======================================================== */}
           {/* STEP 1: EXECUTIVE IDENTITY & PHOTO                       */}
           {/* ======================================================== */}
           {step === 1 && (
-            <div className="h-full flex flex-col justify-between space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-border/80">
                 <div className="flex items-center space-x-2">
                   <div className="w-7 h-7 rounded-lg bg-primary-soft text-primary flex items-center justify-center font-bold">
@@ -1075,7 +1075,7 @@ export const OnboardingPage: React.FC = () => {
           {/* STEP 2: AFFILIATION & SCOPE (Compact Grid, Zero Scroll)  */}
           {/* ======================================================== */}
           {step === 2 && (
-            <div className="h-full flex flex-col justify-between space-y-2.5">
+            <div className="space-y-4">
               <div className="flex items-center justify-between pb-1.5 border-b border-border/80">
                 <div className="flex items-center space-x-2">
                   <div className="w-7 h-7 rounded-lg bg-primary-soft text-primary flex items-center justify-center font-bold">

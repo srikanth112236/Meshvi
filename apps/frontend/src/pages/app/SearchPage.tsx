@@ -31,6 +31,9 @@ import {
   XCircle,
   MessageSquare,
   Plus,
+  LayoutGrid,
+  List,
+  Eye,
 } from 'lucide-react';
 import { ConnectOpportunityModal } from '../../components/ui/ConnectOpportunityModal';
 import { SubmitCompanyProposalModal } from '../../components/ui/SubmitCompanyProposalModal';
@@ -281,6 +284,7 @@ export const SearchPage = () => {
   const [searchMode, setSearchMode] = useState<
     'DECISION_MAKERS' | 'ENTERPRISES' | 'OPPORTUNITY_GRAPH' | 'MARKET_CORRIDOR'
   >('DECISION_MAKERS');
+  const [candidateViewMode, setCandidateViewMode] = useState<'LIST' | 'GRID'>('LIST');
   const [opportunityGraphData, setOpportunityGraphData] = useState<any | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
 
@@ -2850,9 +2854,158 @@ export const SearchPage = () => {
             </div>
           ) : (
             <>
+              {/* Interactive Results Toolbar: Result Count & Compact List vs Grid Switcher */}
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200/90 rounded-xl mb-3 shadow-2xs">
+                <div className="flex items-center space-x-2 text-xs">
+                  <span className="font-extrabold text-navy">
+                    {candidateResults.length} Verified {candidateResults.length === 1 ? 'Decision Maker' : 'Decision Makers'}
+                  </span>
+                  <span className="text-slate-400 hidden sm:inline">&bull;</span>
+                  <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+                    Double-opt-in bilateral trust active
+                  </span>
+                </div>
+                <div className="flex items-center space-x-1 bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setCandidateViewMode('LIST')}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                      candidateViewMode === 'LIST'
+                        ? 'bg-navy text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-navy hover:bg-slate-100'
+                    }`}
+                    title="High-density list view"
+                  >
+                    <List className="w-3.5 h-3.5" />
+                    <span>List</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCandidateViewMode('GRID')}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                      candidateViewMode === 'GRID'
+                        ? 'bg-navy text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-navy hover:bg-slate-100'
+                    }`}
+                    title="Interactive cards grid"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>Grid</span>
+                  </button>
+                </div>
+              </div>
+
               {(() => {
                 const renderCandidateCard = (r: any, idx: number) => {
                   const matchScore = r.score ? Math.round(r.score > 1 ? r.score : r.score * 100) : null;
+                  
+                  if (candidateViewMode === 'GRID') {
+                    return (
+                      <div
+                        key={r.profile?.id || idx}
+                        className="p-4 bg-white border border-slate-200/90 hover:border-primary/50 hover:shadow-md rounded-2xl transition-all flex flex-col justify-between space-y-3 relative group hover:-translate-y-0.5"
+                      >
+                        <div className="space-y-2.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div
+                              onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
+                              className="w-11 h-11 rounded-xl bg-gradient-to-br from-navy via-slate-800 to-primary text-white text-sm font-black flex items-center justify-center shrink-0 shadow-2xs cursor-pointer hover:opacity-90"
+                              title="Click to view 360 executive dossier"
+                            >
+                              {r.profile.displayName?.[0] || 'U'}
+                            </div>
+                            <div className="flex items-center space-x-1.5 shrink-0">
+                              {matchScore && (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold flex items-center space-x-1">
+                                  <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                                  <span>{matchScore}%</span>
+                                </span>
+                              )}
+                              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                Verified
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h3
+                              onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
+                              className="text-sm font-black text-navy truncate group-hover:text-primary transition-colors cursor-pointer"
+                              title="Click to view 360 executive dossier"
+                            >
+                              {r.profile.displayName}
+                            </h3>
+                            <p className="text-xs font-semibold text-slate-800 truncate pt-0.5">
+                              {r.profile.currentTitle || 'Professional'}
+                            </p>
+                            <p className="text-[11px] text-slate-500 truncate pt-0.5">
+                              {r.profile.companyName || r.profile.company?.name || 'Enterprise'} &bull; {[r.profile.city, r.profile.countryCode].filter(Boolean).join(', ') || 'Global'}
+                            </p>
+                          </div>
+
+                          <div className="text-[10.5px] pt-1 border-t border-slate-100">
+                            {r.profile.connectionStatus === 'CONNECTED' ? (
+                              <div className="text-emerald-800 font-semibold truncate">
+                                {r.profile.email ? `✉️ ${r.profile.email}` : '✓ Direct coordinates unlocked'}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 font-medium flex items-center space-x-1">
+                                <span>🔒</span>
+                                <span>Coordinates unlocked upon connecting</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
+                            className="text-[11px] font-bold text-slate-600 hover:text-navy flex items-center space-x-1 transition-colors cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Dossier</span>
+                          </button>
+
+                          {r.profile.connectionStatus === 'CONNECTED' ? (
+                            <Link
+                              to={`/app/messages?profileId=${r.profile.id}`}
+                              className="px-3 py-1 text-xs font-bold rounded-xl flex items-center space-x-1 bg-primary hover:bg-primary-hover text-white shadow-xs transition-all cursor-pointer"
+                            >
+                              <MessageSquare className="w-3 h-3" />
+                              <span>Message</span>
+                            </Link>
+                          ) : (r.profile.connectionStatus === 'PENDING' || connectionRequested === r.profile.id) ? (
+                            <span className="px-2.5 py-1 text-xs font-bold rounded-xl flex items-center space-x-1 bg-amber-50 text-amber-800 border border-amber-300">
+                              <Clock className="w-3 h-3 text-amber-600" />
+                              <span>Pending</span>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConnectModalTarget({
+                                  id: r.profile.id,
+                                  displayName: r.profile.displayName,
+                                  currentTitle: r.profile.currentTitle,
+                                  companyName: r.profile.company?.name,
+                                  city: r.profile.city,
+                                  countryCode: r.profile.countryCode,
+                                  matchScore: r.score,
+                                  initialMode: 'DIRECT',
+                                });
+                              }}
+                              className="px-3 py-1 text-xs font-bold rounded-xl flex items-center space-x-1 bg-primary hover:bg-primary-hover text-white shadow-xs hover:shadow-primary/20 transition-all cursor-pointer"
+                            >
+                              <Send className="w-3 h-3" />
+                              <span>👋 Connect</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                   <div
                     key={r.profile?.id || idx}
@@ -2861,12 +3014,20 @@ export const SearchPage = () => {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                       {/* Left Column: Avatar + Profile Name + Role + Company */}
                       <div className="flex items-center space-x-3.5 min-w-0 flex-1">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-navy via-slate-800 to-primary text-white text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">
+                        <div
+                          onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
+                          className="w-9 h-9 rounded-xl bg-gradient-to-br from-navy via-slate-800 to-primary text-white text-xs font-black flex items-center justify-center shrink-0 shadow-2xs cursor-pointer hover:opacity-90"
+                          title="Click to view 360 executive dossier"
+                        >
                           {r.profile.displayName?.[0] || 'U'}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-xs sm:text-sm font-black text-navy truncate group-hover:text-primary transition-colors">
+                            <h3
+                              onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
+                              className="text-xs sm:text-sm font-black text-navy truncate group-hover:text-primary transition-colors cursor-pointer"
+                              title="Click to view 360 executive dossier"
+                            >
                               {r.profile.displayName}
                             </h3>
                             {matchScore && (
@@ -2911,6 +3072,15 @@ export const SearchPage = () => {
 
                       {/* Right Column: Say Hi / Message Action */}
                       <div className="flex items-center space-x-2 shrink-0 self-end md:self-center">
+                        <button
+                          type="button"
+                          onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
+                          className="px-2.5 py-1.5 text-xs font-semibold rounded-xl text-slate-600 hover:text-navy hover:bg-slate-100 flex items-center space-x-1 transition-colors cursor-pointer"
+                          title="View 360 Dossier"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Dossier</span>
+                        </button>
                         {r.profile.connectionStatus === 'CONNECTED' ? (
                           <div className="flex items-center space-x-1.5">
                             <span className="px-3 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1 bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-2xs">
@@ -2982,7 +3152,11 @@ export const SearchPage = () => {
                 const tradeAdvisorsList = candidateResults.filter((item: any) => !isDirectSupplier(item));
 
                 if (directSuppliersList.length === 0) {
-                  return candidateResults.map((r: any, idx: number) => renderCandidateCard(r, idx));
+                  return (
+                    <div className={candidateViewMode === 'GRID' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-2'}>
+                      {candidateResults.map((r: any, idx: number) => renderCandidateCard(r, idx))}
+                    </div>
+                  );
                 }
 
                 return (
@@ -3002,7 +3176,7 @@ export const SearchPage = () => {
                           </span>
                         )}
                       </div>
-                      <div className="space-y-2">
+                      <div className={candidateViewMode === 'GRID' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-2'}>
                         {directSuppliersList.map((r: any, idx: number) => renderCandidateCard(r, idx))}
                       </div>
                     </div>
@@ -3019,7 +3193,7 @@ export const SearchPage = () => {
                           </span>
                           <span className="text-[11px] text-neutral-500 hidden sm:inline">Advisory & Distribution Mandates</span>
                         </div>
-                        <div className="space-y-2">
+                        <div className={candidateViewMode === 'GRID' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-2'}>
                           {tradeAdvisorsList.map((r: any, idx: number) => renderCandidateCard(r, idx))}
                         </div>
                       </div>
