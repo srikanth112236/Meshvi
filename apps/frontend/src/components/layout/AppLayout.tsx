@@ -17,17 +17,16 @@ import {
   MoreHorizontal,
   Search,
   Bell,
-  History,
   Building2,
   Shield,
   Settings,
   User,
+  Clock,
 } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useSearchHistory } from '../../context/SearchHistoryContext';
 import { UniversalCommandBar } from '../ui/UniversalCommandBar';
 import { NetworkStatusPill } from '../ui/NetworkStatusPill';
-import { RecentSearchesModal } from '../ui/RecentSearchesModal';
 
 export const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -37,7 +36,6 @@ export const AppLayout = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commandBarOpen, setCommandBarOpen] = useState(false);
-  const [recentModalOpen, setRecentModalOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   // Sidebar starts expanded on desktop by default (228px), with collapsible rail (68px)
@@ -84,11 +82,6 @@ export const AppLayout = () => {
     const newSessionId = startNewSearchSession();
     setMobileMenuOpen(false);
     navigate(`/app/search?session=${newSessionId}`);
-  };
-
-  const openRecentModal = () => {
-    setRecentModalOpen(true);
-    setMobileMenuOpen(false);
   };
 
   // The 5 Primary Destinations (Strict Linear / Attio style navigation)
@@ -283,9 +276,47 @@ export const AppLayout = () => {
               );
             })}
 
-            {/* Contextual "More" Submenu (Search History, Corporate, Admin) */}
+            {/* Last 5 Recent Searches in Sidebar */}
+            {showLabels && recent.length > 0 && (
+              <div className="pt-2 pb-1 my-1 border-t border-slate-100">
+                <div className="flex items-center justify-between px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    <span>Recent Searches</span>
+                  </span>
+                  <span className="text-[9px] font-medium text-slate-400">
+                    {Math.min(recent.length, 5)}
+                  </span>
+                </div>
+                <div className="space-y-0.5 mt-0.5">
+                  {recent.slice(0, 5).map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate(`/app/search?q=${encodeURIComponent(item.query)}&session=${item.id}`);
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-slate-600 hover:text-[#142B45] hover:bg-slate-100 transition-colors text-left group cursor-pointer"
+                      title={item.query}
+                    >
+                      <span className="truncate flex-1 min-w-0 pr-1 group-hover:text-[#078BCC] font-medium">
+                        {item.query}
+                      </span>
+                      {item.count > 0 && (
+                        <span className="text-[9.5px] font-medium text-slate-400 group-hover:text-slate-600 shrink-0">
+                          {item.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Contextual "More" Submenu (Corporate, Admin) */}
             {showLabels ? (
-              <div className="pt-2">
+              <div className="pt-1">
                 <button
                   type="button"
                   onClick={() => setMoreOptionsOpen(!moreOptionsOpen)}
@@ -308,22 +339,6 @@ export const AppLayout = () => {
 
                 {moreOptionsOpen && (
                   <div className="mt-1 space-y-0.5 pl-3 border-l-2 border-slate-200 ml-3 animate-fade-in">
-                    <button
-                      type="button"
-                      onClick={openRecentModal}
-                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors text-left cursor-pointer"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <History className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Search History</span>
-                      </div>
-                      {recent.length > 0 && (
-                        <span className="text-[9px] font-bold bg-slate-200 px-1.5 py-0.2 rounded-full text-slate-700">
-                          {recent.length}
-                        </span>
-                      )}
-                    </button>
-
                     <Link
                       to="/company"
                       onClick={() => setMobileMenuOpen(false)}
@@ -523,19 +538,6 @@ export const AppLayout = () => {
       <UniversalCommandBar
         isOpen={commandBarOpen}
         onClose={() => setCommandBarOpen(false)}
-      />
-
-      <RecentSearchesModal
-        open={recentModalOpen}
-        onClose={() => setRecentModalOpen(false)}
-        onSelect={(query: string, sessionId?: string) => {
-          setRecentModalOpen(false);
-          if (sessionId) {
-            navigate(`/app/search?q=${encodeURIComponent(query)}&session=${sessionId}`);
-          } else {
-            navigate(`/app/search?q=${encodeURIComponent(query)}`);
-          }
-        }}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   Search,
@@ -29,14 +29,15 @@ import {
   Clock,
   XCircle,
   MessageSquare,
-  Plus,
   LayoutGrid,
   List,
   Eye,
   MapPin,
   Building,
   Target,
+  Trash2,
 } from 'lucide-react';
+import { formatSearchTime } from '../../utils/formatSearchTime';
 import { ConnectOpportunityModal } from '../../components/ui/ConnectOpportunityModal';
 import { SubmitCompanyProposalModal } from '../../components/ui/SubmitCompanyProposalModal';
 import { CompanyDossierModal } from '../../components/ui/CompanyDossierModal';
@@ -436,7 +437,6 @@ const SearchableDropdownFilter: React.FC<SearchableDropdownFilterProps> = ({
 };
 
 export const SearchPage = () => {
-  const navigate = useNavigate();
   const { user, token } = useAuth();
   const firstName = user?.profile?.displayName?.split(' ')[0] || 'Srikanth';
   const {
@@ -444,11 +444,25 @@ export const SearchPage = () => {
     activeSessionId,
     setActiveSessionId,
     startNewSearchSession,
-    getSession,
+    recent,
+    removeSearch,
+    clearSearches,
   } = useSearchHistory();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
   const urlSession = searchParams.get('session') || '';
+
+  const [hasSearched, setHasSearched] = useState<boolean>(() => {
+    return Boolean(
+      urlQuery.trim() ||
+      searchParams.get('industry') ||
+      searchParams.get('company') ||
+      searchParams.get('city') ||
+      searchParams.get('countryCode') ||
+      searchParams.get('designation') ||
+      searchParams.get('businessRequirement')
+    );
+  });
 
   // Sync active session if URL specifies a session
   useEffect(() => {
@@ -456,8 +470,6 @@ export const SearchPage = () => {
       setActiveSessionId(urlSession);
     }
   }, [urlSession, activeSessionId, setActiveSessionId]);
-
-  const currentSession = getSession(urlSession || activeSessionId || '');
 
   // Search Mode: DECISION_MAKERS vs ENTERPRISES vs OPPORTUNITY_GRAPH vs MARKET_CORRIDOR (Differentiator #3)
   const [searchMode, setSearchMode] = useState<
@@ -784,6 +796,7 @@ export const SearchPage = () => {
     const activeLocScope = filterOverrides?.locationScope !== undefined ? filterOverrides.locationScope : activeLocationScope;
     const activePriority = filterOverrides?.searchPriority !== undefined ? filterOverrides.searchPriority : searchPriority;
 
+    setHasSearched(true);
     setLoading(true);
 
     try {
@@ -932,28 +945,9 @@ export const SearchPage = () => {
     setActiveLocationScope('ALL');
     setSearchPriority('BALANCED');
     setCurrentPage(1);
-
-    handleSearch('', searchMode, 1, pageSize, {
-      countryFilter: '',
-      industryFilter: '',
-      subIndustryFilter: '',
-      cityFilter: '',
-      designationFilter: '',
-      companyFilter: '',
-      businessRequirementFilter: 'ALL',
-      functionFilter: '',
-      seniorityFilter: '',
-      verifiedOnly: false,
-      excludeKeywords: '',
-      excludeCompanies: '',
-      excludeIndustries: '',
-      corridorFilter: '',
-      certificationFilter: '',
-      minFitScoreFilter: 0,
-      matchTier: 'ALL',
-      locationScope: 'ALL',
-      searchPriority: 'BALANCED',
-    });
+    setHasSearched(false);
+    setLoading(false);
+    setSearchParams({}, { replace: true });
   };
 
   const handleResetFiltersKeepQuery = () => {
@@ -1038,11 +1032,6 @@ export const SearchPage = () => {
       locationScope: activeLocationScope,
       searchPriority,
     });
-  };
-
-  const handleStartNewChat = () => {
-    const newSessionId = startNewSearchSession();
-    navigate(`/app/home?new_search=true&session=${newSessionId}`);
   };
 
   const handleOpenTwoSidedFit = async (profile: any) => {
@@ -1227,7 +1216,18 @@ export const SearchPage = () => {
     if (qFromUrl !== query) {
       setQuery(qFromUrl);
     }
-    handleSearch(qFromUrl);
+    const hasFilterParams = Boolean(
+      searchParams.get('industry') ||
+      searchParams.get('company') ||
+      searchParams.get('city') ||
+      searchParams.get('countryCode') ||
+      searchParams.get('designation') ||
+      searchParams.get('businessRequirement')
+    );
+    if (qFromUrl.trim() || hasFilterParams) {
+      setHasSearched(true);
+      handleSearch(qFromUrl);
+    }
     fetchSavedSearches();
     fetchFacets();
   }, [token, searchMode, searchParams]);
@@ -1372,49 +1372,6 @@ export const SearchPage = () => {
             </p>
           </div>
         </div>
-
-        {/* Search Chat Thread Breadcrumb Strip */}
-        {currentSession && currentSession.queries && currentSession.queries.length > 0 && (
-          <div className="flex items-center gap-1.5 p-1.5 px-2.5 bg-slate-50/90 border border-slate-200/80 rounded-xl text-xs overflow-x-auto no-scrollbar touch-pan-x">
-            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 flex items-center gap-1 shrink-0 mr-1">
-              <MessageSquare className="w-3 h-3 text-primary" />
-              <span className="hidden sm:inline">Thread:</span>
-            </span>
-            <div className="flex items-center gap-1 min-w-0 flex-nowrap">
-              {currentSession.queries.map((sessionQ, idx) => {
-                const isCurrent = sessionQ.toLowerCase() === query.trim().toLowerCase();
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setQuery(sessionQ);
-                      setShowSuggestions(false);
-                      handleFreshSearch(sessionQ);
-                    }}
-                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
-                      isCurrent
-                        ? 'bg-primary text-white shadow-2xs font-bold'
-                        : 'bg-white hover:bg-slate-100 text-navy border border-slate-200/90'
-                    }`}
-                    title={`Re-run query "${sessionQ}"`}
-                  >
-                    <span>{sessionQ}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <button
-              type="button"
-              onClick={handleStartNewChat}
-              className="ml-auto text-[11px] font-bold text-primary hover:text-primary-hover flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-primary/5 transition-colors shrink-0 cursor-pointer"
-              title="Start a fresh search thread"
-            >
-              <Plus className="w-3 h-3" />
-              <span className="hidden sm:inline">New Chat</span>
-            </button>
-          </div>
-        )}
 
         {/* Premium Command Search Bar */}
         <form
@@ -1653,7 +1610,9 @@ export const SearchPage = () => {
           )}
         </form>
 
-        {/* Compact Horizontal Swipeable Filters Bar */}
+        {hasSearched ? (
+          <>
+            {/* Compact Horizontal Swipeable Filters Bar */}
         <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 -mx-1 px-1 touch-pan-x">
           <div className="flex items-center space-x-1 text-xs text-slate-500 font-bold shrink-0 pr-1">
             <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
@@ -2037,9 +1996,125 @@ export const SearchPage = () => {
             ))}
           </div>
         )}
+          </>
+        ) : (
+          /* Clean Initial Executive Search State */
+          <div className="pt-2 space-y-5 animate-fade-in">
+            {/* Trending Executive Searches / Mandates */}
+            <div>
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                <span>Trending Executive Searches</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {[
+                  { label: 'Procurement Head & Sourcing VP', q: 'Procurement Head' },
+                  { label: 'Cold Chain Logistics Director', q: 'Cold Chain Logistics' },
+                  { label: 'Enterprise AI & Cloud Architect', q: 'Enterprise AI Cloud Architect' },
+                  { label: 'Contract Manufacturing OEM', q: 'Contract Manufacturing OEM' },
+                  { label: 'FMCG Distribution Channel Head', q: 'FMCG Distribution' },
+                  { label: 'Cross-Border Trade Route Lead', q: 'Cross Border Trade Route' },
+                ].map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setQuery(item.q);
+                      handleFreshSearch(item.q);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-xs font-semibold text-slate-700 hover:text-[#142B45] hover:border-slate-300 transition-all cursor-pointer group shadow-2xs"
+                  >
+                    <span>{item.label}</span>
+                    <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* In-Page Recent Searches Clean List */}
+            <div className="pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#142B45]">
+                  <Clock className="w-3.5 h-3.5 text-primary" />
+                  <span>Recent Searches</span>
+                  {recent.length > 0 && (
+                    <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.2 rounded-full border border-slate-200">
+                      {recent.length}
+                    </span>
+                  )}
+                </div>
+                {recent.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearSearches}
+                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer flex items-center gap-1 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Clear all history</span>
+                  </button>
+                )}
+              </div>
+
+              {recent.length > 0 ? (
+                <div className="divide-y divide-slate-100 border border-slate-200/80 rounded-xl overflow-hidden bg-slate-50/40">
+                  {recent.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-2.5 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-3 hover:bg-white transition-colors group"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuery(item.query);
+                          handleFreshSearch(item.query);
+                        }}
+                        className="flex-1 min-w-0 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-1 cursor-pointer"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <span className="text-xs sm:text-[13px] font-bold text-slate-800 group-hover:text-primary transition-colors truncate block">
+                            {item.query}
+                          </span>
+                          <span className="text-[10.5px] text-slate-400">
+                            {formatSearchTime(item.at)}
+                            {item.count > 0 && ` • ${item.count} verified match${item.count > 1 ? 'es' : ''}`}
+                          </span>
+                        </div>
+                        <div className="hidden sm:flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <span>Search</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSearch(item.id);
+                        }}
+                        className="p-1.5 text-slate-300 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                        title="Remove from history"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 text-center bg-slate-50/50 border border-dashed border-slate-200 rounded-xl">
+                  <Clock className="w-6 h-6 text-slate-300 mx-auto mb-1.5" />
+                  <p className="text-xs font-medium text-slate-500">
+                    No recent searches yet. Search any executive title, company, or mandate above to begin.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Differentiator #10: Active Opportunity Qualification Passport Banner */}
+      {hasSearched && (
+        <>
+          {/* Differentiator #10: Active Opportunity Qualification Passport Banner */}
       {activePassportData && (
         <div className="bg-gradient-to-r from-neutral-900 via-neutral-800 to-black text-white p-6 rounded-2xl shadow-lg border border-neutral-700 animate-in fade-in space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-750">
@@ -4203,6 +4278,8 @@ export const SearchPage = () => {
             );
           })()}
         </div>
+      )}
+        </>
       )}
 
       {/* Feature #15: Save Search Slide-Over Drawer */}
