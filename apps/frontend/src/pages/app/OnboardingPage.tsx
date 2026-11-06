@@ -496,7 +496,7 @@ export const OnboardingPage: React.FC = () => {
 
         setTimeout(async () => {
           await refreshUser();
-          navigate('/app/home', { replace: true });
+          navigate('/app/search', { replace: true });
         }, 800);
       }, 700);
     } else {

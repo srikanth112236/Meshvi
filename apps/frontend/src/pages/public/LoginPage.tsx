@@ -106,7 +106,7 @@ export const LoginPage: React.FC = () => {
       if (res.isNewUser || !res.onboardingCompleted) {
         navigate('/app/onboarding');
       } else {
-        navigate('/app/home');
+        navigate('/app/search');
       }
     } catch (err: any) {
       setError(err.message || 'Google authentication failed');
@@ -154,7 +154,7 @@ export const LoginPage: React.FC = () => {
       if (!data.data.user?.profile?.currentTitle && !data.data.user?.onboardingCompleted) {
         navigate('/app/onboarding');
       } else {
-        navigate('/app/home');
+        navigate('/app/search');
       }
     } catch (err: any) {
       setError(err.message || 'Invalid email or password.');

@@ -55,9 +55,9 @@ export const LinkedInCallbackPage = () => {
           type: 'success',
         });
 
-        // If user already completed onboarding, go to home; otherwise go to onboarding wizard
+        // If user already completed onboarding, go to search; otherwise go to onboarding wizard
         if (data.data.user?.onboardingCompleted || data.data.user?.profile?.currentTitle) {
-          navigate('/app/home');
+          navigate('/app/search');
         } else {
           navigate('/app/onboarding');
         }

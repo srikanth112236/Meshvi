@@ -134,7 +134,7 @@ export default function App() {
           >
             <Route path="/app/onboarding" element={<OnboardingPage />} />
             <Route path="/app" element={<AppLayout />}>
-              <Route index element={<Navigate to="/app/home" replace />} />
+              <Route index element={<Navigate to="/app/search" replace />} />
               <Route path="home" element={<AppHomePage />} />
               <Route path="partnerships" element={<PartnershipsPage />} />
               <Route path="partnerships/requests" element={<PartnershipRequestsPage />} />

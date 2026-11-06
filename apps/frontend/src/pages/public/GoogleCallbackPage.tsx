@@ -122,9 +122,9 @@ export const GoogleCallbackPage = () => {
         return;
       }
 
-      // Web: Automatically transition directly to dashboard after brief verification feedback
+      // Web: Automatically transition directly to search console after brief verification feedback
       setTimeout(() => {
-        navigate('/app/home', { replace: true });
+        navigate('/app/search', { replace: true });
       }, 700);
     };
 

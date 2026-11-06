@@ -39,7 +39,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const getUserHomePortal = () => {
     if (userRoles.includes('SUPER_ADMIN')) return '/admin/dashboard';
     if (userRoles.includes('COMPANY_ADMIN')) return '/company';
-    return '/app/home';
+    return '/app/search';
   };
 
   // 1. Strict Disallowed Role Validation: Cleanly redirect to designated portal

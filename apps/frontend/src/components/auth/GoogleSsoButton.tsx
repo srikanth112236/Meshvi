@@ -60,7 +60,7 @@ export const GoogleSsoButton: React.FC<GoogleSsoButtonProps> = ({
       } else if (!data.data.user?.profile?.currentTitle) {
         navigate('/app/onboarding');
       } else {
-        navigate('/app/home');
+        navigate('/app/search');
       }
     } catch (err: any) {
       showToast({
