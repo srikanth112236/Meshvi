@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -21,7 +21,7 @@ import {
   Shield,
   Settings,
   User,
-  Clock,
+  Plus,
 } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useSearchHistory } from '../../context/SearchHistoryContext';
@@ -83,6 +83,32 @@ export const AppLayout = () => {
     setMobileMenuOpen(false);
     navigate(`/app/search?session=${newSessionId}`);
   };
+
+  const groupedRecent = useMemo(() => {
+    const now = Date.now();
+    const startOfToday = new Date(now).setHours(0, 0, 0, 0);
+    const startOfYesterday = startOfToday - 86400000;
+
+    const today: typeof recent = [];
+    const yesterday: typeof recent = [];
+    const pastWeek: typeof recent = [];
+
+    for (const item of recent) {
+      if (item.at >= startOfToday) {
+        today.push(item);
+      } else if (item.at >= startOfYesterday) {
+        yesterday.push(item);
+      } else {
+        pastWeek.push(item);
+      }
+    }
+
+    return [
+      { label: 'Today', items: today.slice(0, 3) },
+      { label: 'Yesterday', items: yesterday.slice(0, 2) },
+      { label: '7 days', items: pastWeek.slice(0, 3) },
+    ].filter((g) => g.items.length > 0);
+  }, [recent]);
 
   // The 5 Primary Destinations (Strict Linear / Attio style navigation)
   const primaryNavItems = [
@@ -211,28 +237,50 @@ export const AppLayout = () => {
             </button>
           </div>
 
-          {/* Quick Search Action */}
-          <div className={showLabels ? 'px-3 pt-3 pb-1' : 'px-2 pt-3 pb-1 flex justify-center'}>
+          {/* Quick Actions & Search Input (Mirrors Reference) */}
+          <div className={showLabels ? 'px-3 pt-3 pb-1 space-y-1.5' : 'px-2 pt-3 pb-1 space-y-2 flex flex-col items-center'}>
+            {/* + New Search Button */}
             {showLabels ? (
               <button
                 type="button"
                 onClick={handleStartNewSearch}
-                className="flex items-center justify-between w-full rounded-xl border border-[#E8EDF3] bg-slate-50 hover:bg-slate-100/80 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#142B45] hover:bg-[#102A43] text-white text-xs font-bold shadow-xs transition-all cursor-pointer group"
+              >
+                <Plus className="w-3.5 h-3.5 text-white/90 group-hover:scale-110 transition-transform" />
+                <span>New search</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleStartNewSearch}
+                title="New Search"
+                className="w-9 h-9 rounded-xl bg-[#142B45] text-white flex items-center justify-center hover:bg-[#102A43] transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Quick Command Search Bar */}
+            {showLabels ? (
+              <button
+                type="button"
+                onClick={() => setCommandBarOpen(true)}
+                className="flex items-center justify-between w-full rounded-xl border border-slate-200/90 bg-slate-50/80 hover:bg-slate-100 px-2.5 py-1.5 text-xs text-slate-500 transition-colors cursor-pointer"
               >
                 <div className="flex items-center space-x-2">
-                  <Search className="w-3.5 h-3.5 text-[#078BCC]" />
-                  <span>Discover leaders</span>
+                  <Search className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-slate-400 font-medium">Search</span>
                 </div>
-                <kbd className="text-[10px] font-mono text-slate-400 bg-white border border-slate-200 px-1.5 py-0.2 rounded">
+                <kbd className="text-[9.5px] font-mono text-slate-400 bg-white border border-slate-200 px-1 rounded shadow-2xs">
                   ⌘K
                 </kbd>
               </button>
             ) : (
               <button
                 type="button"
-                onClick={handleStartNewSearch}
-                title="Discover leaders (Cmd+K)"
-                className="w-9 h-9 rounded-xl border border-[#E8EDF3] bg-slate-50 flex items-center justify-center text-slate-500 hover:text-[#078BCC] hover:bg-slate-100 transition-colors cursor-pointer"
+                onClick={() => setCommandBarOpen(true)}
+                title="Quick Search (Cmd+K)"
+                className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 hover:text-[#078BCC] hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <Search className="w-4 h-4" />
               </button>
@@ -276,41 +324,32 @@ export const AppLayout = () => {
               );
             })}
 
-            {/* Last 5 Recent Searches in Sidebar */}
-            {showLabels && recent.length > 0 && (
-              <div className="pt-2 pb-1 my-1 border-t border-slate-100">
-                <div className="flex items-center justify-between px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-3 h-3 text-slate-400" />
-                    <span>Recent Searches</span>
-                  </span>
-                  <span className="text-[9px] font-medium text-slate-400">
-                    {Math.min(recent.length, 5)}
-                  </span>
-                </div>
-                <div className="space-y-0.5 mt-0.5">
-                  {recent.slice(0, 5).map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        navigate(`/app/search?q=${encodeURIComponent(item.query)}&session=${item.id}`);
-                      }}
-                      className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-slate-600 hover:text-[#142B45] hover:bg-slate-100 transition-colors text-left group cursor-pointer"
-                      title={item.query}
-                    >
-                      <span className="truncate flex-1 min-w-0 pr-1 group-hover:text-[#078BCC] font-medium">
-                        {item.query}
-                      </span>
-                      {item.count > 0 && (
-                        <span className="text-[9.5px] font-medium text-slate-400 group-hover:text-slate-600 shrink-0">
-                          {item.count}
+            {/* Grouped History by Time (Today, Yesterday, 7 days - Mirrors Reference) */}
+            {showLabels && groupedRecent.length > 0 && (
+              <div className="pt-2 pb-1 my-1 border-t border-slate-100 space-y-2">
+                {groupedRecent.map((group) => (
+                  <div key={group.label} className="space-y-0.5">
+                    <div className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      {group.label}
+                    </div>
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          navigate(`/app/search?q=${encodeURIComponent(item.query)}&session=${item.id}`);
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-1 rounded-lg text-xs text-slate-600 hover:text-[#142B45] hover:bg-slate-100 transition-colors text-left group cursor-pointer"
+                        title={item.query}
+                      >
+                        <span className="truncate flex-1 min-w-0 pr-1 group-hover:text-[#078BCC] font-medium text-[11.5px]">
+                          {item.query}
                         </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                      </button>
+                    ))}
+                  </div>
+                ))}
               </div>
             )}
 

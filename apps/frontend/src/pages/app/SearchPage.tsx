@@ -36,6 +36,12 @@ import {
   Building,
   Target,
   Trash2,
+  Share2,
+  Download,
+  Mic,
+  Paperclip,
+  Lightbulb,
+  MoreVertical,
 } from 'lucide-react';
 import { formatSearchTime } from '../../utils/formatSearchTime';
 import { ConnectOpportunityModal } from '../../components/ui/ConnectOpportunityModal';
@@ -478,6 +484,14 @@ export const SearchPage = () => {
   const [candidateViewMode, setCandidateViewMode] = useState<'LIST' | 'GRID'>('GRID');
   const [opportunityGraphData, setOpportunityGraphData] = useState<any | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
+  const [modeDropdownOpen, setModeDropdownOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
 
   // Differentiator #3 (Option B): Market-Corridor Opportunity Finder state
   const [corridorOrigin, setCorridorOrigin] = useState('IN');
@@ -549,7 +563,7 @@ export const SearchPage = () => {
   };
 
   // Feature #16: Negative Exclusion Filters
-  const [showNegativeFilters, _setShowNegativeFilters] = useState(false);
+  const [showNegativeFilters, setShowNegativeFilters] = useState(false);
   const [excludeKeywords, setExcludeKeywords] = useState('');
   const [excludeCompanies, setExcludeCompanies] = useState('');
   const [excludeIndustries, setExcludeIndustries] = useState('');
@@ -1356,24 +1370,109 @@ export const SearchPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Premium Modern Executive Search Console */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 shadow-2xs space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-          <div>
-            <h1 className="text-lg sm:text-xl font-black text-[#142B45] tracking-tight flex items-center gap-2">
-              <span>Discover Decision Makers</span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
-                <span>Directory Live</span>
+      {/* Premium Modern Executive AI Search Canvas */}
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-7 shadow-xs space-y-4">
+        {/* Top Canvas Bar (Mirrors Reference) */}
+        <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+          {/* Mode Selector Pill Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setModeDropdownOpen(!modeDropdownOpen)}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-[#142B45] transition-all cursor-pointer shadow-2xs"
+            >
+              <span className="w-2 h-2 rounded-full bg-gradient-to-r from-[#078BCC] to-[#36C4E8] animate-pulse" />
+              <span>
+                {searchMode === 'DECISION_MAKERS'
+                  ? 'Decision Makers'
+                  : searchMode === 'ENTERPRISES'
+                    ? 'Enterprises'
+                    : searchMode === 'MARKET_CORRIDOR'
+                      ? 'Trade Corridors'
+                      : 'Opportunity Graph'}
               </span>
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Find verified executives, heads of procurement, and commercial business partners.
-            </p>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+
+            {modeDropdownOpen && (
+              <div className="absolute left-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95">
+                {[
+                  { mode: 'DECISION_MAKERS', label: 'Decision Makers', desc: 'Verified CXOs & procurement heads', icon: Users },
+                  { mode: 'ENTERPRISES', label: 'Enterprises', desc: 'Corporate accounts & sectors', icon: Building2 },
+                  { mode: 'MARKET_CORRIDOR', label: 'Trade Corridors', desc: 'Bilateral trade & freight', icon: Compass },
+                  { mode: 'OPPORTUNITY_GRAPH', label: 'Opportunity Graph', desc: 'Buying committee network', icon: Target },
+                ].map((item) => (
+                  <button
+                    key={item.mode}
+                    type="button"
+                    onClick={() => {
+                      setSearchMode(item.mode as any);
+                      setModeDropdownOpen(false);
+                      if (query.trim()) {
+                        handleSearch(query, item.mode as any);
+                      }
+                    }}
+                    className={`w-full flex items-start gap-2.5 p-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      searchMode === item.mode ? 'bg-slate-100 text-[#078BCC] font-bold' : 'hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4 mt-0.5 shrink-0 text-[#078BCC]" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold leading-tight">{item.label}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{item.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right Action Tools */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setShowSearchGuideModal(true)}
+              className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Search Guide & Operators"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer relative"
+              title="Share Search Link"
+            >
+              <Share2 className="w-4 h-4" />
+              {copiedLink && (
+                <span className="absolute -bottom-7 right-0 text-[10px] font-bold bg-[#142B45] text-white px-2 py-0.5 rounded shadow z-10 whitespace-nowrap">
+                  Link copied!
+                </span>
+              )}
+            </button>
+
+            {hasSearched && (
+              <button
+                type="button"
+                onClick={() => setShowSaveModal(true)}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500" />
+                <span>Save</span>
+              </button>
+            )}
+
+            <div className="inline-flex items-center gap-1.5 text-[10.5px] sm:text-xs font-bold text-white bg-[#142B45] px-2.5 sm:px-3 py-1.5 rounded-xl shadow-xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#36C4E8]" />
+              <span>Directory Live</span>
+            </div>
           </div>
         </div>
 
-        {/* Premium Command Search Bar */}
+        {hasSearched ? (
+          <>
+            {/* Premium Command Search Bar */}
         <form
           ref={searchBarContainerRef}
           onSubmit={(e) => {
@@ -1610,9 +1709,7 @@ export const SearchPage = () => {
           )}
         </form>
 
-        {hasSearched ? (
-          <>
-            {/* Compact Horizontal Swipeable Filters Bar */}
+        {/* Compact Horizontal Swipeable Filters Bar */}
         <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 -mx-1 px-1 touch-pan-x">
           <div className="flex items-center space-x-1 text-xs text-slate-500 font-bold shrink-0 pr-1">
             <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
@@ -1998,52 +2095,231 @@ export const SearchPage = () => {
         )}
           </>
         ) : (
-          /* Clean Initial Executive Search State */
-          <div className="pt-2 space-y-5 animate-fade-in">
-            {/* Trending Executive Searches / Mandates */}
-            <div>
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                <TrendingUp className="w-3.5 h-3.5 text-primary" />
-                <span>Trending Executive Searches</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {[
-                  { label: 'Procurement Head & Sourcing VP', q: 'Procurement Head' },
-                  { label: 'Cold Chain Logistics Director', q: 'Cold Chain Logistics' },
-                  { label: 'Enterprise AI & Cloud Architect', q: 'Enterprise AI Cloud Architect' },
-                  { label: 'Contract Manufacturing OEM', q: 'Contract Manufacturing OEM' },
-                  { label: 'FMCG Distribution Channel Head', q: 'FMCG Distribution' },
-                  { label: 'Cross-Border Trade Route Lead', q: 'Cross Border Trade Route' },
-                ].map((item, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setQuery(item.q);
-                      handleFreshSearch(item.q);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-xs font-semibold text-slate-700 hover:text-[#142B45] hover:border-slate-300 transition-all cursor-pointer group shadow-2xs"
-                  >
-                    <span>{item.label}</span>
-                    <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                ))}
+          /* Initial Hero View (Mirrors Reference) */
+          <div className="py-6 sm:py-10 flex flex-col items-center justify-center animate-fade-in max-w-3xl mx-auto w-full">
+            {/* Floating Glowing 3D Glass Sphere Orb */}
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 flex items-center justify-center">
+              {/* Ambient Pulsing Backlight */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#36C4E8]/50 via-[#078BCC]/35 to-indigo-500/35 blur-2xl animate-pulse" />
+              {/* 3D Glass Sphere Body */}
+              <div className="relative w-full h-full rounded-full bg-gradient-to-br from-white/95 via-[#E0F2FE]/85 to-[#078BCC]/40 border border-white/80 shadow-[inset_0_4px_14px_rgba(255,255,255,0.95),inset_0_-8px_18px_rgba(7,139,204,0.3),0_16px_32px_rgba(7,139,204,0.2)] backdrop-blur-md flex items-center justify-center overflow-hidden">
+                {/* Specular Inner Glare Refractions */}
+                <div className="absolute top-2.5 left-3.5 w-6 h-4 rounded-full bg-white/85 blur-[1px] rotate-[-25deg]" />
+                <div className="absolute bottom-2.5 right-3.5 w-5 h-3 rounded-full bg-[#36C4E8]/50 blur-[2px]" />
+                <Sparkles className="w-8 h-8 text-[#078BCC] animate-pulse drop-shadow-xs" />
               </div>
             </div>
 
-            {/* In-Page Recent Searches Clean List */}
-            <div className="pt-4 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#142B45]">
-                  <Clock className="w-3.5 h-3.5 text-primary" />
-                  <span>Recent Searches</span>
-                  {recent.length > 0 && (
+            {/* Hero Greeting & Headline */}
+            <p className="text-sm sm:text-base font-semibold text-slate-400 mb-1 tracking-tight text-center">
+              Hello, {firstName}
+            </p>
+            <h1 className="text-2xl sm:text-4xl font-black text-[#142B45] tracking-tight mb-7 text-center">
+              How can I assist your search today?
+            </h1>
+
+            {/* Central Interactive Search Box (Mirrors Reference) */}
+            <div className="w-full bg-[#F8FAFC] hover:bg-white border border-slate-200/90 hover:border-slate-300 focus-within:border-[#078BCC] focus-within:ring-4 focus-within:ring-[#078BCC]/10 focus-within:bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xs transition-all relative mb-5">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setShowSuggestions(false);
+                  if (query.trim()) handleFreshSearch();
+                }}
+              >
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  placeholder="Ask me anything or search by title, role, company, objective..."
+                  className="w-full bg-transparent border-none text-sm text-[#142B45] placeholder:text-slate-400 font-medium focus:outline-none mb-3"
+                />
+
+                {/* Toolbar Inside Prompt Box */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 text-[#078BCC] text-xs font-bold border border-slate-200 shadow-2xs">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Executive Match</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => applyFilter('businessRequirement', businessRequirementFilter === 'LOOKING_FOR' ? 'ALL' : 'LOOKING_FOR')}
+                      className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                        businessRequirementFilter === 'LOOKING_FOR' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'border-slate-200 text-slate-400 hover:text-slate-600'
+                      }`}
+                      title="Filter by Requirement"
+                    >
+                      <Target className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowNegativeFilters(!showNegativeFilters)}
+                      className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                      title="Exclusion filters"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleFreshSearch()}
+                      className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                      title="Directory search"
+                    >
+                      <Globe className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                      title="Voice search"
+                    >
+                      <Mic className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading || !query.trim()}
+                      className="w-8 h-8 rounded-full bg-[#142B45] hover:bg-[#078BCC] text-white flex items-center justify-center transition-colors shadow-2xs disabled:opacity-40 cursor-pointer"
+                    >
+                      {loading ? (
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <ArrowRight className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Autocomplete / Suggestions Dropdown */}
+                {showSuggestions && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden text-xs max-h-80 overflow-y-auto animate-in fade-in zoom-in-95">
+                    {query.trim().length >= 2 ? (
+                      <div className="divide-y divide-slate-100">
+                        {categorizedSuggestions.length > 0 ? (
+                          categorizedSuggestions.map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setQuery(item.text);
+                                setShowSuggestions(false);
+                                handleFreshSearch(item.text);
+                              }}
+                              className="w-full px-3.5 py-2 text-left text-xs hover:bg-slate-50 flex items-center justify-between transition-colors cursor-pointer"
+                            >
+                              <span className="font-bold text-[#142B45]">{item.text}</span>
+                              <span className="text-[10px] text-slate-400">{item.subtitle}</span>
+                            </button>
+                          ))
+                        ) : suggestions.length > 0 ? (
+                          suggestions.map((s, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setQuery(s);
+                                setShowSuggestions(false);
+                                handleFreshSearch(s);
+                              }}
+                              className="w-full px-3.5 py-2 text-left text-xs font-semibold text-[#142B45] hover:bg-slate-50 flex items-center justify-between cursor-pointer"
+                            >
+                              <span>{s}</span>
+                              <Search className="w-3 h-3 text-slate-400" />
+                            </button>
+                          ))
+                        ) : (
+                          <div className="p-3 text-center text-slate-400 text-xs">
+                            Press Enter to search for "{query}"
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </form>
+
+              {/* Sublinks below input: Saved Mandates & Qualify Requirement */}
+              <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold pt-2.5 px-0.5">
+                <button
+                  type="button"
+                  onClick={() => setShowSaveModal(true)}
+                  className="flex items-center gap-1.5 text-slate-500 hover:text-[#078BCC] transition-colors cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Saved Mandates ({savedSearches.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowQualificationModal(true)}
+                  className="flex items-center gap-1 text-slate-500 hover:text-[#078BCC] transition-colors cursor-pointer"
+                >
+                  <Paperclip className="w-3.5 h-3.5" />
+                  <span>Qualify Requirement</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 3 Executive Suggestion Cards (Mirrors Reference) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 w-full mb-8">
+              {[
+                {
+                  icon: Clock,
+                  title: 'Synthesize Sourcing',
+                  subtitle: 'Find VP Procurement, Sourcing Directors & Supply Chain Heads.',
+                  q: 'Procurement Head & Sourcing VP',
+                },
+                {
+                  icon: Lightbulb,
+                  title: 'Strategic Co-Ventures',
+                  subtitle: 'Explore joint ventures, technology alliances & distribution networks.',
+                  q: 'Strategic Technology Alliances & Co-Ventures',
+                },
+                {
+                  icon: ShieldCheck,
+                  title: 'Verified CXO Mandates',
+                  subtitle: 'Connect directly with pre-vetted enterprise decision makers.',
+                  q: 'Enterprise Chief Technology Officer',
+                },
+              ].map((card, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setQuery(card.q);
+                    handleFreshSearch(card.q);
+                  }}
+                  className="p-4 rounded-2xl bg-slate-50/80 hover:bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-xs transition-all text-left group cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-slate-600 group-hover:text-[#078BCC] group-hover:border-[#078BCC]/30 transition-colors shadow-2xs mb-2.5">
+                    <card.icon className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-xs font-bold text-[#142B45] group-hover:text-[#078BCC] transition-colors mb-1">
+                    {card.title}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                    {card.subtitle}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            {/* In-Page Recent Searches (Clean list) */}
+            {recent.length > 0 && (
+              <div className="w-full pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#142B45]">
+                    <Clock className="w-3.5 h-3.5 text-[#078BCC]" />
+                    <span>Recent Searches</span>
                     <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.2 rounded-full border border-slate-200">
                       {recent.length}
                     </span>
-                  )}
-                </div>
-                {recent.length > 0 && (
+                  </div>
                   <button
                     type="button"
                     onClick={clearSearches}
@@ -2052,12 +2328,10 @@ export const SearchPage = () => {
                     <Trash2 className="w-3 h-3" />
                     <span>Clear all history</span>
                   </button>
-                )}
-              </div>
+                </div>
 
-              {recent.length > 0 ? (
-                <div className="divide-y divide-slate-100 border border-slate-200/80 rounded-xl overflow-hidden bg-slate-50/40">
-                  {recent.map((item) => (
+                <div className="divide-y divide-slate-100 border border-slate-200/80 rounded-2xl overflow-hidden bg-slate-50/50">
+                  {recent.slice(0, 5).map((item) => (
                     <div
                       key={item.id}
                       className="p-2.5 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-3 hover:bg-white transition-colors group"
@@ -2099,14 +2373,22 @@ export const SearchPage = () => {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="p-6 text-center bg-slate-50/50 border border-dashed border-slate-200 rounded-xl">
-                  <Clock className="w-6 h-6 text-slate-300 mx-auto mb-1.5" />
-                  <p className="text-xs font-medium text-slate-500">
-                    No recent searches yet. Search any executive title, company, or mandate above to begin.
-                  </p>
-                </div>
-              )}
+              </div>
+            )}
+
+            {/* Canvas Footer (Mirrors Reference) */}
+            <div className="pt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 w-full mt-4">
+              <div className="flex items-center gap-1.5 mx-auto text-center">
+                <span>Join the Meshvi Enterprise community for verified executive matchmaking</span>
+                <Link to="/app/connections" className="text-[#078BCC] hover:underline font-bold">
+                  Directory Live
+                </Link>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 text-slate-400">
+                <button type="button" onClick={() => setShowSearchGuideModal(true)} title="Help & Guide">
+                  <HelpCircle className="w-4 h-4 hover:text-slate-700" />
+                </button>
+              </div>
             </div>
           </div>
         )}
