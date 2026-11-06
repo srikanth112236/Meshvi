@@ -519,7 +519,7 @@ export const AppLayout = () => {
       {/* Main Content Area — Full-width clean workspace */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Global Standard Header (Linear + Stripe inspired) */}
-        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-[#E8EDF3] px-4 sm:px-6 h-13 flex items-center justify-between">
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-[#E8EDF3] px-3 sm:px-5 h-12 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <button
               type="button"
@@ -568,7 +568,7 @@ export const AppLayout = () => {
         </header>
 
         {/* Routed Workspace View */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1440px] w-full mx-auto">
+        <main className="flex-1 p-2.5 sm:p-4 lg:p-5 max-w-[1440px] w-full mx-auto">
           <Outlet />
         </main>
       </div>
