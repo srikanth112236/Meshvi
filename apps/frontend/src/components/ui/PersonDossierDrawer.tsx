@@ -11,8 +11,6 @@ import {
   Play,
   Pause,
   Video,
-  Radio,
-  Zap,
   Users,
   Check,
   Network,
@@ -83,23 +81,7 @@ export const PersonDossierDrawer: React.FC<PersonDossierDrawerProps> = ({
     }
   };
 
-  // Step 3: Reciprocity Radar (Double-Blind Mutual Intent Engine)
-  const [radarScanning, setRadarScanning] = useState(false);
-  const [radarMatched, setRadarMatched] = useState(false);
-  const [matchedIntentSnippet, setMatchedIntentSnippet] = useState('');
 
-  const handleTriggerRadar = () => {
-    setRadarScanning(true);
-    setTimeout(() => {
-      setRadarScanning(false);
-      const lookingFor =
-        profile?.intents?.find((i: any) => i.intentType === 'LOOKING_FOR')?.description ||
-        profile?.intents?.[0]?.description ||
-        `${profile?.function || 'Commercial'} partnerships in Southeast Asia`;
-      setMatchedIntentSnippet(lookingFor);
-      setRadarMatched(true);
-    }, 700);
-  };
 
   useEffect(() => {
     if (isOpen && profileId && token) {
@@ -685,116 +667,20 @@ export const PersonDossierDrawer: React.FC<PersonDossierDrawerProps> = ({
             )}
           </div>
 
-          {/* Step 3: Reciprocity Radar Synergy Card */}
-          {radarMatched && (
-            <div className="mx-6 mb-3 p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100/70 border border-emerald-300 rounded-2xl animate-fade-in shadow-xs space-y-2">
-              <div className="flex items-center space-x-2">
-                <span className="p-1 rounded-md bg-emerald-600 text-white">
-                  <Zap className="w-3.5 h-3.5" />
-                </span>
-                <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">
-                  ⚡ Reciprocity Radar: Double-Blind Match Verified!
-                </span>
-              </div>
-              <p className="text-[11px] text-emerald-900 leading-relaxed">
-                Both parties have declared reciprocal alignment. Target seeks: <strong className="font-bold">"{matchedIntentSnippet}"</strong>. Double-blind verification removes cold outreach friction.
-              </p>
-              <div className="pt-1 flex items-center justify-between">
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
-                  🎯 100% Pre-Approved Synergy
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onOpenConnect &&
-                      onOpenConnect({
-                        id: profile.id,
-                        displayName: profile.displayName,
-                        currentTitle: profile.currentTitle,
-                        companyName: profile.company?.name,
-                        city: profile.city,
-                        countryCode: profile.countryCode,
-                        matchScore: 98,
-                        intents: profile.intents,
-                      });
-                    onClose();
-                  }}
-                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs transition-colors"
-                >
-                  Open Pre-Approved Bridge &rarr;
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Action Footer (Black Clean Actions) */}
+          {/* Action Footer */}
           {profile && (
             <div className="px-6 py-4 border-t border-border bg-surface-muted/40 flex items-center justify-between">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-bold text-text-muted hover:text-navy rounded-xl"
+                className="px-4 py-2 text-xs font-bold text-text-muted hover:text-navy rounded-xl border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 transition-colors"
               >
-                Close
+                Cancel
               </button>
 
               <div className="flex items-center space-x-2">
-                {/* Step 3: Signal Mutual Intent (Double-Blind Radar) */}
-                <button
-                  type="button"
-                  onClick={handleTriggerRadar}
-                  disabled={radarScanning || radarMatched}
-                  className={`px-3 py-2 text-xs font-bold rounded-xl border flex items-center space-x-1.5 transition-all ${
-                    radarMatched
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                      : radarScanning
-                      ? 'bg-neutral-100 text-text-muted border-neutral-300'
-                      : 'bg-white hover:bg-neutral-50 text-neutral-800 border-neutral-300 shadow-xs'
-                  }`}
-                  title="Step 3: Test double-blind mutual intent matching"
-                >
-                  <Radio
-                    className={`w-3.5 h-3.5 ${
-                      radarScanning
-                        ? 'text-amber-500 animate-spin'
-                        : radarMatched
-                        ? 'text-emerald-600'
-                        : 'text-purple-600'
-                    }`}
-                  />
-                  <span>
-                    {radarMatched
-                      ? 'Radar Synced'
-                      : radarScanning
-                      ? 'Scanning Intent...'
-                      : 'Signal Mutual Intent'}
-                  </span>
-                </button>
-
                 {onOpenConnect && (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onOpenConnect({
-                          id: profile.id,
-                          displayName: profile.displayName,
-                          currentTitle: profile.currentTitle,
-                          companyName: profile.company?.name,
-                          city: profile.city,
-                          countryCode: profile.countryCode,
-                          matchScore: 90,
-                          intents: profile.intents,
-                          initialMode: 'WARM_INTRO_ONLY',
-                        });
-                        onClose();
-                      }}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center space-x-1.5"
-                      title="Request 3-Way Warm Introduction via Mutual Peer"
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      <span>🤝 Warm Intro</span>
-                    </button>
                     {profile.connectionStatus === 'CONNECTED' ? (
                       <div className="flex items-center space-x-2">
                         <span className="px-3.5 py-2 bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-2xs">

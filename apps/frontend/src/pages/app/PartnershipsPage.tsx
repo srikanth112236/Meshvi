@@ -217,10 +217,9 @@ export const PartnershipsPage: React.FC = () => {
   const { showToast } = useNotifications();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Top Consolidated Destination Tab: FEED | DEALS | REQUESTS
+  // Top Consolidated Destination Tab: FEED | REQUESTS
   const [mainNavTab, setMainNavTab] = useState<'FEED' | 'DEALS' | 'REQUESTS'>(() => {
     const tabParam = searchParams.get('tab')?.toUpperCase();
-    if (tabParam === 'DEALS' || tabParam === 'PIPELINE') return 'DEALS';
     if (tabParam === 'REQUESTS') return 'REQUESTS';
     return 'FEED';
   });
@@ -844,25 +843,6 @@ export const PartnershipsPage: React.FC = () => {
         >
           <Layers className="w-3.5 h-3.5" />
           <span>Opportunities Feed ({posts.length})</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setMainNavTab('DEALS');
-            setSearchParams({ tab: 'deals' });
-          }}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-            mainNavTab === 'DEALS'
-              ? 'bg-navy text-white shadow-xs'
-              : 'text-text-muted hover:text-navy hover:bg-surface-muted'
-          }`}
-        >
-          <Handshake className="w-3.5 h-3.5" />
-          <span>My Deals (Pipeline)</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-sky-100 text-sky-800">
-            {deals.length}
-          </span>
         </button>
 
         <Link

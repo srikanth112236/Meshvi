@@ -240,7 +240,7 @@ export const SettingsPage = () => {
           </div>
 
           <p className="text-[11px] text-text-muted">
-            Cryptographic proof unlocks Tier-2 Institutional Inbound Routing and deal rooms.
+            Cryptographic proof unlocks Tier-2 Institutional Inbound Routing and verified direct communication channels.
           </p>
         </div>
 

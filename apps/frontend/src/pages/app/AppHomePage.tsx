@@ -12,7 +12,6 @@ import {
   Sparkles,
   Search,
   Globe,
-  Layers,
   ChevronRight,
 } from 'lucide-react';
 import { AddCompanyModal } from '../../components/ui/AddCompanyModal';
@@ -261,19 +260,19 @@ export const AppHomePage = () => {
         </Link>
 
         <Link
-          to="/app/partnerships"
+          to="/app/introductions"
           className="p-3 sm:p-3.5 rounded-xl bg-white border border-[#E8EDF3] shadow-2xs hover:border-[#078BCC]/40 hover:shadow-xs transition-all group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500">Active Deal Rooms</span>
+            <span className="text-[11px] font-semibold text-slate-500">Warm Introductions</span>
             <span className="p-1 rounded-md bg-indigo-50 text-indigo-600 group-hover:scale-105 transition-transform">
-              <Layers className="w-3.5 h-3.5" />
+              <Users className="w-3.5 h-3.5" />
             </span>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-[#142B45] tracking-tight">{stats.dealRoomsCount}</span>
+            <span className="text-xl sm:text-2xl font-black text-[#142B45] tracking-tight">{stats.introductionsCount}</span>
             <span className="text-[9.5px] font-bold text-[#078BCC] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-              NDA Protected
+              Mutual Consent
             </span>
           </div>
         </Link>
@@ -432,22 +431,7 @@ export const AppHomePage = () => {
             </div>
           </div>
 
-          {/* Quick Access to My Deals Pipeline */}
-          <div className="bg-white border border-[#E8EDF3] rounded-2xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-[#142B45]">Deal Pipeline & Collaborative Vault</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Manage your active deals, project milestones, and signed agreements.
-              </p>
-            </div>
-            <Link
-              to="/app/partnerships?tab=deals"
-              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl transition-colors flex items-center space-x-1"
-            >
-              <span>Open Pipeline</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+
         </div>
 
         {/* Right Sidebar Column (4 Cols): Recommended Decision-Makers & Actions */}

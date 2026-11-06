@@ -128,7 +128,7 @@ export const AppLayout = () => {
       name: 'Partnerships',
       href: '/app/partnerships',
       icon: Handshake,
-      isActive: (pathname: string) => pathname.startsWith('/app/partnerships') || pathname.startsWith('/app/deal-rooms'),
+      isActive: (pathname: string) => pathname.startsWith('/app/partnerships'),
     },
     {
       name: 'My Network',
@@ -153,7 +153,6 @@ export const AppLayout = () => {
     if (p.startsWith('/app/search')) return 'Discover Decision Makers';
     if (p.startsWith('/app/home')) return 'Intelligence Dashboard';
     if (p.startsWith('/app/partnerships')) return 'Partnership Marketplace';
-    if (p.startsWith('/app/deal-rooms')) return 'Deal Rooms';
     if (p.startsWith('/app/messages')) return 'Messages';
     if (p.startsWith('/app/connections')) return 'My Network';
     if (p.startsWith('/app/introductions')) return 'Warm Introductions';
