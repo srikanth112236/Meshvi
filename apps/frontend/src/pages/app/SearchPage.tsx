@@ -38,10 +38,9 @@ import {
   Trash2,
   Share2,
   Download,
-  Mic,
-  Paperclip,
   Lightbulb,
   MoreVertical,
+  Plus,
 } from 'lucide-react';
 import { formatSearchTime } from '../../utils/formatSearchTime';
 import { ConnectOpportunityModal } from '../../components/ui/ConnectOpportunityModal';
@@ -1241,6 +1240,13 @@ export const SearchPage = () => {
     if (qFromUrl.trim() || hasFilterParams) {
       setHasSearched(true);
       handleSearch(qFromUrl);
+    } else {
+      setHasSearched(false);
+      setResultsData(null);
+      setCompanyResults([]);
+      setOpportunityGraphData(null);
+      setCorridorData(null);
+      setLoading(false);
     }
     fetchSavedSearches();
     fetchFacets();
@@ -1369,11 +1375,11 @@ export const SearchPage = () => {
   const candidateResults: any[] = resultsData?.matches || resultsData?.results || [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Premium Modern Executive AI Search Canvas */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-xs space-y-3">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-xs space-y-2.5">
         {/* Top Canvas Bar (Mirrors Reference) */}
-        <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+        <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
           {/* Mode Selector Pill Dropdown */}
           <div className="relative">
             <button
@@ -1429,6 +1435,18 @@ export const SearchPage = () => {
 
           {/* Right Action Tools */}
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {hasSearched && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/90 text-xs font-bold text-[#142B45] transition-colors cursor-pointer shadow-2xs"
+                title="Start a new search and return to console"
+              >
+                <Plus className="w-3.5 h-3.5 text-[#078BCC]" />
+                <span>New Search</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setShowSearchGuideModal(true)}
@@ -1478,7 +1496,11 @@ export const SearchPage = () => {
           onSubmit={(e) => {
             e.preventDefault();
             setShowSuggestions(false);
-            handleFreshSearch();
+            if (!query.trim()) {
+              handleClearSearch();
+            } else {
+              handleFreshSearch();
+            }
           }}
           className="relative pt-0.5"
         >
@@ -2176,13 +2198,6 @@ export const SearchPage = () => {
                       <Globe className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      type="button"
-                      className="p-1 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                      title="Voice search"
-                    >
-                      <Mic className="w-3.5 h-3.5" />
-                    </button>
-                    <button
                       type="submit"
                       disabled={loading || !query.trim()}
                       className="w-7 h-7 rounded-full bg-[#142B45] hover:bg-[#078BCC] text-white flex items-center justify-center transition-colors shadow-2xs disabled:opacity-40 cursor-pointer"
@@ -2244,8 +2259,8 @@ export const SearchPage = () => {
                 )}
               </form>
 
-              {/* Sublinks below input: Saved Mandates & Qualify Requirement */}
-              <div className="flex items-center justify-between text-[10.5px] text-slate-400 font-semibold pt-2 px-0.5">
+              {/* Sublinks below input: Saved Mandates */}
+              <div className="flex items-center justify-start text-[10.5px] text-slate-400 font-semibold pt-2 px-0.5">
                 <button
                   type="button"
                   onClick={() => setShowSaveModal(true)}
@@ -2253,14 +2268,6 @@ export const SearchPage = () => {
                 >
                   <Sparkles className="w-3 h-3 text-amber-500" />
                   <span>Saved Mandates ({savedSearches.length})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowQualificationModal(true)}
-                  className="flex items-center gap-1 text-slate-500 hover:text-[#078BCC] transition-colors cursor-pointer"
-                >
-                  <Paperclip className="w-3 h-3" />
-                  <span>Qualify Requirement</span>
                 </button>
               </div>
             </div>
@@ -3858,22 +3865,22 @@ export const SearchPage = () => {
                     return (
                       <div
                         key={r.profile?.id || idx}
-                        className="p-4 bg-white border border-slate-200/90 hover:border-primary/50 hover:shadow-md rounded-2xl transition-all flex flex-col justify-between space-y-3 relative group hover:-translate-y-0.5"
+                        className="p-3 sm:p-3.5 bg-white border border-slate-200/90 hover:border-[#078BCC]/50 hover:shadow-md rounded-xl transition-all flex flex-col justify-between space-y-2 relative group hover:-translate-y-0.5"
                       >
-                        <div className="space-y-2.5">
+                        <div className="space-y-2">
                           <div className="flex items-start justify-between gap-2">
                             <div
                               onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
-                              className="w-11 h-11 rounded-xl bg-gradient-to-br from-navy via-slate-800 to-primary text-white text-sm font-black flex items-center justify-center shrink-0 shadow-2xs cursor-pointer hover:opacity-90"
+                              className="w-9 h-9 rounded-lg bg-gradient-to-br from-navy via-slate-800 to-primary text-white text-xs font-black flex items-center justify-center shrink-0 shadow-2xs cursor-pointer hover:opacity-90"
                               title="Click to view 360 executive dossier"
                             >
                               {r.profile.displayName?.[0] || 'U'}
                             </div>
-                            <div className="flex items-center space-x-1.5 shrink-0">
+                            <div className="flex items-center space-x-1 shrink-0">
                               {matchScore && (
                                 <SegmentedMatchBadge score={matchScore} segments={r.matchSegments} />
                               )}
-                              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                 Verified
                               </span>
                             </div>
@@ -3882,21 +3889,21 @@ export const SearchPage = () => {
                           <div>
                             <h3
                               onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
-                              className="text-sm font-black text-navy truncate group-hover:text-primary transition-colors cursor-pointer"
+                              className="text-xs sm:text-[13px] font-black text-navy truncate group-hover:text-primary transition-colors cursor-pointer"
                               title="Click to view 360 executive dossier"
                             >
                               {r.profile.displayName}
                             </h3>
-                            <p className="text-xs font-semibold text-slate-800 truncate pt-0.5">
+                            <p className="text-[11px] font-semibold text-slate-800 truncate pt-0.5">
                               {r.profile.currentTitle || 'Professional'}
                             </p>
-                            <p className="text-[11px] text-slate-500 truncate pt-0.5">
+                            <p className="text-[10px] text-slate-500 truncate pt-0.5">
                               {r.profile.companyName || r.profile.company?.name || 'Enterprise'} &bull; {[r.profile.city, r.profile.countryCode].filter(Boolean).join(', ') || 'Global'}
                             </p>
 
                             {/* Segmented Match Summary Line */}
                             {matchScore && (
-                              <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-x-2 pt-1.5 border-t border-slate-100/80 font-medium">
+                              <div className="text-[9.5px] text-slate-500 flex flex-wrap items-center gap-x-1.5 pt-1 border-t border-slate-100 font-medium">
                                 <span className="text-blue-700 font-semibold">• Industry: {r.matchSegments?.industryRelevance ?? Math.round(matchScore * 0.54)}%</span>
                                 <span className="text-emerald-700 font-semibold">• Need: {r.matchSegments?.requirementRelevance ?? Math.round(matchScore * 0.36)}%</span>
                                 <span className="text-amber-700 font-semibold">• Geo: {r.matchSegments?.geographicRelevance ?? Math.max(1, matchScore - (r.matchSegments?.industryRelevance ?? Math.round(matchScore * 0.54)) - (r.matchSegments?.requirementRelevance ?? Math.round(matchScore * 0.36)))}%</span>
@@ -3904,7 +3911,7 @@ export const SearchPage = () => {
                             )}
                           </div>
 
-                          <div className="text-[10.5px] pt-1 border-t border-slate-100">
+                          <div className="text-[10px] pt-1 border-t border-slate-100">
                             {r.profile.connectionStatus === 'CONNECTED' ? (
                               <div className="text-emerald-800 font-semibold truncate">
                                 {r.profile.email ? `✉️ ${r.profile.email}` : '✓ Direct coordinates unlocked'}
@@ -3918,26 +3925,26 @@ export const SearchPage = () => {
                           </div>
                         </div>
 
-                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1.5">
                           <button
                             type="button"
                             onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
-                            className="text-[11px] font-bold text-slate-600 hover:text-navy flex items-center space-x-1 transition-colors cursor-pointer"
+                            className="text-[10.5px] font-bold text-slate-600 hover:text-navy flex items-center space-x-1 transition-colors cursor-pointer"
                           >
-                            <Eye className="w-3.5 h-3.5 text-slate-400" />
+                            <Eye className="w-3 h-3 text-slate-400" />
                             <span>Dossier</span>
                           </button>
 
                           {r.profile.connectionStatus === 'CONNECTED' ? (
                             <Link
                               to={`/app/messages?profileId=${r.profile.id}`}
-                              className="px-3 py-1 text-xs font-bold rounded-xl flex items-center space-x-1 bg-primary hover:bg-primary-hover text-white shadow-xs transition-all cursor-pointer"
+                              className="px-2.5 py-1 text-[11px] font-bold rounded-lg flex items-center space-x-1 bg-primary hover:bg-primary-hover text-white shadow-xs transition-all cursor-pointer"
                             >
                               <MessageSquare className="w-3 h-3" />
                               <span>Message</span>
                             </Link>
                           ) : (r.profile.connectionStatus === 'PENDING' || connectionRequested === r.profile.id) ? (
-                            <span className="px-2.5 py-1 text-xs font-bold rounded-xl flex items-center space-x-1 bg-amber-50 text-amber-800 border border-amber-300">
+                            <span className="px-2 py-0.5 text-[10.5px] font-bold rounded-lg flex items-center space-x-1 bg-amber-50 text-amber-800 border border-amber-300">
                               <Clock className="w-3 h-3 text-amber-600" />
                               <span>Pending</span>
                             </span>
@@ -3956,7 +3963,7 @@ export const SearchPage = () => {
                                   initialMode: 'DIRECT',
                                 });
                               }}
-                              className="px-3 py-1 text-xs font-bold rounded-xl flex items-center space-x-1 bg-primary hover:bg-primary-hover text-white shadow-xs hover:shadow-primary/20 transition-all cursor-pointer"
+                              className="px-2.5 py-1 text-[11px] font-bold rounded-lg flex items-center space-x-1 bg-primary hover:bg-primary-hover text-white shadow-xs hover:shadow-primary/20 transition-all cursor-pointer"
                             >
                               <Send className="w-3 h-3" />
                               <span>👋 Connect</span>
@@ -3970,7 +3977,7 @@ export const SearchPage = () => {
                   return (
                   <div
                     key={r.profile?.id || idx}
-                    className="p-3.5 sm:p-4 bg-white border border-slate-200/90 hover:border-primary/40 rounded-2xl shadow-xs hover:shadow-md transition-all space-y-2 relative group"
+                    className="p-2.5 sm:p-3 bg-white border border-slate-200/90 hover:border-[#078BCC]/40 rounded-xl shadow-2xs hover:shadow-xs transition-all space-y-1.5 relative group"
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                       {/* Left Column: Avatar + Profile Name + Role + Company */}
