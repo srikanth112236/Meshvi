@@ -3,6 +3,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { NotificationType } from '@prisma/client';
 import { Subject, Observable, merge, interval } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 export interface CreateNotificationDto {
   userId: string;
@@ -22,9 +23,9 @@ export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Create a persistent notification for a user and emit via real-time stream
+   * Create a persistent notification for a user and optionally emit via real-time stream
    */
-  async createNotification(dto: CreateNotificationDto) {
+  async createNotification(dto: CreateNotificationDto, emitToStream: boolean = true) {
     const created = await this.prisma.notification.create({
       data: {
         userId: dto.userId,
@@ -38,8 +39,10 @@ export class NotificationsService {
       },
     });
 
-    // Real-time reactive dispatch
-    this.notificationStream$.next(created);
+    // Real-time reactive dispatch only for interactive peer notifications
+    if (emitToStream) {
+      this.notificationStream$.next(created);
+    }
 
     return created;
   }
@@ -60,18 +63,34 @@ export class NotificationsService {
 
   /**
    * Generates a weekly personalized partner recommendation notification
-   * if the user hasn't received one in the last 7 days.
+   * for users who have completed onboarding, if they haven't received one in the last 7 days.
    */
   async ensureWeeklyRecommendationsNotification(userId: string) {
     if (!userId) return null;
 
+    // Check if user exists and has completed onboarding
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: {
+          include: { company: true },
+        },
+      },
+    });
+
+    // Do NOT generate weekly recommendations for unverified or incomplete onboarding users
+    if (!user || !user.onboardingCompleted || !user.profile) {
+      return null;
+    }
+
+    const userProfile = user.profile;
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     // Check if user already got a weekly recommendation this week
     const existing = await this.prisma.notification.findFirst({
       where: {
         userId,
-        title: { contains: 'Weekly' },
+        title: { contains: 'Weekly', mode: 'insensitive' },
         createdAt: { gte: sevenDaysAgo },
       },
     });
@@ -80,14 +99,8 @@ export class NotificationsService {
       return existing;
     }
 
-    // Load user's profile to understand their industry and function
-    const userProfile = await this.prisma.professionalProfile.findUnique({
-      where: { userId },
-      include: { company: true },
-    });
-
-    const userIndustry = userProfile?.industry || 'Technology & Innovation';
-    const userFunction = userProfile?.function
+    const userIndustry = userProfile.industry || 'Technology & Innovation';
+    const userFunction = userProfile.function
       ? userProfile.function.split(';')[0].trim()
       : 'Commercial & Strategy';
 
@@ -95,6 +108,7 @@ export class NotificationsService {
     const matches = await this.prisma.professionalProfile.findMany({
       where: {
         userId: { not: userId },
+        user: { onboardingCompleted: true },
       },
       include: {
         company: true,
@@ -106,7 +120,11 @@ export class NotificationsService {
       take: 3,
     });
 
-    const matchesCount = matches.length || 3;
+    if (matches.length === 0) {
+      return null;
+    }
+
+    const matchesCount = matches.length;
     const names = matches
       .map((m) => m.displayName)
       .filter(Boolean)
@@ -118,31 +136,51 @@ export class NotificationsService {
       ? `We found ${matchesCount} verified leaders including ${names} aligned with your ${userFunction} focus in ${userIndustry}. Explore your weekly matches now.`
       : `We found ${matchesCount} verified business leaders aligned with your ${userFunction} focus in ${userIndustry}. Tap to view.`;
 
-    return this.createNotification({
-      userId,
-      type: NotificationType.SYSTEM_ALERT,
-      title,
-      body,
-      actionUrl: '/app/search?tab=PROFILES',
-      metadata: {
-        category: 'WEEKLY_RECOMMENDATIONS',
-        matchesCount,
-        industry: userIndustry,
-        function: userFunction,
+    // Persist silently into the Notification Hub without blasting real-time interrupting stream
+    return this.createNotification(
+      {
+        userId,
+        type: NotificationType.SYSTEM_ALERT,
+        title,
+        body,
+        actionUrl: '/app/search?tab=PROFILES',
+        metadata: {
+          category: 'WEEKLY_RECOMMENDATIONS',
+          matchesCount,
+          industry: userIndustry,
+          function: userFunction,
+        },
       },
-    });
+      false, // emitToStream: false — silent drawer update
+    );
   }
 
   /**
-   * Get all notifications for current user with unread counter
+   * Weekly scheduled cron job running every Monday at 9:00 AM server time
+   */
+  @Cron(CronExpression.EVERY_WEEK)
+  async handleWeeklyRecommendationsCron() {
+    try {
+      const activeUsers = await this.prisma.user.findMany({
+        where: { onboardingCompleted: true, accountStatus: 'ACTIVE' },
+        select: { id: true },
+        take: 100,
+      });
+
+      for (const u of activeUsers) {
+        if (u.id) {
+          await this.ensureWeeklyRecommendationsNotification(u.id);
+        }
+      }
+    } catch {
+      // Non-blocking cron
+    }
+  }
+
+  /**
+   * Get all notifications for current user with unread counter (Pure read-only query)
    */
   async getUserNotifications(userId: string, limit: number = 50) {
-    try {
-      await this.ensureWeeklyRecommendationsNotification(userId);
-    } catch (err) {
-      // Non-blocking background generation
-    }
-
     const [notifications, unreadCount] = await Promise.all([
       this.prisma.notification.findMany({
         where: { userId },

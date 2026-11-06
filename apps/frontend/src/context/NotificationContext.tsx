@@ -27,6 +27,7 @@ export interface ToastItem {
   message: string;
   type?: 'success' | 'info' | 'warning' | 'opportunity' | 'error';
   actionUrl?: string;
+  playSound?: boolean;
 }
 
 interface NotificationContextType {
@@ -49,7 +50,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const isInitialLoadRef = useRef(true);
   const seenIdsRef = useRef<Set<string>>(new Set());
   const lastToastTimeRef = useRef<number>(0);
 
@@ -80,11 +80,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const message = toast.message || toast.body || toast.text || toast.description || '';
     if (!title && !message) return; // Prevent empty blank toasts
 
-    // Throttle audio chime so rapid consecutive notifications within 3 seconds don't spam audio
-    const now = Date.now();
-    if (now - lastToastTimeRef.current > 3000) {
-      playExecutiveNotificationSound();
-      lastToastTimeRef.current = now;
+    // Audio chime only plays if explicitly requested (e.g. direct incoming peer action)
+    if (toast.playSound) {
+      const now = Date.now();
+      if (now - lastToastTimeRef.current > 3000) {
+        playExecutiveNotificationSound();
+        lastToastTimeRef.current = now;
+      }
     }
 
     const id = Math.random().toString(36).substring(2, 9);
@@ -121,42 +123,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const fetchedList: AppNotification[] = data.data.notifications || [];
         const count: number = data.data.unreadCount || 0;
 
-        if (isInitialLoadRef.current) {
-          // On initial fetch/refresh, mark all existing notifications as seen so old toasts never replay
-          fetchedList.forEach((notif) => {
-            seenIdsRef.current.add(notif.id);
-          });
-          saveSeenIds();
-          isInitialLoadRef.current = false;
-        } else {
-          // Subsequent background poll: only trigger toast for newly arrived unread notifications created recently
-          fetchedList.forEach((notif) => {
-            if (!seenIdsRef.current.has(notif.id)) {
-              seenIdsRef.current.add(notif.id);
-              saveSeenIds(notif.id);
-
-              const createdAtMs = notif.createdAt ? new Date(notif.createdAt).getTime() : 0;
-              const isRecent = createdAtMs > 0 ? (Date.now() - createdAtMs < 120000) : false;
-
-              if (!notif.read && isRecent) {
-                showToast({
-                  title: notif.title,
-                  message: notif.body,
-                  type: 'opportunity',
-                  actionUrl: notif.actionUrl,
-                });
-              }
-            }
-          });
-        }
-
+        // Background polling is strictly silent state synchronization.
+        // It updates the drawer and badge without spawning unsolicited toast popups or audio chimes.
         setNotifications(fetchedList);
         setUnreadCount(count);
       }
     } catch {
       // Background poll fail silent
     }
-  }, [token, showToast, saveSeenIds]);
+  }, [token]);
 
   const markAsRead = async (id: string) => {
     if (!token) return;
@@ -214,21 +189,32 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             createdAt: newNotif.createdAt || new Date().toISOString(),
           };
 
-          if (!seenIdsRef.current.has(notifItem.id)) {
+          // Update real-time notification hub state silently
+          setNotifications((prev) => [notifItem, ...prev.filter((n) => n.id !== notifItem.id)]);
+          setUnreadCount((prev) => prev + 1);
+
+          // Only trigger a real-time toast alert for direct interactive peer actions,
+          // NEVER for background system recommendations, weekly digests, or system alerts!
+          const isDirectPeerEvent = [
+            'CONNECTION_REQUEST',
+            'CONNECTION_ACCEPTED',
+            'INTRO_REQUEST',
+            'INTRO_ACCEPTED',
+          ].includes(notifItem.type);
+
+          if (isDirectPeerEvent && !seenIdsRef.current.has(notifItem.id)) {
             seenIdsRef.current.add(notifItem.id);
             saveSeenIds(notifItem.id);
 
-            setNotifications((prev) => [notifItem, ...prev.filter((n) => n.id !== notifItem.id)]);
-            setUnreadCount((prev) => prev + 1);
-
             const createdAtMs = notifItem.createdAt ? new Date(notifItem.createdAt).getTime() : Date.now();
-            const isRecent = Date.now() - createdAtMs < 120000;
+            const isRecent = Date.now() - createdAtMs < 60000;
             if (isRecent) {
               showToast({
                 title: notifItem.title,
                 message: notifItem.body,
                 type: 'opportunity',
                 actionUrl: notifItem.actionUrl,
+                playSound: true,
               });
             }
           }
