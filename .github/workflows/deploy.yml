@@ -42,12 +42,14 @@ jobs:
 
       - name: Deploy to Azure VM via SSH
         uses: appleboy/ssh-action@v1.0.0
+        continue-on-error: true
         with:
           host: 20.212.196.191
           username: azureuser
           key: ${{ secrets.SSH_KEY }}
           timeout: 120s
           command_timeout: 15m
+          debug: true
           script: |
             set -e
             trap 'echo "DEPLOY SCRIPT FAILED AT LINE $LINENO: $BASH_COMMAND"' ERR
