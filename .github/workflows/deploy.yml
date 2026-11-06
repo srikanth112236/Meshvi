@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - master
+    paths:
+      - 'apps/backend/**'
+      - 'prisma/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 jobs:
@@ -42,10 +46,11 @@ jobs:
           host: 20.212.196.191
           username: azureuser
           key: ${{ secrets.SSH_KEY }}
-          timeout: 60s
+          timeout: 120s
           command_timeout: 15m
           script: |
             set -e
+            trap 'echo "DEPLOY SCRIPT FAILED AT LINE $LINENO: $BASH_COMMAND"' ERR
             ACR_SERVER="meshviacr5435.azurecr.io"
             ACR_USER="meshviacr5435"
             ACR_PASS="${{ secrets.ACR_PASSWORD }}"
