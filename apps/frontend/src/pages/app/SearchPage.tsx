@@ -670,6 +670,20 @@ export const SearchPage = () => {
   const [categorizedSuggestions, setCategorizedSuggestions] = useState<any[]>([]);
   const [suggestedCorrection, setSuggestedCorrection] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchBarContainerRef = useRef<HTMLFormElement>(null);
+
+  // Click-away listener to smoothly dismiss search suggestions dropdown
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (searchBarContainerRef.current && !searchBarContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    if (showSuggestions) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showSuggestions]);
 
   const fetchSavedSearches = async () => {
     if (!token) return;
@@ -1341,26 +1355,32 @@ export const SearchPage = () => {
   const candidateResults: any[] = resultsData?.matches || resultsData?.results || [];
 
   return (
-    <div className="space-y-8">
-      {/* Clean Compact Search Header */}
-      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#142B45] tracking-tight">
-            Discover Decision Makers
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Find verified professionals and business partners.
-          </p>
+    <div className="space-y-6">
+      {/* Premium Modern Executive Search Console */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 shadow-2xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div>
+            <h1 className="text-lg sm:text-xl font-black text-[#142B45] tracking-tight flex items-center gap-2">
+              <span>Discover Decision Makers</span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
+                <span>Directory Live</span>
+              </span>
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Find verified executives, heads of procurement, and commercial business partners.
+            </p>
+          </div>
         </div>
 
-        {/* Search Chat Thread Indicator / Session Breadcrumb */}
+        {/* Search Chat Thread Breadcrumb Strip */}
         {currentSession && currentSession.queries && currentSession.queries.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 p-2 px-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs animate-in fade-in">
-            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 flex items-center gap-1 mr-1">
+          <div className="flex items-center gap-1.5 p-1.5 px-2.5 bg-slate-50/90 border border-slate-200/80 rounded-xl text-xs overflow-x-auto no-scrollbar touch-pan-x">
+            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 flex items-center gap-1 shrink-0 mr-1">
               <MessageSquare className="w-3 h-3 text-primary" />
-              <span>Current Search Chat:</span>
+              <span className="hidden sm:inline">Thread:</span>
             </span>
-            <div className="flex flex-wrap items-center gap-1 min-w-0">
+            <div className="flex items-center gap-1 min-w-0 flex-nowrap">
               {currentSession.queries.map((sessionQ, idx) => {
                 const isCurrent = sessionQ.toLowerCase() === query.trim().toLowerCase();
                 return (
@@ -1369,12 +1389,14 @@ export const SearchPage = () => {
                     type="button"
                     onClick={() => {
                       setQuery(sessionQ);
+                      setShowSuggestions(false);
                       handleFreshSearch(sessionQ);
                     }}
-                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${isCurrent
-                      ? 'bg-primary text-white shadow-2xs font-bold'
-                      : 'bg-white hover:bg-slate-100 text-navy border border-slate-200/90'
-                      }`}
+                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
+                      isCurrent
+                        ? 'bg-primary text-white shadow-2xs font-bold'
+                        : 'bg-white hover:bg-slate-100 text-navy border border-slate-200/90'
+                    }`}
                     title={`Re-run query "${sessionQ}"`}
                   >
                     <span>{sessionQ}</span>
@@ -1385,25 +1407,27 @@ export const SearchPage = () => {
             <button
               type="button"
               onClick={handleStartNewChat}
-              className="ml-auto text-[11px] font-bold text-primary hover:text-primary-hover flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
+              className="ml-auto text-[11px] font-bold text-primary hover:text-primary-hover flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-primary/5 transition-colors shrink-0 cursor-pointer"
               title="Start a fresh search thread"
             >
               <Plus className="w-3 h-3" />
-              <span>New Search Chat</span>
+              <span className="hidden sm:inline">New Chat</span>
             </button>
           </div>
         )}
 
-        {/* Compact Command Search Bar with Autocomplete */}
+        {/* Premium Command Search Bar */}
         <form
+          ref={searchBarContainerRef}
           onSubmit={(e) => {
             e.preventDefault();
+            setShowSuggestions(false);
             handleFreshSearch();
           }}
-          className="flex flex-col sm:flex-row gap-2 pt-1 relative"
+          className="relative pt-0.5"
         >
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-primary absolute left-3.5 top-3.5" />
+          <div className="relative flex items-center bg-white border border-slate-200/90 hover:border-slate-300 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 rounded-xl sm:rounded-2xl shadow-2xs transition-all p-1.5 pl-3.5 sm:pl-4">
+            <Search className="w-4 h-4 text-primary shrink-0 mr-2.5" />
             <input
               type="text"
               value={query}
@@ -1438,140 +1462,211 @@ export const SearchPage = () => {
                       ? 'Filter trade corridors by partner keyword or category...'
                       : 'Describe your commercial goal to map buying committees...'
               }
-              className="w-full pl-10 pr-10 py-3 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200/90 focus:border-primary focus:ring-2 focus:ring-primary/15 rounded-xl text-xs sm:text-sm text-navy placeholder:text-slate-400 font-medium transition-all shadow-inner/10"
+              className="flex-1 bg-transparent border-none text-xs sm:text-sm text-navy placeholder:text-slate-400 font-medium focus:outline-none min-w-0"
             />
             {query && (
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute right-3 top-3 text-slate-400 hover:text-navy p-0.5 rounded transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-navy p-1 mr-1 rounded transition-colors cursor-pointer shrink-0"
                 title="Clear search and reset filters"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
+            <kbd className="hidden md:inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-slate-100 border border-slate-200 rounded mr-2 shrink-0">
+              Enter ↵
+            </kbd>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg sm:rounded-xl shadow-xs hover:shadow-primary/20 transition-all flex items-center justify-center space-x-1.5 shrink-0 disabled:opacity-60 cursor-pointer"
+            >
+              {loading ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  <span className="hidden sm:inline">Searching...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 text-white shrink-0" />
+                  <span>Search</span>
+                </>
+              )}
+            </button>
+          </div>
 
-            {/* Live Suggestions Dropdown with Categorized Suggestions & Auto-Correction */}
-            {showSuggestions && (suggestions.length > 0 || suggestedCorrection) && query.trim().length >= 2 && (
-              <div className="absolute left-0 right-0 top-11 z-40 bg-surface border border-border rounded-xl shadow-xl overflow-hidden mt-1 text-xs max-h-80 overflow-y-auto">
-                {/* 1-Click Did You Mean / Typo Correction Banner */}
-                {suggestedCorrection && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuery(suggestedCorrection);
-                      handleFreshSearch(suggestedCorrection);
-                    }}
-                    className="w-full p-2.5 bg-gradient-to-r from-amber-50 to-amber-100/80 hover:from-amber-100 hover:to-amber-200/80 border-b border-amber-200 text-left flex items-center justify-between transition-colors group cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                      <span className="text-xs text-amber-950 font-medium">
-                        Did you mean: <strong className="font-extrabold text-navy underline decoration-amber-500">{suggestedCorrection}</strong>?
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-black text-amber-900 bg-amber-200 px-2 py-0.5 rounded-full shrink-0 group-hover:bg-amber-300 transition-colors">
-                      ⚡ 1-Click Search
+          {/* Live Suggestions & Trending Mandates Dropdown */}
+          {showSuggestions && (
+            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden text-xs max-h-96 overflow-y-auto animate-in fade-in zoom-in-95">
+              {/* 1-Click Did You Mean / Typo Correction Banner */}
+              {suggestedCorrection && query.trim().length >= 2 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery(suggestedCorrection);
+                    setShowSuggestions(false);
+                    handleFreshSearch(suggestedCorrection);
+                  }}
+                  className="w-full p-2.5 bg-gradient-to-r from-amber-50 to-amber-100/70 hover:from-amber-100 hover:to-amber-200/70 border-b border-amber-200 text-left flex items-center justify-between transition-colors group cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span className="text-xs text-amber-950 font-medium truncate">
+                      Did you mean: <strong className="font-extrabold text-navy underline decoration-amber-500">{suggestedCorrection}</strong>?
                     </span>
-                  </button>
-                )}
+                  </div>
+                  <span className="text-[10px] font-black text-amber-900 bg-amber-200 px-2 py-0.5 rounded-full shrink-0">
+                    ⚡ 1-Click Search
+                  </span>
+                </button>
+              )}
 
-                <div className="px-3 py-1.5 bg-surface-muted border-b border-border text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center justify-between">
-                  <span>Suggestions for "{query}"</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowSuggestions(false)}
-                    className="text-text-muted hover:text-navy"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
+              {/* Suggestions when query >= 2 chars */}
+              {query.trim().length >= 2 ? (
+                <>
+                  <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Suggestions for "{query}"</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowSuggestions(false)}
+                      className="text-slate-400 hover:text-navy cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
 
-                <div className="divide-y divide-border/60">
-                  {categorizedSuggestions.length > 0 ? (
-                    categorizedSuggestions.map((item, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setQuery(item.text);
-                          handleFreshSearch(item.text);
-                        }}
-                        className="w-full px-4 py-2 text-left text-xs hover:bg-neutral-50 flex items-center justify-between transition-colors group"
-                      >
-                        <div className="flex items-center space-x-2.5 min-w-0">
-                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${item.type === 'COMPANY'
-                            ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                            : 'bg-indigo-100 text-indigo-900 border border-indigo-200'
+                  <div className="divide-y divide-slate-100">
+                    {categorizedSuggestions.length > 0 ? (
+                      categorizedSuggestions.map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setQuery(item.text);
+                            setShowSuggestions(false);
+                            handleFreshSearch(item.text);
+                          }}
+                          className="w-full px-3.5 py-2 text-left text-xs hover:bg-slate-50 flex items-center justify-between transition-colors group cursor-pointer"
+                        >
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
+                              item.type === 'COMPANY'
+                                ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                                : 'bg-indigo-100 text-indigo-900 border border-indigo-200'
                             }`}>
-                            {item.type === 'COMPANY' ? (
-                              <Building2 className="w-3.5 h-3.5 text-amber-700" />
-                            ) : (
-                              <Users className="w-3.5 h-3.5 text-indigo-700" />
-                            )}
+                              {item.type === 'COMPANY' ? (
+                                <Building2 className="w-3.5 h-3.5 text-amber-700" />
+                              ) : (
+                                <Users className="w-3.5 h-3.5 text-indigo-700" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-bold text-navy group-hover:text-primary block truncate">
+                                {item.text}
+                              </span>
+                              <span className="text-[10.5px] text-slate-400 block truncate">
+                                {item.subtitle}
+                              </span>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <span className="font-bold text-navy group-hover:text-black block truncate">
-                              {item.text}
+                          {item.badge && (
+                            <span className="px-1.5 py-0.2 rounded text-[9.5px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 shrink-0 ml-2">
+                              {item.badge}
                             </span>
-                            <span className="text-[10.5px] text-neutral-500 block truncate">
-                              {item.subtitle}
-                            </span>
-                          </div>
-                        </div>
-                        {item.badge && (
-                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 shrink-0 ml-2">
-                            {item.badge}
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    suggestions.map((s, idx) => (
+                          )}
+                        </button>
+                      ))
+                    ) : suggestions.length > 0 ? (
+                      suggestions.map((s, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setQuery(s);
+                            setShowSuggestions(false);
+                            handleFreshSearch(s);
+                          }}
+                          className="w-full px-3.5 py-2 text-left text-xs font-semibold text-navy hover:bg-slate-50 flex items-center justify-between transition-colors cursor-pointer"
+                        >
+                          <span>{s}</span>
+                          <Search className="w-3 h-3 text-slate-400" />
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-3 text-center text-slate-400 text-xs">
+                        Press Enter to search for "{query}"
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                /* When query < 2 chars: Show Trending & Recommended Executive Searches */
+                <div className="p-3 space-y-2">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
+                    <span className="flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3 text-primary" />
+                      <span>Trending Executive Searches</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowSuggestions(false)}
+                      className="text-slate-400 hover:text-navy cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {[
+                      { title: 'Procurement Head & Sourcing VP', category: 'Procurement & Supply' },
+                      { title: 'Cold Chain Logistics Director', category: 'Logistics & Warehousing' },
+                      { title: 'Enterprise AI & Cloud Architect', category: 'Technology & AI' },
+                      { title: 'Contract Manufacturing OEM', category: 'Industrial & Manufacturing' },
+                      { title: 'FMCG Distribution Channel Head', category: 'Commercial Partnerships' },
+                      { title: 'Airport Retail Concessions', category: 'Commercial & Hospitality' },
+                    ].map((item, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => {
-                          setQuery(s);
-                          handleFreshSearch(s);
+                          setQuery(item.title);
+                          setShowSuggestions(false);
+                          handleFreshSearch(item.title);
                         }}
-                        className="w-full px-4 py-2.5 text-left text-xs font-semibold text-navy hover:bg-bg flex items-center justify-between transition-colors"
+                        className="p-2 rounded-lg text-left hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all flex items-center justify-between group cursor-pointer"
                       >
-                        <span>{s}</span>
-                        <Search className="w-3 h-3 text-text-muted" />
+                        <div className="min-w-0 pr-1">
+                          <span className="text-xs font-bold text-navy group-hover:text-primary block truncate">
+                            {item.title}
+                          </span>
+                          <span className="text-[10px] text-slate-400 block truncate">
+                            {item.category}
+                          </span>
+                        </div>
+                        <ArrowRight className="w-3 h-3 text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
                       </button>
-                    ))
-                  )}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+            </div>
+          )}
+        </form>
+
+        {/* Compact Horizontal Swipeable Filters Bar */}
+        <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 -mx-1 px-1 touch-pan-x">
+          <div className="flex items-center space-x-1 text-xs text-slate-500 font-bold shrink-0 pr-1">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
+            <span className="hidden sm:inline">Filters</span>
+            {activeFiltersCount > 0 && (
+              <span className="px-1.5 py-0.2 bg-primary text-white text-[9.5px] font-black rounded-full">
+                {activeFiltersCount}
+              </span>
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-5 py-3 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-primary/20 transition-all flex items-center justify-center space-x-2 shrink-0 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-white" />
-            <span>{loading ? 'Searching...' : 'Search Directory'}</span>
-          </button>
-        </form>
-
-        {/* Positive Filters Bar (7 Core Filters) */}
-        <div className="pt-2.5 border-t border-slate-100 flex flex-col gap-2.5">
-          {/* Row 1: Dropdown & Input Filters */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <div className="flex items-center space-x-1.5 text-xs text-slate-500 font-bold mr-1">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
-              <span>Filters:</span>
-              {activeFiltersCount > 0 && (
-                <span className="px-2 py-0.5 bg-primary text-white text-[9.5px] font-black rounded-full uppercase tracking-wider">
-                  {activeFiltersCount} Active
-                </span>
-              )}
-            </div>
-
-            {/* 1. Industry Filter */}
+          {/* 1. Industry Filter */}
+          <div className="shrink-0">
             <SearchableDropdownFilter
               label="Industry"
               allLabel="All Industries"
@@ -1584,8 +1679,10 @@ export const SearchPage = () => {
               onSelect={(val) => applyFilter('industry', val)}
               icon={<Building2 className="w-3.5 h-3.5 shrink-0" />}
             />
+          </div>
 
-            {/* 2. Sub Industry Filter */}
+          {/* 2. Sub Industry Filter */}
+          <div className="shrink-0">
             <SearchableDropdownFilter
               label="Sub Industry"
               allLabel="All Sub-Industries"
@@ -1594,8 +1691,10 @@ export const SearchPage = () => {
               onSelect={(val) => applyFilter('subIndustry', val)}
               icon={<Layers className="w-3.5 h-3.5 shrink-0" />}
             />
+          </div>
 
-            {/* 3. Country Filter */}
+          {/* 3. Country Filter */}
+          <div className="shrink-0">
             <SearchableDropdownFilter
               label="Country"
               allLabel="All Countries"
@@ -1608,8 +1707,10 @@ export const SearchPage = () => {
               onSelect={(val) => applyFilter('country', val)}
               icon={<Globe className="w-3.5 h-3.5 shrink-0" />}
             />
+          </div>
 
-            {/* 4. City Filter */}
+          {/* 4. City Filter */}
+          <div className="shrink-0">
             <SearchableDropdownFilter
               label="City"
               allLabel="All Cities"
@@ -1618,8 +1719,10 @@ export const SearchPage = () => {
               onSelect={(val) => applyFilter('city', val)}
               icon={<MapPin className="w-3.5 h-3.5 shrink-0" />}
             />
+          </div>
 
-            {/* 5. Designation Filter */}
+          {/* 5. Designation Filter */}
+          <div className="shrink-0">
             <SearchableDropdownFilter
               label="Designation"
               allLabel="All Designations"
@@ -1628,178 +1731,173 @@ export const SearchPage = () => {
               onSelect={(val) => applyFilter('designation', val)}
               icon={<Briefcase className="w-3.5 h-3.5 shrink-0" />}
             />
-
-            {/* 6. Company Filter */}
-            <div className="relative inline-flex items-center">
-              <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all bg-surface text-text-muted border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
-                <Building className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Filter company..."
-                  value={companyFilter}
-                  onChange={(e) => setCompanyFilter(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      applyFilter('company', companyFilter);
-                    }
-                  }}
-                  className="w-24 sm:w-28 text-xs bg-transparent text-navy placeholder:text-slate-400 focus:outline-none"
-                />
-                {companyFilter ? (
-                  <button
-                    type="button"
-                    onClick={() => applyFilter('company', '')}
-                    className="p-0.5 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
-                    title="Clear company filter"
-                  >
-                    <X className="w-3 h-3 text-slate-500" />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => applyFilter('company', companyFilter)}
-                    className="text-[10px] text-primary hover:underline font-bold"
-                    title="Apply company filter"
-                  >
-                    Apply
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Reset All Filters Button */}
-            {activeFiltersCount > 0 && (
-              <button
-                type="button"
-                onClick={clearAllFilters}
-                className="px-2.5 py-1 text-xs font-extrabold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 flex items-center space-x-1 transition-colors shrink-0 shadow-xs cursor-pointer"
-                title="Reset all filters"
-              >
-                <X className="w-3 h-3" />
-                <span>Reset ({activeFiltersCount})</span>
-              </button>
-            )}
-
-            {/* 1-Click Clear Search & Directory Reset */}
-            {(query || resultsData || companyResults.length > 0) && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="px-2.5 py-1 text-xs font-bold text-neutral-700 hover:text-black bg-neutral-100 hover:bg-neutral-200 rounded-lg border border-neutral-300 flex items-center space-x-1 transition-colors shrink-0 shadow-2xs ml-auto cursor-pointer"
-                title="Clear search and restore clean directory browse"
-              >
-                <RotateCcw className="w-3 h-3 text-neutral-500" />
-                <span>Clear Search</span>
-              </button>
-            )}
           </div>
 
-          {/* Row 2: 7. Business Requirement Filter & Active Filter Pills */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-            <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
-              <Target className="w-3.5 h-3.5 text-primary" />
-              <span>Business Requirement:</span>
-            </span>
-            <div className="inline-flex p-0.5 bg-slate-100 border border-slate-200 rounded-lg">
-              <button
-                type="button"
-                onClick={() => applyFilter('businessRequirement', 'ALL')}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                  businessRequirementFilter === 'ALL'
-                    ? 'bg-white text-navy font-bold shadow-xs'
-                    : 'text-slate-600 hover:text-navy'
-                }`}
-              >
-                All Requirements
-              </button>
-              <button
-                type="button"
-                onClick={() => applyFilter('businessRequirement', 'LOOKING_FOR')}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                  businessRequirementFilter === 'LOOKING_FOR'
-                    ? 'bg-emerald-600 text-white font-bold shadow-xs'
-                    : 'text-slate-600 hover:text-emerald-700'
-                }`}
-              >
-                <span>🔍 Sourcing / Looking For</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => applyFilter('businessRequirement', 'OFFERING')}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                  businessRequirementFilter === 'OFFERING'
-                    ? 'bg-blue-600 text-white font-bold shadow-xs'
-                    : 'text-slate-600 hover:text-blue-700'
-                }`}
-              >
-                <span>📦 Supplying / Offering</span>
-              </button>
+          {/* 6. Company Filter */}
+          <div className="shrink-0">
+            <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all bg-white text-slate-700 border-slate-200/90 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
+              <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="Company..."
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyFilter('company', companyFilter);
+                  }
+                }}
+                className="w-20 sm:w-24 text-xs bg-transparent text-navy placeholder:text-slate-400 focus:outline-none"
+              />
+              {companyFilter ? (
+                <button
+                  type="button"
+                  onClick={() => applyFilter('company', '')}
+                  className="p-0.5 hover:bg-slate-100 rounded-full cursor-pointer"
+                  title="Clear company filter"
+                >
+                  <X className="w-3 h-3 text-slate-400" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => applyFilter('company', companyFilter)}
+                  className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
+                  title="Apply company filter"
+                >
+                  ↵
+                </button>
+              )}
             </div>
-
-            {/* Active Filter Pills Bar */}
-            {activeFiltersCount > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 ml-auto">
-                {industryFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-[11px] font-semibold">
-                    <span>Industry: {industryFilter}</span>
-                    <button type="button" onClick={() => applyFilter('industry', '')} className="hover:text-blue-900 cursor-pointer">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {subIndustryFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md text-[11px] font-semibold">
-                    <span>Sub: {subIndustryFilter}</span>
-                    <button type="button" onClick={() => applyFilter('subIndustry', '')} className="hover:text-indigo-900 cursor-pointer">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {countryFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-[11px] font-semibold">
-                    <span>Country: {countryFilter}</span>
-                    <button type="button" onClick={() => applyFilter('country', '')} className="hover:text-emerald-900 cursor-pointer">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {cityFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-[11px] font-semibold">
-                    <span>City: {cityFilter}</span>
-                    <button type="button" onClick={() => applyFilter('city', '')} className="hover:text-amber-900 cursor-pointer">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {designationFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-[11px] font-semibold">
-                    <span>Role: {designationFilter}</span>
-                    <button type="button" onClick={() => applyFilter('designation', '')} className="hover:text-purple-900 cursor-pointer">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {companyFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-800 border border-slate-300 rounded-md text-[11px] font-semibold">
-                    <span>Co: {companyFilter}</span>
-                    <button type="button" onClick={() => applyFilter('company', '')} className="hover:text-slate-900 cursor-pointer">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {businessRequirementFilter !== 'ALL' && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-50 text-cyan-800 border border-cyan-200 rounded-md text-[11px] font-semibold">
-                    <span>{businessRequirementFilter === 'LOOKING_FOR' ? 'Seeking' : 'Offering'}</span>
-                    <button type="button" onClick={() => applyFilter('businessRequirement', 'ALL')} className="hover:text-cyan-900 cursor-pointer">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-              </div>
-            )}
           </div>
+
+          {/* 7. Requirement Segmented Switch */}
+          <div className="shrink-0 inline-flex p-0.5 bg-slate-100/90 border border-slate-200/80 rounded-lg">
+            <button
+              type="button"
+              onClick={() => applyFilter('businessRequirement', 'ALL')}
+              className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
+                businessRequirementFilter === 'ALL'
+                  ? 'bg-white text-navy font-bold shadow-2xs'
+                  : 'text-slate-500 hover:text-navy'
+              }`}
+            >
+              All Needs
+            </button>
+            <button
+              type="button"
+              onClick={() => applyFilter('businessRequirement', 'LOOKING_FOR')}
+              className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                businessRequirementFilter === 'LOOKING_FOR'
+                  ? 'bg-emerald-600 text-white font-bold shadow-2xs'
+                  : 'text-slate-500 hover:text-emerald-700'
+              }`}
+            >
+              <span>🔍 Seeking</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => applyFilter('businessRequirement', 'OFFERING')}
+              className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                businessRequirementFilter === 'OFFERING'
+                  ? 'bg-blue-600 text-white font-bold shadow-2xs'
+                  : 'text-slate-500 hover:text-blue-700'
+              }`}
+            >
+              <span>📦 Offering</span>
+            </button>
+          </div>
+
+          {/* Reset All Filters Button */}
+          {activeFiltersCount > 0 && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="shrink-0 px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 flex items-center space-x-1 transition-colors shadow-2xs cursor-pointer"
+              title="Reset all filters"
+            >
+              <X className="w-3 h-3" />
+              <span>Reset ({activeFiltersCount})</span>
+            </button>
+          )}
+
+          {/* 1-Click Clear Search & Directory Reset */}
+          {(query || resultsData || companyResults.length > 0) && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="shrink-0 px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:text-navy bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200 flex items-center space-x-1 transition-colors shadow-2xs cursor-pointer ml-auto"
+              title="Clear search and restore clean directory browse"
+            >
+              <RotateCcw className="w-3 h-3 text-slate-400" />
+              <span>Clear</span>
+            </button>
+          )}
         </div>
+
+        {/* Active Filter Pills Bar (Shown only when filters are active) */}
+        {activeFiltersCount > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100 text-xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 mr-1">Active:</span>
+            {industryFilter && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-[11px] font-semibold">
+                <span>Industry: {industryFilter}</span>
+                <button type="button" onClick={() => applyFilter('industry', '')} className="hover:text-blue-900 cursor-pointer">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {subIndustryFilter && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md text-[11px] font-semibold">
+                <span>Sub: {subIndustryFilter}</span>
+                <button type="button" onClick={() => applyFilter('subIndustry', '')} className="hover:text-indigo-900 cursor-pointer">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {countryFilter && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-[11px] font-semibold">
+                <span>Country: {countryFilter}</span>
+                <button type="button" onClick={() => applyFilter('country', '')} className="hover:text-emerald-900 cursor-pointer">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {cityFilter && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-[11px] font-semibold">
+                <span>City: {cityFilter}</span>
+                <button type="button" onClick={() => applyFilter('city', '')} className="hover:text-amber-900 cursor-pointer">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {designationFilter && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-[11px] font-semibold">
+                <span>Role: {designationFilter}</span>
+                <button type="button" onClick={() => applyFilter('designation', '')} className="hover:text-purple-900 cursor-pointer">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {companyFilter && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-800 border border-slate-300 rounded-md text-[11px] font-semibold">
+                <span>Co: {companyFilter}</span>
+                <button type="button" onClick={() => applyFilter('company', '')} className="hover:text-slate-900 cursor-pointer">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {businessRequirementFilter !== 'ALL' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-50 text-cyan-800 border border-cyan-200 rounded-md text-[11px] font-semibold">
+                <span>{businessRequirementFilter === 'LOOKING_FOR' ? 'Seeking' : 'Offering'}</span>
+                <button type="button" onClick={() => applyFilter('businessRequirement', 'ALL')} className="hover:text-cyan-900 cursor-pointer">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Feature #16: Negative Exclusion Filter Drawer */}
         {showNegativeFilters && (
@@ -3016,82 +3114,166 @@ export const SearchPage = () => {
           })()}
 
           {loading ? (
-            <div className="py-16 text-center text-xs text-text-muted bg-surface rounded-2xl border border-border">
-              Finding the best verified business matches for you...
-            </div>
-          ) : !query && !resultsData ? (
-            /* NEW CHAT / EMPTY STATE MATCHING GIVEN IMAGE */
-            <div className="py-12 sm:py-20 text-center space-y-6 max-w-3xl mx-auto animate-in fade-in duration-300">
-              <div className="space-y-2">
-                <p className="text-base sm:text-lg font-bold text-slate-800 flex items-center justify-center gap-1.5">
-                  <span>Hey! 👋, {firstName}</span>
-                </p>
-                <h1 className="text-4xl sm:text-6xl font-black text-[#38BDF8] tracking-tight leading-tight">
-                  What’s on your mind Now?
-                </h1>
+            /* Premium High-Tech Skeleton Pulse Shimmer Grid */
+            <div className="space-y-4 py-2 animate-in fade-in duration-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#142B45]">
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
+                  <span>Searching verified decision-makers across directory...</span>
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium animate-pulse">
+                  Evaluating intent criteria & fit score...
+                </span>
               </div>
 
-              {/* Floating Pill Input Bar (Matching Image 3) */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleFreshSearch();
-                }}
-                className="max-w-2xl mx-auto w-full px-2"
-              >
-                <div className="relative flex items-center bg-white border border-slate-200 hover:border-slate-300 focus-within:border-[#38BDF8] focus-within:ring-4 focus-within:ring-[#38BDF8]/15 rounded-full shadow-lg hover:shadow-xl transition-all p-1.5 pl-4 sm:pl-5 pr-2">
-                  <span className="text-slate-400 shrink-0 mr-1.5">
-                    <Plus className="w-4 h-4" />
-                  </span>
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Ask Anything.. e.g. Travel retail airport lounge concessions, cold brew sourcing..."
-                    className="flex-1 bg-transparent border-none text-xs sm:text-sm text-navy placeholder:text-slate-400 font-medium focus:outline-none"
-                    autoFocus
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      onClick={handleClearSearch}
-                      className="text-slate-400 hover:text-navy p-1 mr-1.5 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    className="w-10 h-10 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
-                    title="Send"
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <div
+                    key={i}
+                    className="p-4 bg-white border border-slate-200/80 rounded-xl shadow-2xs space-y-3 animate-pulse"
                   >
-                    <Send className="w-4 h-4 -rotate-45 -ml-0.5" />
-                  </button>
-                </div>
-              </form>
-
-              {/* Suggested Mandate Chips */}
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                <span className="text-slate-400 text-[10.5px] font-bold uppercase tracking-wider mr-1">Suggested mandates:</span>
-                {[
-                  'Airport Retail Concessions',
-                  'Cold Brew Beverage Sourcing',
-                  'APAC Supply Chain Logistics',
-                  'Enterprise AI Platform',
-                  'FMCG Food Procurement',
-                ].map((term) => (
-                  <button
-                    key={term}
-                    type="button"
-                    onClick={() => {
-                      setQuery(term);
-                      handleFreshSearch(term);
-                    }}
-                    className="px-3.5 py-1.5 bg-white hover:bg-sky-50 text-slate-700 hover:text-primary rounded-full text-xs font-semibold border border-slate-200/90 hover:border-primary/40 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
-                  >
-                    {term}
-                  </button>
+                    <div className="flex items-start justify-between">
+                      <div className="w-10 h-10 rounded-lg bg-slate-200" />
+                      <div className="w-16 h-5 rounded-full bg-slate-200" />
+                    </div>
+                    <div className="space-y-1.5 pt-1">
+                      <div className="w-3/4 h-4 bg-slate-200 rounded" />
+                      <div className="w-1/2 h-3 bg-slate-100 rounded" />
+                      <div className="w-2/3 h-3 bg-slate-100 rounded" />
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <div className="w-16 h-3 bg-slate-100 rounded" />
+                      <div className="w-20 h-7 bg-slate-200 rounded-lg" />
+                    </div>
+                  </div>
                 ))}
+              </div>
+            </div>
+          ) : !query && !resultsData ? (
+            /* Premium Executive Discovery Dashboard */
+            <div className="space-y-6 py-4 animate-in fade-in duration-300">
+              <div className="p-5 sm:p-6 bg-gradient-to-br from-slate-900 via-[#102B45] to-[#078BCC] rounded-2xl text-white shadow-md relative overflow-hidden">
+                <div className="absolute right-0 top-0 w-80 h-full bg-white/5 blur-2xl pointer-events-none" />
+                <div className="relative z-10 max-w-2xl space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-white/90 text-[10px] font-bold uppercase tracking-wider backdrop-blur-xs">
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                    <span>Executive Discovery Engine</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                    Welcome, {firstName}. Who do you need to connect with today?
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    Search verified C-suite leaders, procurement heads, and enterprise partners across global trade corridors.
+                  </p>
+                </div>
+              </div>
+
+              {/* 4 Curated Executive Mandate Cards */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Compass className="w-3.5 h-3.5 text-primary" />
+                    <span>Popular Business Mandates</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400">1-click search</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    {
+                      icon: <Target className="w-4 h-4 text-emerald-600" />,
+                      bg: 'bg-emerald-50 border-emerald-200 hover:border-emerald-400',
+                      badge: 'Procurement',
+                      title: 'Enterprise Sourcing',
+                      desc: 'Heads of procurement & supply chain across tier-1 organizations',
+                      queryText: 'Procurement Head Sourcing',
+                    },
+                    {
+                      icon: <Building2 className="w-4 h-4 text-blue-600" />,
+                      bg: 'bg-blue-50 border-blue-200 hover:border-blue-400',
+                      badge: 'Logistics',
+                      title: 'Cold Storage & Supply',
+                      desc: 'Cold chain logistics, freight operators & warehousing leaders',
+                      queryText: 'Cold Chain Supply Chain Logistics',
+                    },
+                    {
+                      icon: <Sparkles className="w-4 h-4 text-purple-600" />,
+                      bg: 'bg-purple-50 border-purple-200 hover:border-purple-400',
+                      badge: 'Tech & AI',
+                      title: 'Technology Alliances',
+                      desc: 'CTOs, systems architects & cloud infrastructure decision-makers',
+                      queryText: 'Technology AI Software Systems',
+                    },
+                    {
+                      icon: <Briefcase className="w-4 h-4 text-amber-600" />,
+                      bg: 'bg-amber-50 border-amber-200 hover:border-amber-400',
+                      badge: 'Joint Ventures',
+                      title: 'Commercial Expansion',
+                      desc: 'Co-ventures, franchise agreements & cross-border licensing',
+                      queryText: 'Commercial Joint Venture Licensing',
+                    },
+                  ].map((card, cIdx) => (
+                    <div
+                      key={cIdx}
+                      onClick={() => {
+                        setQuery(card.queryText);
+                        setShowSuggestions(false);
+                        handleFreshSearch(card.queryText);
+                      }}
+                      className={`p-4 rounded-xl border transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 space-y-2.5 bg-white ${card.bg}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="p-2 rounded-lg bg-white shadow-2xs">
+                          {card.icon}
+                        </div>
+                        <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-slate-600 bg-white/80 px-2 py-0.5 rounded-md border border-slate-200/60">
+                          {card.badge}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-navy">{card.title}</h4>
+                        <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2">
+                          {card.desc}
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-primary">
+                        <span>Explore Matches</span>
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Filter Tag Pills */}
+              <div className="p-4 bg-slate-50/80 border border-slate-200/80 rounded-xl space-y-2">
+                <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Quick Search Suggestions:
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[
+                    'Airport Retail Concessions',
+                    'FMCG Food Procurement',
+                    'Packaging & Materials Supplier',
+                    'Hospitality & Hotel Sourcing',
+                    'Renewable Energy Components',
+                    'Enterprise SaaS Partner',
+                    'Automotive OEM Manufacturer',
+                  ].map((term) => (
+                    <button
+                      key={term}
+                      type="button"
+                      onClick={() => {
+                        setQuery(term);
+                        setShowSuggestions(false);
+                        handleFreshSearch(term);
+                      }}
+                      className="px-3 py-1 bg-white hover:bg-primary-soft text-slate-700 hover:text-primary rounded-lg text-xs font-semibold border border-slate-200/80 hover:border-primary/40 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
+                    >
+                      <span>{term}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ) : candidateResults.length === 0 ? (
