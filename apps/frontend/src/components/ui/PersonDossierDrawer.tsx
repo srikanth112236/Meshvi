@@ -6,7 +6,6 @@ import {
   Briefcase,
   Target,
   Send,
-  Building2,
   Calendar,
   Volume2,
   Play,
@@ -39,12 +38,12 @@ export const PersonDossierDrawer: React.FC<PersonDossierDrawerProps> = ({
   profileId,
   onOpenConnect,
   onOpenProposal: _onOpenProposal,
-  onOpenCompanyDossier,
+  onOpenCompanyDossier: _onOpenCompanyDossier,
 }) => {
   const { token } = useAuth();
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'intents' | 'company' | 'experience'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'intents' | 'experience'>('profile');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
@@ -267,69 +266,57 @@ export const PersonDossierDrawer: React.FC<PersonDossierDrawerProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('profile')}
-              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap ${
+              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === 'profile'
                   ? 'border-black text-navy font-extrabold'
-                  : 'border-transparent hover:text-navy'
+                  : 'border-transparent hover:text-navy text-text-muted'
               }`}
             >
               <Briefcase className="w-3.5 h-3.5" />
-              <span>360° Profile</span>
+              <span>Overview</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('intents')}
-              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap ${
+              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === 'intents'
                   ? 'border-black text-navy font-extrabold'
-                  : 'border-transparent hover:text-navy'
+                  : 'border-transparent hover:text-navy text-text-muted'
               }`}
             >
               <Target className="w-3.5 h-3.5" />
-              <span>Commercial Intents</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('company')}
-              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'company'
-                  ? 'border-black text-navy font-extrabold'
-                  : 'border-transparent hover:text-navy'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Company Dossier</span>
+              <span>Business Needs</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('experience')}
-              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap ${
+              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === 'experience'
                   ? 'border-black text-navy font-extrabold'
-                  : 'border-transparent hover:text-navy'
+                  : 'border-transparent hover:text-navy text-text-muted'
               }`}
             >
               <Calendar className="w-3.5 h-3.5" />
-              <span>Background</span>
+              <span>Experience</span>
             </button>
           </div>
 
           {/* Body Content */}
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 text-xs">
             {loading ? (
-              <div className="py-20 text-center text-text-muted">Loading decision maker dossier...</div>
+              <div className="py-20 text-center text-text-muted">Loading profile details...</div>
             ) : !profile ? (
-              <div className="py-20 text-center text-text-muted">Profile intelligence unavailable.</div>
+              <div className="py-20 text-center text-text-muted">Profile unavailable.</div>
             ) : (
               <>
-                {/* TAB 1: 360 PROFILE */}
+                {/* TAB 1: OVERVIEW */}
                 {activeTab === 'profile' && (
                   <div className="space-y-4">
                     {/* Executive Headline & Bio */}
                     {profile.headline && (
                       <div className="p-3.5 bg-bg rounded-xl border border-border">
                         <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block mb-1">
-                          Executive Stance & Mandate
+                          About & Objective
                         </span>
                         <p className="text-xs font-semibold text-navy italic">
                           "{profile.headline}"
@@ -662,90 +649,7 @@ export const PersonDossierDrawer: React.FC<PersonDossierDrawerProps> = ({
                   </div>
                 )}
 
-                {/* TAB 3: COMPANY DOSSIER LINK */}
-                {activeTab === 'company' && (
-                  <div className="space-y-4">
-                    {profile.company ? (
-                      <div className="p-4 bg-bg rounded-2xl border border-border space-y-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-xl bg-black text-white font-extrabold flex items-center justify-center text-sm">
-                            {profile.company.name?.[0] || 'C'}
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-extrabold text-navy">{profile.company.name}</h3>
-                            <p className="text-xs text-text-muted">
-                              {profile.company.domain || 'corporate-portal'} &bull;{' '}
-                              {profile.company.headquartersCountry || 'Global'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {profile.company.description && (
-                          <p className="text-xs text-text-muted leading-relaxed">
-                            {profile.company.description}
-                          </p>
-                        )}
-
-                        {/* Parent Group & Regional Branches */}
-                        {profile.company.subsidiaryRelations?.length > 0 && (
-                          <div className="p-3 bg-surface rounded-xl border border-border space-y-1.5">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-navy block">
-                              Operating Under Parent Holding
-                            </span>
-                            {profile.company.subsidiaryRelations.map((rel: any) => (
-                              <div key={rel.id} className="text-xs font-semibold text-navy flex items-center justify-between">
-                                <span>{rel.parentCompany?.name}</span>
-                                <span className="text-[9px] px-1.5 py-0.5 bg-neutral-100 rounded text-text-muted">
-                                  {rel.parentCompany?.headquartersCity}, {rel.parentCompany?.headquartersCountry}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {profile.company.parentRelations?.length > 0 && (
-                          <div className="p-3 bg-surface rounded-xl border border-border space-y-1.5">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-navy block">
-                              Global Branch Network ({profile.company.parentRelations.length} Hubs)
-                            </span>
-                            <div className="space-y-1">
-                              {profile.company.parentRelations.slice(0, 4).map((rel: any) => (
-                                <div key={rel.id} className="text-xs text-navy flex items-center justify-between">
-                                  <span className="truncate pr-2">{rel.subsidiary?.name}</span>
-                                  <span className="text-[9px] px-1.5 py-0.5 bg-indigo-50 text-indigo-700 font-bold rounded shrink-0">
-                                    {rel.subsidiary?.companyType || 'Branch'}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="pt-2 flex items-center space-x-2">
-                          {onOpenCompanyDossier && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onOpenCompanyDossier(profile.company.id);
-                                onClose();
-                              }}
-                              className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white font-bold text-xs rounded-xl transition-colors flex items-center space-x-1.5"
-                            >
-                              <Building2 className="w-3.5 h-3.5" />
-                              <span>Open Full 360° Company Dossier</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-8 text-center bg-bg rounded-xl border border-border text-text-muted">
-                        No corporate entity linked to this profile.
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* TAB 4: EXPERIENCE BACKGROUND */}
+                {/* TAB 3: EXPERIENCE BACKGROUND */}
                 {activeTab === 'experience' && (
                   <div className="space-y-3">
                     <span className="text-[11px] font-bold text-navy uppercase tracking-wider block">

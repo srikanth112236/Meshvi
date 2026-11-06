@@ -8,7 +8,6 @@ import {
   AlertCircle,
   Send,
   Building2,
-  Briefcase,
   TrendingUp,
 } from 'lucide-react';
 
@@ -26,7 +25,7 @@ export const WhyThisMatchModal: React.FC<WhyThisMatchModalProps> = ({
   onClose,
   match,
   onOpenConnect,
-  onOpenDossier,
+  onOpenDossier: _onOpenDossier,
   onOpenProposal,
 }) => {
   if (!isOpen || !match) return null;
@@ -230,20 +229,6 @@ export const WhyThisMatchModal: React.FC<WhyThisMatchModalProps> = ({
           </button>
 
           <div className="flex items-center space-x-2">
-            {profile.companyId && onOpenDossier && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenDossier(profile.companyId);
-                }}
-                className="px-3 py-1.5 bg-surface border border-border hover:bg-surface-muted text-navy rounded-lg text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-xs"
-              >
-                <Briefcase className="w-3.5 h-3.5 text-neutral-500" />
-                <span>Company Dossier</span>
-              </button>
-            )}
-
             {onOpenProposal && (
               <button
                 type="button"

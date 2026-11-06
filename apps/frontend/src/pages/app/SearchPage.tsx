@@ -483,7 +483,6 @@ export const SearchPage = () => {
   const [candidateViewMode, setCandidateViewMode] = useState<'LIST' | 'GRID'>('GRID');
   const [opportunityGraphData, setOpportunityGraphData] = useState<any | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
-  const [modeDropdownOpen, setModeDropdownOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   const handleCopyLink = () => {
@@ -1380,57 +1379,10 @@ export const SearchPage = () => {
       <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-xs space-y-2.5">
         {/* Top Canvas Bar (Mirrors Reference) */}
         <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
-          {/* Mode Selector Pill Dropdown */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setModeDropdownOpen(!modeDropdownOpen)}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-[#142B45] transition-all cursor-pointer shadow-2xs"
-            >
-              <span className="w-2 h-2 rounded-full bg-gradient-to-r from-[#078BCC] to-[#36C4E8] animate-pulse" />
-              <span>
-                {searchMode === 'DECISION_MAKERS'
-                  ? 'Decision Makers'
-                  : searchMode === 'ENTERPRISES'
-                    ? 'Enterprises'
-                    : searchMode === 'MARKET_CORRIDOR'
-                      ? 'Trade Corridors'
-                      : 'Opportunity Graph'}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
-
-            {modeDropdownOpen && (
-              <div className="absolute left-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95">
-                {[
-                  { mode: 'DECISION_MAKERS', label: 'Decision Makers', desc: 'Verified CXOs & procurement heads', icon: Users },
-                  { mode: 'ENTERPRISES', label: 'Enterprises', desc: 'Corporate accounts & sectors', icon: Building2 },
-                  { mode: 'MARKET_CORRIDOR', label: 'Trade Corridors', desc: 'Bilateral trade & freight', icon: Compass },
-                  { mode: 'OPPORTUNITY_GRAPH', label: 'Opportunity Graph', desc: 'Buying committee network', icon: Target },
-                ].map((item) => (
-                  <button
-                    key={item.mode}
-                    type="button"
-                    onClick={() => {
-                      setSearchMode(item.mode as any);
-                      setModeDropdownOpen(false);
-                      if (query.trim()) {
-                        handleSearch(query, item.mode as any);
-                      }
-                    }}
-                    className={`w-full flex items-start gap-2.5 p-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      searchMode === item.mode ? 'bg-slate-100 text-[#078BCC] font-bold' : 'hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <item.icon className="w-4 h-4 mt-0.5 shrink-0 text-[#078BCC]" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold leading-tight">{item.label}</p>
-                      <p className="text-[10px] text-slate-400 truncate">{item.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* Active Directory: Decision Makers */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs font-bold text-[#142B45] shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-gradient-to-r from-[#078BCC] to-[#36C4E8] animate-pulse" />
+            <span>Decision Makers</span>
           </div>
 
           {/* Right Action Tools */}
@@ -1531,15 +1483,7 @@ export const SearchPage = () => {
                 }
               }}
               onFocus={() => setShowSuggestions(true)}
-              placeholder={
-                searchMode === 'DECISION_MAKERS'
-                  ? 'Search by title, role, company, or objective, e.g. "Procurement head at Nestle"...'
-                  : searchMode === 'ENTERPRISES'
-                    ? 'Search by company name, domain, or sector, e.g. "Cold storage logistics"...'
-                    : searchMode === 'MARKET_CORRIDOR'
-                      ? 'Filter trade corridors by partner keyword or category...'
-                      : 'Describe your commercial goal to map buying committees...'
-              }
+              placeholder='Search by job title, name, company, or skills (e.g. "Procurement Head at Nestle")...'
               className="flex-1 bg-transparent border-none text-xs sm:text-sm text-navy placeholder:text-slate-400 font-medium focus:outline-none min-w-0"
             />
             {query && (
@@ -2137,7 +2081,7 @@ export const SearchPage = () => {
               Hello, {firstName}
             </p>
             <h1 className="text-lg sm:text-2xl font-black text-[#142B45] tracking-tight mb-4 text-center leading-snug">
-              How can I assist your search today?
+              How can I help you find business leaders today?
             </h1>
 
             {/* Central Interactive Search Box (Mirrors Reference) */}
@@ -2157,7 +2101,7 @@ export const SearchPage = () => {
                     setShowSuggestions(true);
                   }}
                   onFocus={() => setShowSuggestions(true)}
-                  placeholder="Ask me anything or search by title, role, company, objective..."
+                  placeholder="Ask anything or search by job title, company, name, or skills..."
                   className="w-full bg-transparent border-none text-xs sm:text-sm text-[#142B45] placeholder:text-slate-400 font-medium focus:outline-none mb-2 py-0.5"
                 />
 
@@ -2166,7 +2110,7 @@ export const SearchPage = () => {
                   <div className="flex items-center gap-1.5">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100 text-[#078BCC] text-[11px] font-bold border border-slate-200 shadow-2xs">
                       <Sparkles className="w-3 h-3" />
-                      <span>Executive Match</span>
+                      <span>Decision Makers</span>
                     </span>
                     <button
                       type="button"
@@ -2259,7 +2203,7 @@ export const SearchPage = () => {
                 )}
               </form>
 
-              {/* Sublinks below input: Saved Mandates */}
+              {/* Sublinks below input: Saved Searches */}
               <div className="flex items-center justify-start text-[10.5px] text-slate-400 font-semibold pt-2 px-0.5">
                 <button
                   type="button"
@@ -2267,31 +2211,31 @@ export const SearchPage = () => {
                   className="flex items-center gap-1.5 text-slate-500 hover:text-[#078BCC] transition-colors cursor-pointer"
                 >
                   <Sparkles className="w-3 h-3 text-amber-500" />
-                  <span>Saved Mandates ({savedSearches.length})</span>
+                  <span>Saved Searches ({savedSearches.length})</span>
                 </button>
               </div>
             </div>
 
-            {/* 3 Executive Suggestion Cards (Mirrors Reference - Compact) */}
+            {/* 3 Executive Suggestion Cards (Simple, intuitive, human English) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full mb-3.5">
               {[
                 {
                   icon: Clock,
-                  title: 'Synthesize Sourcing',
-                  subtitle: 'Find VP Procurement, Sourcing Directors & Supply Chain Heads.',
-                  q: 'Procurement Head & Sourcing VP',
+                  title: 'Procurement & Sourcing Leaders',
+                  subtitle: 'Find heads of procurement, sourcing managers, and purchasing directors.',
+                  q: 'Procurement Head & Sourcing Director',
                 },
                 {
                   icon: Lightbulb,
-                  title: 'Strategic Co-Ventures',
-                  subtitle: 'Explore joint ventures, technology alliances & distribution networks.',
-                  q: 'Strategic Technology Alliances & Co-Ventures',
+                  title: 'Strategic Partnerships',
+                  subtitle: 'Find business leaders open to partnerships, joint ventures, and new deals.',
+                  q: 'Partnerships & Business Development Director',
                 },
                 {
                   icon: ShieldCheck,
-                  title: 'Verified CXO Mandates',
-                  subtitle: 'Connect directly with pre-vetted enterprise decision makers.',
-                  q: 'Enterprise Chief Technology Officer',
+                  title: 'Senior Executives & CXOs',
+                  subtitle: 'Connect directly with verified CEOs, CTOs, VPs, and company executives.',
+                  q: 'Chief Executive Officer & VP',
                 },
               ].map((card, idx) => (
                 <button
@@ -2386,9 +2330,9 @@ export const SearchPage = () => {
             {/* Canvas Footer (Mirrors Reference - Compact) */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[10.5px] text-slate-400 w-full mt-2">
               <div className="flex items-center gap-1.5 mx-auto text-center">
-                <span>Join the Meshvi Enterprise community for verified executive matchmaking</span>
+                <span>Connect directly with verified business leaders across leading enterprises</span>
                 <Link to="/app/connections" className="text-[#078BCC] hover:underline font-bold">
-                  Directory Live
+                  View Directory
                 </Link>
               </div>
               <div className="hidden sm:flex items-center gap-2 text-slate-400">
@@ -3428,16 +3372,6 @@ export const SearchPage = () => {
                   </div>
 
                   <div className="flex items-center space-x-2 shrink-0 self-start sm:self-center">
-                    <button
-                      type="button"
-                      onClick={() => setDossierCompanyId(resultsData.matchedCompany.id)}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-navy border border-slate-200 rounded-xl text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-2xs cursor-pointer"
-                      title="360° Company Dossier"
-                    >
-                      <Briefcase className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Company Dossier</span>
-                    </button>
-
                     {!hasDecisionMakers && !isVerified && (
                       <button
                         type="button"
@@ -3932,7 +3866,7 @@ export const SearchPage = () => {
                             className="text-[10.5px] font-bold text-slate-600 hover:text-navy flex items-center space-x-1 transition-colors cursor-pointer"
                           >
                             <Eye className="w-3 h-3 text-slate-400" />
-                            <span>Dossier</span>
+                            <span>View Profile</span>
                           </button>
 
                           {r.profile.connectionStatus === 'CONNECTED' ? (
@@ -4050,10 +3984,10 @@ export const SearchPage = () => {
                           type="button"
                           onClick={() => r.profile?.id && setPersonDossierProfileId(r.profile.id)}
                           className="px-2.5 py-1.5 text-xs font-semibold rounded-xl text-slate-600 hover:text-navy hover:bg-slate-100 flex items-center space-x-1 transition-colors cursor-pointer"
-                          title="View 360 Dossier"
+                          title="View Profile"
                         >
                           <Eye className="w-3.5 h-3.5 text-slate-400" />
-                          <span>Dossier</span>
+                          <span>View Profile</span>
                         </button>
                         {r.profile.connectionStatus === 'CONNECTED' ? (
                           <div className="flex items-center space-x-1.5">
