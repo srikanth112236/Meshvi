@@ -67,12 +67,12 @@ const ALL_AVAILABLE_PAGES: PageItem[] = [
   },
   {
     id: 'member-partnerships',
-    title: 'Deal Rooms & Partnerships',
+    title: 'Partnerships & Opportunities',
     path: '/app/partnerships',
     category: 'Member Hub',
-    description: 'Active deal rooms, signed agreements, and partnership milestones',
+    description: 'Explore verified partnership opportunities and enterprise agreements',
     icon: Handshake,
-    keywords: ['deal rooms', 'deals', 'partnerships', 'nda', 'negotiation', 'contracts'],
+    keywords: ['partnerships', 'opportunities', 'collaboration', 'agreements', 'synergy'],
     requiredRole: 'USER',
   },
   {
@@ -660,7 +660,7 @@ export const UniversalCommandBar: React.FC<UniversalCommandBarProps> = ({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search available pages (e.g. 'deal rooms', 'pipeline', 'search', 'settings')..."
+            placeholder="Search available pages (e.g. 'search', 'partnerships', 'settings', 'network')..."
             className="flex-1 bg-transparent text-sm font-semibold text-navy placeholder:text-slate-400 focus:outline-none"
           />
           <div className="flex items-center space-x-1.5 shrink-0">
@@ -713,7 +713,7 @@ export const UniversalCommandBar: React.FC<UniversalCommandBarProps> = ({
               <Compass className="w-8 h-8 text-slate-300 mx-auto" />
               <p className="text-sm font-bold text-navy">No available pages found</p>
               <p className="text-xs text-slate-400">
-                No matching routes for "{query}". Try searching for "search", "deals", "settings", or "dashboard".
+                No matching routes for "{query}". Try searching for "search", "partnerships", "settings", or "network".
               </p>
             </div>
           ) : (

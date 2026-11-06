@@ -18,8 +18,6 @@ import {
   Play,
   Pause,
   ListChecks,
-  Building2,
-  ArrowRight,
   Phone,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -363,43 +361,12 @@ export const RequestsPage = () => {
 
         <div className="flex items-center flex-wrap gap-2 shrink-0">
           <Link
-            to="/company/pipeline"
-            className="px-3.5 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center space-x-1.5"
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Company Pipeline &rarr;</span>
-          </Link>
-          <Link
             to="/app/connections"
             className="px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs"
           >
             Active Connections &rarr;
           </Link>
         </div>
-      </div>
-
-      {/* Corporate Inbound Pipeline Notice Banner */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-black text-white flex items-center justify-center shrink-0">
-            <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
-          </div>
-          <div>
-            <h4 className="text-xs font-black text-navy uppercase tracking-wider">
-              Corporate Inbound CRM Pipeline
-            </h4>
-            <p className="text-xs text-text-muted mt-0.5">
-              Looking for inbound inquiries sent to your corporate brand or team? Manage company-wide triage, deal rooms, and SLAs in your Corporate Inbound Pipeline.
-            </p>
-          </div>
-        </div>
-        <Link
-          to="/company/pipeline"
-          className="px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-all shrink-0 flex items-center space-x-1.5 shadow-xs"
-        >
-          <span>Open Pipeline</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
       </div>
 
       {/* Tabs */}

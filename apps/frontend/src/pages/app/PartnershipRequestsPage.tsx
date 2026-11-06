@@ -108,9 +108,9 @@ export const PartnershipRequestsPage: React.FC = () => {
           <div className="flex items-center space-x-2">
             <span className="px-2.5 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1">
               <Handshake className="w-3 h-3" />
-              <span>Bilateral Pipeline Tracker</span>
+              <span>Bilateral Request Tracker</span>
             </span>
-            <span className="text-xs text-text-muted">• Executive Deal Flow</span>
+            <span className="text-xs text-text-muted">• Direct Commercial Mandates</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-navy tracking-tight">
             Partnership Requests & Inquiries
