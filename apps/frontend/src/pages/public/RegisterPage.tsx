@@ -359,13 +359,21 @@ export const RegisterPage: React.FC = () => {
           {/* Header Row */}
           <div className="flex items-center justify-between">
             {/* Brand Logo */}
-            <Link to="/" className="flex items-center group">
-              <div className="px-3.5 py-2 rounded-xl bg-[#078BCC] hover:bg-[#0679B2] transition-colors shadow-2xs flex items-center">
+            <Link to="/" className="flex items-center space-x-2.5 group">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#078BCC] to-[#056FA8] flex items-center justify-center p-1.5 shadow-sm shrink-0 transition-transform group-hover:scale-105">
                 <img
-                  src="/meshvi-logo-white.png"
+                  src="/meshvi-mark.png"
                   alt="Meshvi"
-                  className="h-6 sm:h-7 w-auto object-contain"
+                  className="w-full h-full object-contain brightness-0 invert"
                 />
+              </div>
+              <div className="min-w-0">
+                <span className="text-base font-black text-[#142B45] tracking-tight block leading-tight">
+                  Meshvi
+                </span>
+                <span className="text-[9px] font-extrabold text-[#078BCC] tracking-[0.22em] uppercase block leading-tight">
+                  ENTERPRISE
+                </span>
               </div>
             </Link>
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ShieldCheck, Sparkles, Building2, Users, CheckCircle2 } from 'lucide-react';
 
 export const AuthShowcasePanel: React.FC = () => {
   return (
@@ -10,12 +11,16 @@ export const AuthShowcasePanel: React.FC = () => {
 
       {/* Top Text Content */}
       <div className="relative z-10 max-w-md">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/40 border border-white/60 text-slate-800 text-[11px] font-bold shadow-2xs mb-3 backdrop-blur-md">
+          <Sparkles className="w-3.5 h-3.5 text-[#078BCC]" />
+          <span>Verified Executive Directory</span>
+        </div>
         <h2 className="text-2xl sm:text-3xl lg:text-[32px] font-bold text-slate-900 tracking-tight leading-[1.18]">
-          Build, Deploy & Manage<br />
-          Enterprise AI Agents
+          Connect with Verified<br />
+          Enterprise Leaders
         </h2>
-        <p className="text-xs sm:text-sm text-slate-600/95 mt-3 leading-relaxed font-normal">
-          Manage every AI agent, workflow, and business automation from one intelligent platform built for modern enterprises.
+        <p className="text-xs sm:text-sm text-slate-700 mt-2.5 leading-relaxed font-normal">
+          Directly reach verified CXOs, procurement heads, and decision makers. Spam-free executive matchmaking with mutual consent.
         </p>
       </div>
 
@@ -74,7 +79,7 @@ export const AuthShowcasePanel: React.FC = () => {
             {/* Glossy specular top reflection */}
             <div className="absolute top-1 inset-x-2 h-4 rounded-t-xl bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
 
-            {/* Central White Mark (Sparkle / Starburst / Meshvi Logo) */}
+            {/* Central White Mark (Meshvi Logo Mark) */}
             <div className="relative z-10 w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center drop-shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
               <img
                 src="/meshvi-mark.png"
@@ -86,53 +91,70 @@ export const AuthShowcasePanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Floating Frosted Glass Agent Status Cards */}
-      <div className="relative z-10 space-y-2.5 sm:space-y-3 mt-16 sm:mt-24">
-        {/* Card 1: Active Working Agent */}
-        <div className="backdrop-blur-xl bg-white/30 border border-white/50 shadow-[0_8px_25px_rgba(15,23,42,0.05),0_1px_2px_rgba(255,255,255,0.5)_inset] rounded-2xl p-3.5 sm:p-4 flex items-center justify-between text-xs sm:text-sm text-slate-800 transition-all hover:bg-white/35">
-          <div className="flex items-center space-x-3 overflow-hidden pr-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-white shadow-xs shrink-0" />
-            <div className="font-normal text-slate-800 text-[11px] sm:text-xs tracking-tight truncate">
-              Identify code optimization opportunities and performance improvements
-              <span className="inline-block w-[1.5px] h-3 bg-slate-800 ml-1 animate-pulse align-middle" />
+      {/* Bottom Floating Frosted Glass Live Match Cards */}
+      <div className="relative z-10 space-y-2.5 sm:space-y-3 mt-12 sm:mt-16">
+        {/* Card 1: Active Executive Match */}
+        <div className="backdrop-blur-xl bg-white/40 border border-white/60 shadow-[0_8px_25px_rgba(15,23,42,0.06),0_1px_2px_rgba(255,255,255,0.6)_inset] rounded-2xl p-3.5 sm:p-4 flex items-center justify-between transition-all hover:bg-white/50 group">
+          <div className="flex items-center space-x-3 overflow-hidden pr-2 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#142B45] to-[#078BCC] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+              <Users className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-slate-900 text-xs sm:text-[13px] truncate">
+                Procurement Head & Sourcing VP
+              </div>
+              <p className="text-[10.5px] text-slate-600 truncate mt-0.5">
+                Global Enterprise Network &bull; 96% Match Fit
+              </p>
             </div>
           </div>
-          <div className="flex items-center space-x-1.5 shrink-0 text-[11px] sm:text-xs font-medium text-slate-700">
-            <span>Working...</span>
+          <div className="flex items-center space-x-1.5 shrink-0 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10.5px] font-bold text-emerald-800">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
+            <span>Verified Peer</span>
           </div>
         </div>
 
-        {/* Card 2: Completed Step */}
-        <div className="backdrop-blur-xl bg-white/20 border border-white/35 shadow-[0_8px_20px_rgba(15,23,42,0.03),0_1px_2px_rgba(255,255,255,0.3)_inset] rounded-2xl p-3.5 sm:p-4 flex items-center justify-between text-xs sm:text-sm text-slate-700 transition-all">
-          <div className="flex items-center space-x-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-white/70 shrink-0" />
-            <div className="space-y-1.5 py-0.5">
-              <div className="w-32 sm:w-40 h-2 bg-white/50 rounded-full" />
-              <div className="w-20 sm:w-24 h-1.5 bg-white/30 rounded-full" />
+        {/* Card 2: Enterprise Deal Room */}
+        <div className="backdrop-blur-xl bg-white/30 border border-white/45 shadow-[0_8px_20px_rgba(15,23,42,0.04),0_1px_2px_rgba(255,255,255,0.4)_inset] rounded-2xl p-3.5 sm:p-4 flex items-center justify-between transition-all hover:bg-white/40">
+          <div className="flex items-center space-x-3 overflow-hidden pr-2 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-white/80 border border-white text-[#078BCC] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+              <Building2 className="w-4 h-4 text-[#078BCC]" />
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-slate-900 text-xs sm:text-[13px] truncate">
+                Enterprise Cloud & AI Director
+              </div>
+              <p className="text-[10.5px] text-slate-600 truncate mt-0.5">
+                Infosys &bull; 2 Active Deal Rooms
+              </p>
             </div>
           </div>
-          <div className="flex items-center space-x-1.5 shrink-0 text-[11px] sm:text-xs font-medium text-slate-700">
-            <span>Done</span>
-            <span className="inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-xs"></span>
+          <div className="flex items-center space-x-1.5 shrink-0 px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-[10.5px] font-bold text-blue-800">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+            <span>Direct Access</span>
           </div>
         </div>
 
-        {/* Card 3: Completed Step (Slightly faded for depth) */}
-        <div className="backdrop-blur-xl bg-white/15 border border-white/25 shadow-[0_8px_20px_rgba(15,23,42,0.02)] rounded-2xl p-3.5 sm:p-4 flex items-center justify-between text-xs sm:text-sm text-slate-600 transition-all opacity-85">
-          <div className="flex items-center space-x-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-white/50 shrink-0" />
-            <div className="space-y-1.5 py-0.5">
-              <div className="w-24 sm:w-32 h-2 bg-white/35 rounded-full" />
-              <div className="w-14 sm:w-18 h-1.5 bg-white/20 rounded-full" />
+        {/* Card 3: Mutual Direct Connection */}
+        <div className="backdrop-blur-xl bg-white/25 border border-white/35 shadow-[0_8px_20px_rgba(15,23,42,0.03)] rounded-2xl p-3 sm:p-3.5 flex items-center justify-between transition-all opacity-95">
+          <div className="flex items-center space-x-3 overflow-hidden pr-2 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-slate-900 text-xs truncate">
+                VP Strategic Partnerships
+              </div>
+              <p className="text-[10px] text-slate-600 truncate">
+                Direct communication coordinates unlocked
+              </p>
             </div>
           </div>
-          <div className="flex items-center space-x-1.5 shrink-0 text-[11px] sm:text-xs font-medium text-slate-600">
-            <span>Done</span>
-            <span className="inline-flex rounded-full h-2 w-2 bg-emerald-500/80"></span>
+          <div className="flex items-center space-x-1 shrink-0 px-2 py-0.5 rounded-full bg-white/60 text-[10px] font-bold text-slate-700 border border-white">
+            <span>Connected</span>
           </div>
         </div>
       </div>

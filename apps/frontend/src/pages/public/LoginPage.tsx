@@ -172,13 +172,21 @@ export const LoginPage: React.FC = () => {
           {/* Header Row */}
           <div className="flex items-center justify-between">
             {/* Brand Logo */}
-            <Link to="/" className="flex items-center group">
-              <div className="px-3.5 py-2 rounded-xl bg-[#078BCC] hover:bg-[#0679B2] transition-colors shadow-2xs flex items-center">
+            <Link to="/" className="flex items-center space-x-2.5 group">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#078BCC] to-[#056FA8] flex items-center justify-center p-1.5 shadow-sm shrink-0 transition-transform group-hover:scale-105">
                 <img
-                  src="/meshvi-logo-white.png"
+                  src="/meshvi-mark.png"
                   alt="Meshvi"
-                  className="h-6 sm:h-7 w-auto object-contain"
+                  className="w-full h-full object-contain brightness-0 invert"
                 />
+              </div>
+              <div className="min-w-0">
+                <span className="text-base font-black text-[#142B45] tracking-tight block leading-tight">
+                  Meshvi
+                </span>
+                <span className="text-[9px] font-extrabold text-[#078BCC] tracking-[0.22em] uppercase block leading-tight">
+                  ENTERPRISE
+                </span>
               </div>
             </Link>
 
@@ -197,8 +205,8 @@ export const LoginPage: React.FC = () => {
           {/* Center Form Area */}
           <div className="w-full max-w-[360px] mx-auto py-8 sm:py-10">
             {/* Avatar Pill / Icon Squircle */}
-            <div className="w-12 h-12 rounded-2xl bg-slate-100/90 border border-slate-200/60 flex items-center justify-center mx-auto mb-4 text-slate-500 shadow-2xs">
-              <User className="w-5 h-5" strokeWidth={1.8} />
+            <div className="w-12 h-12 rounded-2xl bg-slate-100/90 border border-slate-200/60 flex items-center justify-center mx-auto mb-4 text-[#078BCC] shadow-2xs">
+              <User className="w-5 h-5" strokeWidth={2} />
             </div>
 
             {/* Title & Subtitle */}
@@ -206,7 +214,7 @@ export const LoginPage: React.FC = () => {
               Welcome back
             </h1>
             <p className="text-xs text-slate-500 text-center mt-1.5 mb-6">
-              Sign in to Meshvi in minutes.
+              Sign in to connect with verified business leaders.
             </p>
 
             {/* Password Reset Notice */}
@@ -321,12 +329,12 @@ export const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 px-4 bg-[#0a0d12] hover:bg-black text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-150 active:scale-[0.99] flex items-center justify-center gap-2 mt-4 cursor-pointer disabled:opacity-50"
+                className="w-full h-11 px-4 bg-[#142B45] hover:bg-[#078BCC] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs hover:shadow-[#078BCC]/20 transition-all duration-150 active:scale-[0.99] flex items-center justify-center gap-2 mt-4 cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <span>Sign in with Email</span>
+                  <span>Sign In</span>
                 )}
               </button>
             </form>
