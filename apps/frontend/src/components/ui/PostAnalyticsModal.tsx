@@ -54,7 +54,7 @@ export const PostAnalyticsModal: React.FC<Props> = ({ post, isOpen, onClose }) =
             </div>
             <div>
               <h3 className="text-base font-bold text-navy">Post Analytics & Performance</h3>
-              <p className="text-xs text-text-muted">LinkedIn-style visibility & bilateral engagement metrics</p>
+              <p className="text-xs text-text-muted">Post views, profile visits, and partner engagement metrics</p>
             </div>
           </div>
           <button

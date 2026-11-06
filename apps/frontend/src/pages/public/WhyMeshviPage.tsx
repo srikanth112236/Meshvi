@@ -24,7 +24,7 @@ export const WhyMeshviPage = () => {
     },
     {
       feature: 'Spam & Noise Protection',
-      meshvi: '100% Zero Spam. Mandatory bilateral double-opt-in',
+      meshvi: '100% Zero Spam. Both people must agree to connect',
       linkedin: 'High noise; pay-to-spam InMail allowed',
       coldEmail: 'Severe; flooded inboxes and spam filters',
       headhunter: 'Low volume, but high commission pressure',
@@ -45,7 +45,7 @@ export const WhyMeshviPage = () => {
     },
     {
       feature: 'Deal Acceleration Tooling',
-      meshvi: 'Bilateral Deal Rooms, Mutual NDAs, & Milestone tracking',
+      meshvi: 'Private Deal Rooms, Quick Mutual NDAs & Milestone tracking',
       linkedin: 'Casual text chat inbox',
       coldEmail: 'Email threads with easily lost attachments',
       headhunter: 'Manual PDF exchanges over months',
@@ -63,13 +63,13 @@ export const WhyMeshviPage = () => {
     {
       icon: Clock,
       title: 'Save 80+ Hours on Executive Sourcing',
-      desc: 'Instead of having your analysts spend weeks sifting through thousands of irrelevant profiles, Meshvi isolates matching commercial intent in seconds.',
+      desc: 'Instead of having your analysts spend weeks sifting through thousands of irrelevant profiles, Meshvi finds matching business partners in seconds.',
       badge: 'Speed to Meeting',
     },
     {
       icon: Lock,
-      title: 'Bilateral Privacy & Zero Inbound Spam',
-      desc: 'Your direct contact credentials remain strictly confidential. You only communicate with verified peers after reviewing their business rationale and mutually consenting.',
+      title: 'Private & 100% Spam-Free',
+      desc: 'Your direct contact details remain completely private. You only talk to verified professionals after reviewing their reason and both agreeing.',
       badge: 'Executive Privacy',
     },
     {
@@ -80,8 +80,8 @@ export const WhyMeshviPage = () => {
     },
     {
       icon: FileCheck2,
-      title: 'Cryptographic Deal Rooms & Mutual NDAs',
-      desc: 'Convert warm conversations into commercial execution. One-click Mutual NDAs, milestone deliverables, and bilateral document vaults built-in.',
+      title: 'Secure Private Deal Rooms & Easy NDAs',
+      desc: 'Convert conversations into real deals. One-click Mutual NDAs, milestone deliverables, and private document vaults built-in.',
       badge: 'Deal Rooms',
     },
   ];
@@ -106,7 +106,7 @@ export const WhyMeshviPage = () => {
               </span>
             </h1>
             <p className="text-sm sm:text-lg text-text-muted leading-relaxed max-w-3xl mx-auto">
-              Cold email outreach is dying. LinkedIn InMails are ignored. Executive deals require verified identity, clear business intent, and bilateral consent. Here is why the world’s founders and C-suite leaders choose Meshvi.
+              Cold email outreach is dying. LinkedIn InMails are ignored. Real business partnerships require verified identity, clear needs, and mutual agreement. Here is why founders and business leaders choose Meshvi.
             </p>
           </MotionContainer>
 
@@ -136,10 +136,10 @@ export const WhyMeshviPage = () => {
             Calculated Executive ROI
           </span>
           <h2 className="text-3xl sm:text-5xl font-black text-navy tracking-tight">
-            Built for Executive Velocity & Bilateral Trust
+            Built for Business Speed & Complete Trust
           </h2>
           <p className="text-sm sm:text-base text-text-muted leading-relaxed">
-            Eliminate endless back-and-forth qualification calls. Discover the exact executive partner whose active intent mirrors your own.
+            Eliminate endless back-and-forth qualification calls. Discover the exact business partner looking for what you offer.
           </p>
         </div>
 
@@ -178,7 +178,7 @@ export const WhyMeshviPage = () => {
               Meshvi vs. Traditional Outreach Channels
             </h2>
             <p className="text-xs sm:text-sm text-text-muted">
-              See why high-net-worth founders, C-level executives, and institutional partners avoid generic social channels in favor of Meshvi’s bilateral architecture.
+              See why high-growth founders and executives avoid noisy social networks in favor of Meshvi's spam-free, verified network.
             </p>
           </div>
 
@@ -244,7 +244,7 @@ export const WhyMeshviPage = () => {
           </h2>
 
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            Experience deterministic commercial search, grounded relevance rubrics, and confidential bilateral deal execution.
+            Find the right business partners instantly, see clear match reasons, and close deals in private, secure rooms.
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">

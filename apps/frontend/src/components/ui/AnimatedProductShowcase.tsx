@@ -89,10 +89,10 @@ export const AnimatedProductShowcase = ({ onWatchVideoClick }: AnimatedProductSh
                 Step 1: State the outcome
               </span>
               <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Search with Intent, Not Keywords.
+                Find by What You Need, Not Keywords.
               </h3>
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                Describe the exact commercial outcome you need. MESHVI automatically normalizes your intent and searches verified corporate records.
+                Describe what your business needs in normal English. Meshvi automatically connects you with verified decision-makers.
               </p>
             </div>
 
@@ -252,10 +252,10 @@ export const AnimatedProductShowcase = ({ onWatchVideoClick }: AnimatedProductSh
                 Step 3: Direct Commercial Execution
               </span>
               <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                From Handshake to Signed Bilateral Deal Room.
+                From Introduction to Signed Deal in a Private Room.
               </h3>
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                Both sides accepted. No unrecorded promises or lost email threads. Mutual MNDA executed automatically in an encrypted vault.
+                Both sides agreed to connect. Keep all promises, agreements, and files safely in one secure room.
               </p>
             </div>
 
@@ -317,7 +317,7 @@ export const AnimatedProductShowcase = ({ onWatchVideoClick }: AnimatedProductSh
         <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3 text-xs text-slate-400">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>Zero cold spam &bull; Bilateral double-opt-in &bull; Real enterprise records</span>
+            <span>Zero cold spam &bull; Both sides must agree &bull; Verified business profiles</span>
           </div>
 
           <div className="flex items-center space-x-3">

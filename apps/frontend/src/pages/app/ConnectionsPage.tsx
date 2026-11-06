@@ -111,7 +111,7 @@ export const ConnectionsPage = () => {
   void _quota;
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
   const [selectedConnection, setSelectedConnection] = useState<ActiveConnection | null>(null);
 
   // Modal triage targets
@@ -365,53 +365,71 @@ export const ConnectionsPage = () => {
   ];
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
-      {/* Header Card */}
-      <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+    <div className="space-y-3 sm:space-y-3.5 max-w-7xl mx-auto">
+      {/* Top Network Destinations Tab Bar */}
+      <div className="flex items-center space-x-1.5 border-b border-border pb-2">
+        <Link
+          to="/app/connections"
+          className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-navy text-white shadow-xs flex items-center space-x-1.5"
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>My Connections ({connections.length})</span>
+        </Link>
+        <Link
+          to="/app/introductions"
+          className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-text-muted hover:text-navy hover:bg-surface-muted transition-colors flex items-center space-x-1.5"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          <span>Warm Introductions</span>
+        </Link>
+      </div>
+
+      {/* Header Card (Compact & Tight) */}
+      <div className="bg-surface border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-primary flex items-center space-x-1.5">
-            <Users className="w-3.5 h-3.5" />
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-primary flex items-center space-x-1">
+            <Users className="w-3 h-3" />
             <span>Professional Network Directory</span>
           </span>
-          <h1 className="text-xl sm:text-2xl font-black text-navy mt-1 tracking-tight">Connections Hub</h1>
-          <p className="text-xs text-text-muted mt-0.5">
-            Verified direct connections, inbound executive proposals, and relationship channels.
+          <h1 className="text-lg sm:text-xl font-black text-navy mt-0.5 tracking-tight">Connections Hub</h1>
+          <p className="text-[11px] text-text-muted mt-0.5">
+            Verified direct connections, inbound partner requests, and direct communication channels.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2.5 shrink-0">
+        <div className="flex items-center space-x-2 shrink-0">
           <Link
             to="/app/search"
-            className="px-3.5 sm:px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center space-x-1.5"
+            className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
           >
-            <Send className="w-3.5 h-3.5" />
+            <Send className="w-3 h-3" />
             <span>{connections.length === 0 ? 'Find your first Connection' : 'Find Contacts'}</span>
           </Link>
         </div>
       </div>
 
-      {/* 3 Status KPI Metric Cards: Active, Pending Inbound, Sent Outgoing */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+      {/* 3 Status KPI Metric Cards: Compact & Tight-Spaced */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
         <button
           type="button"
           onClick={() => setActiveTab('CONNECTIONS')}
-          className={`p-4 rounded-2xl border text-left transition-all ${
+          className={`p-3 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-2xs ${
             activeTab === 'CONNECTIONS'
-              ? 'bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-400/40 shadow-xs'
+              ? 'bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-400/30'
               : 'bg-surface border-border hover:border-emerald-200'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-900 flex items-center space-x-1.5">
+            <span className="text-[11px] font-bold text-emerald-900 flex items-center space-x-1.5">
               <Users className="w-3.5 h-3.5 text-emerald-600" />
               <span>Active Connections</span>
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+            <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-emerald-100 text-emerald-800">
               Verified
             </span>
           </div>
-          <div className="text-2xl font-black text-navy mt-1.5">{connections.length}</div>
-          <p className="text-[11px] text-text-muted mt-0.5">
+          <div className="text-xl sm:text-2xl font-black text-navy mt-1">{connections.length}</div>
+          <p className="text-[10.5px] text-text-muted mt-0.5 truncate">
             Direct 1st-degree business relationships
           </p>
         </button>
@@ -419,50 +437,54 @@ export const ConnectionsPage = () => {
         <button
           type="button"
           onClick={() => setActiveTab('INCOMING')}
-          className={`p-4 rounded-2xl border text-left transition-all ${
+          className={`p-3 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-2xs ${
             activeTab === 'INCOMING'
-              ? 'bg-amber-50/70 border-amber-300 ring-2 ring-amber-400/40 shadow-xs'
+              ? 'bg-amber-50/70 border-amber-300 ring-2 ring-amber-400/30'
               : 'bg-surface border-border hover:border-amber-200'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-900 flex items-center space-x-1.5">
+            <span className="text-[11px] font-bold text-amber-900 flex items-center space-x-1.5">
               <Inbox className="w-3.5 h-3.5 text-amber-600" />
               <span>Pending Inbound</span>
             </span>
-            {incomingRequests.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white animate-pulse">
+            {incomingRequests.length > 0 ? (
+              <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-amber-500 text-white animate-pulse">
                 Action Required
+              </span>
+            ) : (
+              <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-medium bg-amber-100 text-amber-800">
+                Inbound
               </span>
             )}
           </div>
-          <div className="text-2xl font-black text-navy mt-1.5">{incomingRequests.length}</div>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            Connection proposals awaiting your response
+          <div className="text-xl sm:text-2xl font-black text-navy mt-1">{incomingRequests.length}</div>
+          <p className="text-[10.5px] text-text-muted mt-0.5 truncate">
+            Connection proposals awaiting response
           </p>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('OUTGOING')}
-          className={`p-4 rounded-2xl border text-left transition-all ${
+          className={`p-3 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-2xs ${
             activeTab === 'OUTGOING'
-              ? 'bg-sky-50/70 border-sky-300 ring-2 ring-sky-400/40 shadow-xs'
+              ? 'bg-sky-50/70 border-sky-300 ring-2 ring-sky-400/30'
               : 'bg-surface border-border hover:border-sky-200'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-sky-900 flex items-center space-x-1.5">
+            <span className="text-[11px] font-bold text-sky-900 flex items-center space-x-1.5">
               <Send className="w-3.5 h-3.5 text-sky-600" />
               <span>Sent Proposals</span>
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">
+            <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-sky-100 text-sky-800">
               Outgoing
             </span>
           </div>
-          <div className="text-2xl font-black text-navy mt-1.5">{outgoingRequests.length}</div>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            Connection bridges you initiated to executives
+          <div className="text-xl sm:text-2xl font-black text-navy mt-1">{outgoingRequests.length}</div>
+          <p className="text-[10.5px] text-text-muted mt-0.5 truncate">
+            Connection requests you sent to partners
           </p>
         </button>
       </div>
@@ -590,7 +612,7 @@ export const ConnectionsPage = () => {
                 Build Your Executive Network
               </h3>
               <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                You haven't established any connections yet. Use the Intent Search to discover verified decision-makers, commercial buyers, and strategic counterparts.
+                You don't have any connections yet. Search by what you need to discover verified decision-makers, commercial buyers, and strategic partners.
               </p>
             </div>
 
@@ -644,84 +666,85 @@ export const ConnectionsPage = () => {
             emptySubtitle="No connections match your search filter."
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredConnections.map((conn) => (
               <div
                 key={conn.id}
                 onClick={() => setSelectedConnection(conn)}
-                className="bg-surface border border-border hover:border-primary/40 rounded-2xl p-5 shadow-xs transition-all flex flex-col justify-between space-y-4 cursor-pointer hover:shadow-sm"
+                className="bg-white border border-border/80 hover:border-primary/50 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between space-y-4 cursor-pointer group text-center relative"
               >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-navy text-white font-bold text-sm flex items-center justify-center shrink-0">
-                        {conn.partner.fullName[0]?.toUpperCase() || 'U'}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-navy">{conn.partner.fullName}</h3>
-                        <p className="text-xs text-text-muted line-clamp-1">
-                          {conn.partner.headline || conn.partner.function || 'Industry Professional'}
-                        </p>
-                      </div>
+                {/* Status Dot & Tenure */}
+                <div className="flex items-center justify-between w-full">
+                  <span className="inline-flex items-center text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
+                    Verified Partner
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDisconnect(conn.id, conn.partner.fullName);
+                    }}
+                    className="p-1 text-text-muted hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                    title="Disconnect"
+                  >
+                    <UserMinus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Centered Avatar */}
+                <div className="flex flex-col items-center space-y-2 pt-1">
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#102B45] to-[#078BCC] text-white font-black text-xl flex items-center justify-center shadow-sm">
+                      {conn.partner.fullName[0]?.toUpperCase() || 'U'}
                     </div>
-                    {(() => {
-                      const days = Math.max(
-                        0,
-                        Math.floor((Date.now() - new Date(conn.connectedAt).getTime()) / (1000 * 60 * 60 * 24))
-                      );
-                      return (
-                        <span className="inline-flex items-center text-[10px] font-extrabold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
-                          <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-700" />
-                          <span>Connected &bull; {days === 0 ? 'Today' : `${days}d`}</span>
-                        </span>
-                      );
-                    })()}
+                    <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-2xs" />
                   </div>
-
-                  {conn.partner.companyName && (
-                    <div className="flex items-center text-xs text-text-muted space-x-1.5 pt-1">
-                      <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <span className="font-medium text-navy">{conn.partner.companyName}</span>
-                    </div>
-                  )}
-
-                  <div className="p-2.5 bg-surface-muted rounded-xl border border-border/50 text-[11px] text-text-muted">
-                    <span className="font-semibold text-navy">Business Context: </span>
-                    <span className="line-clamp-2">"{conn.businessReason}"</span>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-navy group-hover:text-primary transition-colors">
+                      {conn.partner.fullName}
+                    </h3>
+                    <p className="text-xs text-text-muted font-medium line-clamp-1 max-w-[200px] mx-auto">
+                      {conn.partner.headline || conn.partner.function || 'Executive Leader'}
+                    </p>
+                    {conn.partner.companyName && (
+                      <p className="text-[11px] font-bold text-primary mt-0.5 flex items-center justify-center space-x-1">
+                        <Building2 className="w-3 h-3" />
+                        <span>{conn.partner.companyName}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-border flex items-center justify-between text-[11px] text-text-muted">
-                  <span>Since {new Date(conn.connectedAt).toLocaleDateString()}</span>
-                  <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadVCard(conn)}
-                      className="p-1 text-text-muted hover:text-emerald-700"
-                      title="vCard"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const partner = conn.partner;
-                        navigate(`/app/messages?userId=${partner.userId}&name=${encodeURIComponent(partner.fullName)}&company=${encodeURIComponent(partner.companyName || '')}&role=${encodeURIComponent(partner.headline || partner.function || '')}`);
-                      }}
-                      className="p-1 text-text-muted hover:text-navy"
-                      title="Chat"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDisconnect(conn.id, conn.partner.fullName)}
-                      className="p-1 text-text-muted hover:text-rose-600 transition-colors"
-                      title="Remove / Disconnect"
-                    >
-                      <UserMinus className="w-3.5 h-3.5" />
-                    </button>
+                {/* Business Reason Quote */}
+                {conn.businessReason && (
+                  <div className="p-2 bg-slate-50 rounded-xl border border-border/60 text-[11px] text-text-muted line-clamp-2 text-left italic">
+                    "{conn.businessReason}"
                   </div>
+                )}
+
+                {/* Bottom Action Pill Buttons (Fillow style) */}
+                <div className="pt-2 border-t border-border flex items-center justify-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const partner = conn.partner;
+                      navigate(`/app/messages?userId=${partner.userId}&name=${encodeURIComponent(partner.fullName)}&company=${encodeURIComponent(partner.companyName || '')}&role=${encodeURIComponent(partner.headline || partner.function || '')}`);
+                    }}
+                    className="flex-1 py-1.5 px-3 bg-sky-50 hover:bg-[#078BCC] text-[#078BCC] hover:text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-2xs"
+                    title="Direct Message"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Message</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadVCard(conn)}
+                    className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl border border-border transition-colors"
+                    title="Export vCard (.vcf)"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -786,10 +809,10 @@ export const ConnectionsPage = () => {
                     </div>
                   </div>
 
-                  {/* Business Intent Box */}
+                  {/* Business Reason Box */}
                   <div className="p-3.5 bg-surface-muted rounded-xl border border-border text-xs text-navy leading-relaxed">
                     <span className="font-bold text-navy block text-[11px] uppercase tracking-wider mb-1">
-                      Business Proposition / Intent:
+                      Reason for Connecting:
                     </span>
                     <p className="italic">"{req.businessReason}"</p>
                   </div>
@@ -897,7 +920,7 @@ export const ConnectionsPage = () => {
               <Mail className="w-10 h-10 text-text-muted mx-auto mb-2 opacity-50" />
               <h3 className="text-sm font-bold text-navy">No Outgoing Proposals</h3>
               <p className="text-xs text-text-muted mt-1 max-w-sm mx-auto">
-                You haven't initiated any connection proposals recently. Discover partners using Intent Search.
+                You haven't sent any connection requests recently. Search by what you need to find verified partners.
               </p>
               <Link
                 to="/app/search"
@@ -1084,10 +1107,10 @@ export const ConnectionsPage = () => {
                 <div className="p-3 bg-surface border border-border rounded-xl space-y-1">
                   <div className="text-text-muted text-[10px] font-semibold flex items-center space-x-1">
                     <CheckCircle2 className="w-3 h-3 text-success" />
-                    <span>Protocol</span>
+                    <span>Status</span>
                   </div>
                   <div className="font-bold text-success truncate">
-                    Intent Verified
+                    Both Agreed
                   </div>
                 </div>
               </div>
@@ -1096,7 +1119,7 @@ export const ConnectionsPage = () => {
             {/* Business Objective & Context */}
             <div className="space-y-2">
               <h4 className="text-[11px] font-bold uppercase tracking-wider text-navy">
-                Verified Business Intent
+                Why They Wanted to Connect
               </h4>
               <div className="p-4 bg-primary-soft/40 border border-primary/20 rounded-2xl text-xs text-navy leading-relaxed">
                 "{selectedConnection.businessReason}"

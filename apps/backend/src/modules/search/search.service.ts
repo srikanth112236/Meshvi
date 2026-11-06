@@ -45,10 +45,19 @@ export interface LaymanTransparency {
   nonMatchOrBroadenedFactors: string[];
 }
 
+export interface MatchSegments {
+  totalScore: number;
+  industryRelevance: number;
+  requirementRelevance: number;
+  geographicRelevance: number;
+  roleRelevance?: number;
+}
+
 export interface ScoredCandidate {
   profile: any;
   score: number;
   scoreBreakdown: ScoreBreakdown;
+  matchSegments?: MatchSegments;
   symmetricalFitScore?: number;
   intentSymmetryBreakdown?: {
     intentOverlapScore: number;
@@ -1895,6 +1904,76 @@ export class SearchService {
       });
     }
 
+    // Push Sub-Industry Filter to DB
+    if (dto.subIndustry && dto.subIndustry.trim() !== '') {
+      const sub = dto.subIndustry.trim();
+      andFilters.push({
+        OR: [
+          { expertise: { some: { term: { contains: sub, mode: 'insensitive' as const } } } },
+          { expertise: { some: { normalizedTerm: { contains: sub, mode: 'insensitive' as const } } } },
+          { function: { contains: sub, mode: 'insensitive' as const } },
+          { industry: { contains: sub, mode: 'insensitive' as const } },
+          { summary: { contains: sub, mode: 'insensitive' as const } },
+          { headline: { contains: sub, mode: 'insensitive' as const } },
+        ],
+      });
+    }
+
+    // Push City Filter to DB
+    if (dto.city && dto.city.trim() !== '') {
+      const city = dto.city.trim();
+      andFilters.push({
+        OR: [
+          { city: { contains: city, mode: 'insensitive' as const } },
+          { company: { headquartersCity: { contains: city, mode: 'insensitive' as const } } },
+        ],
+      });
+    }
+
+    // Push Designation Filter to DB
+    if (dto.designation && dto.designation.trim() !== '') {
+      const desig = dto.designation.trim();
+      andFilters.push({
+        OR: [
+          { currentTitle: { contains: desig, mode: 'insensitive' as const } },
+          { headline: { contains: desig, mode: 'insensitive' as const } },
+          { seniority: { contains: desig, mode: 'insensitive' as const } },
+        ],
+      });
+    }
+
+    // Push Company Filter to DB
+    if (dto.company && dto.company.trim() !== '') {
+      const comp = dto.company.trim();
+      andFilters.push({
+        OR: [
+          { currentCompanyName: { contains: comp, mode: 'insensitive' as const } },
+          { company: { name: { contains: comp, mode: 'insensitive' as const } } },
+        ],
+      });
+    }
+
+    // Push Business Requirement Filter to DB
+    if (dto.businessRequirement && dto.businessRequirement !== 'ALL') {
+      if (dto.businessRequirement === 'LOOKING_FOR') {
+        andFilters.push({
+          intents: {
+            some: {
+              intentType: 'LOOKING_FOR',
+            },
+          },
+        });
+      } else if (dto.businessRequirement === 'OFFERING') {
+        andFilters.push({
+          intents: {
+            some: {
+              intentType: 'OFFERING',
+            },
+          },
+        });
+      }
+    }
+
     // Push Verified Only Filter to DB
     if (dto.verifiedOnly === 'true' || dto.verifiedOnly === '1') {
       andFilters.push({
@@ -2516,32 +2595,20 @@ export class SearchService {
 
               candidateList = synonymCandidates;
             } else {
-              // General AI Semantic Relaxation
-              const fallbackCandidates = await this.prisma.professionalProfile.findMany({
-                where: whereConditions,
-                include: candidateIncludes,
-                take: 12,
-                orderBy: [{ completenessScore: 'desc' }, { createdAt: 'desc' }],
-              });
-
-              fallbackCandidates.forEach((cand: any) => {
-                (cand as any)._isRelaxed = true;
-                (cand as any)._relaxationTag = 'INDUSTRY_LOOKALIKE_RELAXATION';
-              });
-
+              // Module 3: Strict accuracy - do not dump unrelated profiles when 0 hits occur
               relaxationInfo = {
-                isRelaxed: true,
+                isRelaxed: false,
                 level: 3,
                 type: 'INDUSTRY_LOOKALIKE_RELAXATION',
-                title: `No exact matches for "${query}". Showing top verified commercial decision-makers.`,
-                message: `Direct keyword search returned zero exact records across active directory.`,
-                suggestion: `Explore alternative executive mandates below or try a 1-click suggested query.`,
+                title: `No exact matches for "${query}"`,
+                message: `Direct search returned zero exact records across active directory.`,
+                suggestion: `Explore alternative executive mandates below or try adjusting your search terms.`,
                 actionType: 'ADJACENT_INDUSTRY',
                 originalQuery: query,
                 relaxedField: 'industry',
               };
 
-              candidateList = fallbackCandidates;
+              candidateList = [];
             }
           }
 
@@ -2695,6 +2762,58 @@ export class SearchService {
         const candSen = (cand.seniority || '').toLowerCase();
         const candTitle = (cand.currentTitle || '').toLowerCase();
         if (!candSen.includes(reqSen) && !candTitle.includes(reqSen)) {
+          continue;
+        }
+      }
+
+      // Explicit Sub-Industry In-Memory Filter Check
+      if (dto.subIndustry && dto.subIndustry.trim() !== '') {
+        const sub = dto.subIndustry.toLowerCase().trim();
+        const candTerms = [
+          cand.function,
+          cand.industry,
+          cand.headline,
+          cand.summary,
+          ...(cand.expertise ? cand.expertise.map((e: any) => `${e.term} ${e.normalizedTerm || ''}`) : []),
+        ].filter(Boolean).join(' ').toLowerCase();
+        if (!candTerms.includes(sub)) {
+          continue;
+        }
+      }
+
+      // Explicit City In-Memory Filter Check
+      if (dto.city && dto.city.trim() !== '') {
+        const cityFilter = dto.city.toLowerCase().trim();
+        const candCity = (cand.city || cand.company?.headquartersCity || '').toLowerCase();
+        if (!candCity.includes(cityFilter)) {
+          continue;
+        }
+      }
+
+      // Explicit Designation In-Memory Filter Check
+      if (dto.designation && dto.designation.trim() !== '') {
+        const desigFilter = dto.designation.toLowerCase().trim();
+        const candTitle = (cand.currentTitle || '').toLowerCase();
+        const candHeadline = (cand.headline || '').toLowerCase();
+        const candSeniority = (cand.seniority || '').toLowerCase();
+        if (!candTitle.includes(desigFilter) && !candHeadline.includes(desigFilter) && !candSeniority.includes(desigFilter)) {
+          continue;
+        }
+      }
+
+      // Explicit Company In-Memory Filter Check
+      if (dto.company && dto.company.trim() !== '') {
+        const compFilter = dto.company.toLowerCase().trim();
+        const candComp = (cand.currentCompanyName || cand.company?.name || '').toLowerCase();
+        if (!candComp.includes(compFilter)) {
+          continue;
+        }
+      }
+
+      // Explicit Business Requirement In-Memory Filter Check
+      if (dto.businessRequirement && dto.businessRequirement !== 'ALL') {
+        const hasReq = cand.intents?.some((i: any) => i.intentType === dto.businessRequirement);
+        if (!hasReq) {
           continue;
         }
       }
@@ -3519,10 +3638,57 @@ export class SearchService {
         cand._relaxationTag
       );
 
+      // Module 3: Strict Search Relevance Filter (Eliminate Unrelated Professionals)
+      if (query && query.trim() !== '') {
+        const hasKeywordMatch =
+          reasons.some((r) =>
+            r.includes('QUERY_TOKEN') ||
+            r.includes('SEMANTIC_EXPANSION') ||
+            r.includes('INDUSTRY_CLUSTER') ||
+            r.includes('ROLE_KEYWORD')
+          ) ||
+          Boolean((cand as any)._matchedTokensCount && (cand as any)._matchedTokensCount > 0);
+
+        const hasSubstantiveCategoryMatch =
+          functionScore >= 15 ||
+          industryScore >= 15 ||
+          intentScore >= 15;
+
+        // Discard candidates that have zero keyword match and zero category match, or score under 40
+        if ((!hasKeywordMatch && !hasSubstantiveCategoryMatch) || finalScore < 40) {
+          continue;
+        }
+      }
+
       if (reasons.length > 0 || !query || cand._isRelaxed || targetCountry || finalScore > 0) {
+        // Module 4: Segmented Match Breakdown (Industry relevance %, Business Requirement %, Geographic relevance %)
+        const effTotal = Math.min(99, Math.max(30, Math.round(finalScore || (query ? 45 : 70))));
+
+        const rawInd = Math.max(1, industryScore + functionScore * 0.5);
+        const rawReq = Math.max(1, intentScore + intentOverlapScore * 0.8 + roleMatchBonus * 0.5);
+        const rawGeo = Math.max(1, geoScore);
+        const sumRaw = rawInd + rawReq + rawGeo;
+
+        let indPct = Math.round((rawInd / sumRaw) * effTotal);
+        let reqPct = Math.round((rawReq / sumRaw) * effTotal);
+        let geoPct = effTotal - indPct - reqPct;
+
+        if (geoPct < 2) {
+          geoPct = Math.min(effTotal > 15 ? 5 : 2, Math.max(1, geoScore > 0 ? 5 : 2));
+          indPct = Math.max(1, effTotal - reqPct - geoPct);
+        }
+
+        const matchSegments: MatchSegments = {
+          totalScore: effTotal,
+          industryRelevance: indPct,
+          requirementRelevance: reqPct,
+          geographicRelevance: geoPct,
+        };
+
         scored.push({
           profile: cand,
-          score: finalScore || 20,
+          score: effTotal,
+          matchSegments,
           isRelaxedMatch: Boolean(cand._isRelaxed),
           relaxationTag: cand._relaxationTag || null,
           laymanTransparency: candTransparency,

@@ -46,7 +46,7 @@ export const PartnershipGuidelinesModal: React.FC<Props> = ({
                 </span>
               </h3>
               <p className="text-[11px] text-text-muted">
-                How to formulate bilateral commercial mandates on MESHVI
+                How to post real business partnerships on Meshvi
               </p>
             </div>
           </div>
@@ -67,11 +67,11 @@ export const PartnershipGuidelinesModal: React.FC<Props> = ({
           <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 text-navy space-y-1">
             <div className="font-bold flex items-center space-x-1.5 text-primary text-xs">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Pure B2B Commercial Intent</span>
+              <span>Real Business Partnerships Only</span>
             </div>
             <p className="text-[11px] text-text-muted">
-              MESHVI is strictly a corporate negotiation room. Unlike social networks,
-              our feed is reserved for bilateral business partnerships, joint ventures, OEM supply,
+              Meshvi is strictly a business network. Unlike social networks,
+              our feed is reserved for genuine business partnerships, joint ventures, supplier agreements,
               and strategic alliances.
             </p>
           </div>
@@ -87,7 +87,7 @@ export const PartnershipGuidelinesModal: React.FC<Props> = ({
               <ul className="space-y-1.5 text-[11px] text-emerald-900">
                 <li className="flex items-start space-x-1.5">
                   <span className="text-emerald-600 font-bold">•</span>
-                  <span><strong>Joint Ventures:</strong> Bilateral co-development, risk/equity share.</span>
+                  <span><strong>Joint Ventures:</strong> Working together, sharing growth and profits.</span>
                 </li>
                 <li className="flex items-start space-x-1.5">
                   <span className="text-emerald-600 font-bold">•</span>

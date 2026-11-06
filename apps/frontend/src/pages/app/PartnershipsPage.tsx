@@ -27,11 +27,10 @@ import {
   EyeOff,
   Flag,
   FileText,
-  Award,
-  Clock,
   HelpCircle,
   MapPin,
-  ExternalLink,
+  Calendar,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -64,10 +63,181 @@ import { ExecutiveTeaserModal } from '../../components/ui/ExecutiveTeaserModal';
 import { PartnershipGuidelinesModal } from '../../components/ui/PartnershipGuidelinesModal';
 import { PartnershipDetailModal } from '../../components/ui/PartnershipDetailModal';
 
+interface KanbanDeal {
+  id: string;
+  title: string;
+  amount: number;
+  stage: 'QUALIFIED' | 'DISCOVERY' | 'PROPOSAL_SENT' | 'NEGOTIATION' | 'WON' | 'LOST';
+  probability: number;
+  age: string;
+  company: string;
+  dueDate: string;
+  avatarInitials: string;
+  notes?: string;
+}
+
+const INITIAL_DEALS: KanbanDeal[] = [
+  {
+    id: 'deal-1',
+    title: 'Product Launch – Kinetic Labs',
+    amount: 22000,
+    stage: 'QUALIFIED',
+    probability: 20,
+    age: '4d',
+    company: 'Kinetic Labs',
+    dueDate: 'Mar 30',
+    avatarInitials: 'KL',
+  },
+  {
+    id: 'deal-2',
+    title: 'Brand Strategy – Arcadia Ventures',
+    amount: 8000,
+    stage: 'DISCOVERY',
+    probability: 40,
+    age: '2d',
+    company: 'Arcadia Ventures',
+    dueDate: 'Mar 31',
+    avatarInitials: 'AV',
+  },
+  {
+    id: 'deal-3',
+    title: 'Website Redesign – Bloom Studio',
+    amount: 12500,
+    stage: 'PROPOSAL_SENT',
+    probability: 70,
+    age: '3d',
+    company: 'Bloom Studio',
+    dueDate: 'Apr 1',
+    avatarInitials: 'BS',
+  },
+  {
+    id: 'deal-4',
+    title: 'Health Portal – Meridian',
+    amount: 55000,
+    stage: 'PROPOSAL_SENT',
+    probability: 30,
+    age: 'now',
+    company: 'Meridian Health',
+    dueDate: 'Apr 4',
+    avatarInitials: 'MH',
+  },
+  {
+    id: 'deal-5',
+    title: 'Event Platform – Riviera',
+    amount: 15000,
+    stage: 'PROPOSAL_SENT',
+    probability: 50,
+    age: '1d',
+    company: 'Riviera Hospitality',
+    dueDate: 'Apr 3',
+    avatarInitials: 'RH',
+  },
+  {
+    id: 'deal-6',
+    title: 'Logistics App – Atlas Freight',
+    amount: 41000,
+    stage: 'PROPOSAL_SENT',
+    probability: 60,
+    age: '2d',
+    company: 'Atlas Freight',
+    dueDate: 'Mar 29',
+    avatarInitials: 'AF',
+  },
+  {
+    id: 'deal-7',
+    title: 'IP Portfolio Review – Summit Legal',
+    amount: 9500,
+    stage: 'NEGOTIATION',
+    probability: 100,
+    age: 'now',
+    company: 'Summit Legal',
+    dueDate: 'Apr 2',
+    avatarInitials: 'SL',
+  },
+  {
+    id: 'deal-8',
+    title: 'Lab Management System – Helix',
+    amount: 28000,
+    stage: 'NEGOTIATION',
+    probability: 15,
+    age: 'now',
+    company: 'Helix Biotech',
+    dueDate: 'Apr 1',
+    avatarInitials: 'HB',
+  },
+  {
+    id: 'deal-9',
+    title: 'Office Renovation Plans – Norden',
+    amount: 45000,
+    stage: 'WON',
+    probability: 80,
+    age: 'now',
+    company: 'Norden Architecture',
+    dueDate: 'Apr 3',
+    avatarInitials: 'NA',
+  },
+  {
+    id: 'deal-10',
+    title: 'Annual Retainer – Tidewater',
+    amount: 36000,
+    stage: 'WON',
+    probability: 100,
+    age: 'now',
+    company: 'Tidewater Consulting',
+    dueDate: 'Mar 25',
+    avatarInitials: 'TC',
+  },
+  {
+    id: 'deal-11',
+    title: 'Digital Transformation – Canopy',
+    amount: 32000,
+    stage: 'WON',
+    probability: 75,
+    age: 'now',
+    company: 'Canopy Digital',
+    dueDate: 'Mar 31',
+    avatarInitials: 'CD',
+  },
+  {
+    id: 'deal-12',
+    title: 'Financial Dashboard – Cobalt',
+    amount: 15000,
+    stage: 'LOST',
+    probability: 0,
+    age: 'now',
+    company: 'Cobalt Financial',
+    dueDate: 'Mar 15',
+    avatarInitials: 'CF',
+    notes: 'Budget constraints — chose in-house solution',
+  },
+];
+
 export const PartnershipsPage: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Top Consolidated Destination Tab: FEED | DEALS | REQUESTS
+  const [mainNavTab, setMainNavTab] = useState<'FEED' | 'DEALS' | 'REQUESTS'>(() => {
+    const tabParam = searchParams.get('tab')?.toUpperCase();
+    if (tabParam === 'DEALS' || tabParam === 'PIPELINE') return 'DEALS';
+    if (tabParam === 'REQUESTS') return 'REQUESTS';
+    return 'FEED';
+  });
+
+  // Kanban Deals State (Screenshot 4)
+  const [deals, setDeals] = useState<KanbanDeal[]>(() => {
+    try {
+      const stored = localStorage.getItem('meshvi_kanban_deals');
+      if (stored) return JSON.parse(stored);
+    } catch { /* ignore */ }
+    return INITIAL_DEALS;
+  });
+  const [dealFilter, setDealFilter] = useState<'PIPELINE' | 'CLOSED'>('PIPELINE');
+  const [newDealModalStage, setNewDealModalStage] = useState<string | null>(null);
+  const [newDealTitle, setNewDealTitle] = useState('');
+  const [newDealCompany, setNewDealCompany] = useState('');
+  const [newDealAmount, setNewDealAmount] = useState('25000');
 
   const [posts, setPosts] = useState<PartnershipPost[]>([]);
   const [activeTab, setActiveTab] = useState<'ALL' | 'CONNECTIONS_ONLY' | 'PUBLIC'>('ALL');
@@ -259,6 +429,37 @@ export const PartnershipsPage: React.FC = () => {
     }
     setActiveMentionPostId(null);
     setMentionQuery('');
+  };
+
+  const handleCreateNewDealSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDealTitle.trim() || !newDealCompany.trim()) return;
+    const stage = (newDealModalStage as any) || 'QUALIFIED';
+    const newDeal: KanbanDeal = {
+      id: `deal-${Date.now()}`,
+      title: newDealTitle.trim(),
+      company: newDealCompany.trim(),
+      amount: Number(newDealAmount) || 20000,
+      stage: stage,
+      probability: stage === 'WON' ? 100 : stage === 'PROPOSAL_SENT' ? 60 : 30,
+      age: 'now',
+      dueDate: 'Apr 30',
+      avatarInitials: newDealCompany.trim().slice(0, 2).toUpperCase(),
+    };
+    const updated = [newDeal, ...deals];
+    setDeals(updated);
+    try {
+      localStorage.setItem('meshvi_kanban_deals', JSON.stringify(updated));
+    } catch { /* ignore */ }
+    setNewDealModalStage(null);
+    setNewDealTitle('');
+    setNewDealCompany('');
+    setNewDealAmount('25000');
+    showToast({
+      title: 'Deal Created ✓',
+      message: `"${newDeal.title}" added to ${stage} stage.`,
+      type: 'success',
+    });
   };
 
   const handleAddComment = (post: PartnershipPost, e: React.FormEvent) => {
@@ -616,24 +817,284 @@ export const PartnershipsPage: React.FC = () => {
   const totalPublicCount = posts.filter((p) => p.visibility === 'PUBLIC' && !hiddenPostIds.includes(p.id)).length;
   const totalConnCount = posts.filter((p) => p.visibility === 'CONNECTIONS_ONLY' && !hiddenPostIds.includes(p.id)).length;
 
+  const STAGES = [
+    { key: 'QUALIFIED' as const, label: 'Qualified', dotColor: 'bg-slate-700' },
+    { key: 'DISCOVERY' as const, label: 'Discovery', dotColor: 'bg-indigo-600' },
+    { key: 'PROPOSAL_SENT' as const, label: 'Proposal Sent', dotColor: 'bg-amber-500' },
+    { key: 'NEGOTIATION' as const, label: 'Negotiation', dotColor: 'bg-rose-500' },
+    { key: 'WON' as const, label: 'Won', dotColor: 'bg-emerald-500' },
+    { key: 'LOST' as const, label: 'Lost', dotColor: 'bg-slate-400' },
+  ];
+
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-16 pt-2">
-      {/* 1. Header Banner & Link to Requests Tracker */}
-      <div className="bg-surface border border-border rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
+    <div className="space-y-3 sm:space-y-3.5 max-w-6xl mx-auto pb-10 pt-1">
+      {/* Top Partnerships Sub-Tabs (Consolidated Architecture) */}
+      <div className="flex items-center space-x-2 border-b border-border pb-2">
+        <button
+          type="button"
+          onClick={() => {
+            setMainNavTab('FEED');
+            setSearchParams({});
+          }}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+            mainNavTab === 'FEED'
+              ? 'bg-navy text-white shadow-xs'
+              : 'text-text-muted hover:text-navy hover:bg-surface-muted'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>Opportunities Feed ({posts.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMainNavTab('DEALS');
+            setSearchParams({ tab: 'deals' });
+          }}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+            mainNavTab === 'DEALS'
+              ? 'bg-navy text-white shadow-xs'
+              : 'text-text-muted hover:text-navy hover:bg-surface-muted'
+          }`}
+        >
+          <Handshake className="w-3.5 h-3.5" />
+          <span>My Deals (Pipeline)</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-sky-100 text-sky-800">
+            {deals.length}
+          </span>
+        </button>
+
+        <Link
+          to="/app/partnerships/requests"
+          className="px-4 py-2 rounded-xl text-xs font-bold text-text-muted hover:text-navy hover:bg-surface-muted transition-colors flex items-center space-x-2"
+        >
+          <Inbox className="w-3.5 h-3.5 text-primary" />
+          <span>Sent Requests</span>
+          {requestsCount > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary">
+              {requestsCount}
+            </span>
+          )}
+        </Link>
+      </div>
+
+      {mainNavTab === 'DEALS' ? (
+        <div className="space-y-5 animate-in fade-in duration-150">
+          {/* Deals Top Header & Metric Bar (Screenshot 4) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-border/80 shadow-2xs">
+            <div className="space-y-1">
+              <div className="flex items-center space-x-3">
+                <h2 className="text-xl font-black text-navy tracking-tight">Deals</h2>
+                <div className="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setDealFilter('PIPELINE')}
+                    className={`px-3 py-1 rounded-lg transition-all ${
+                      dealFilter === 'PIPELINE' ? 'bg-white text-navy shadow-xs' : 'text-slate-500 hover:text-navy'
+                    }`}
+                  >
+                    Pipeline
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDealFilter('CLOSED')}
+                    className={`px-3 py-1 rounded-lg transition-all ${
+                      dealFilter === 'CLOSED' ? 'bg-white text-navy shadow-xs' : 'text-slate-500 hover:text-navy'
+                    }`}
+                  >
+                    Closed
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-text-muted">
+                <span className="font-bold text-navy">{deals.length} deals</span> &bull;{' '}
+                <span className="font-bold text-emerald-700">${deals.reduce((a, b) => a + b.amount, 0).toLocaleString()} total value</span>
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-2.5">
+              <div className="px-3 py-1.5 bg-slate-100 rounded-xl text-xs font-semibold text-slate-700 flex items-center space-x-1.5 border border-slate-200">
+                <span>Sales Pipeline</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewDealModalStage('QUALIFIED')}
+                className="px-4 py-2 bg-navy hover:bg-[#1E3A8A] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Add Deal</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Kanban Board Columns (Horizontal layout matching Screenshot 4) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5 overflow-x-auto pb-4">
+            {STAGES.filter(st => {
+              if (dealFilter === 'PIPELINE') return st.key !== 'WON' && st.key !== 'LOST';
+              if (dealFilter === 'CLOSED') return st.key === 'WON' || st.key === 'LOST';
+              return true;
+            }).map((st) => {
+              const stageDeals = deals.filter((d) => d.stage === st.key);
+              const stageTotal = stageDeals.reduce((a, b) => a + b.amount, 0);
+
+              return (
+                <div key={st.key} className="bg-slate-50/70 border border-border/80 rounded-2xl p-3 flex flex-col justify-between space-y-3 min-w-[210px]">
+                  <div>
+                    <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                      <div className="flex items-center space-x-1.5">
+                        <span className={`w-2 h-2 rounded-full ${st.dotColor}`} />
+                        <span className="text-xs font-extrabold text-navy">{st.label}</span>
+                        <span className="text-[10px] font-bold text-slate-400">{stageDeals.length}</span>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600">
+                        ${Math.round(stageTotal / 1000)}k
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5 mt-3">
+                      {stageDeals.map((deal) => (
+                        <div
+                          key={deal.id}
+                          className="bg-white border border-border/70 hover:border-primary/50 rounded-xl p-3 shadow-2xs hover:shadow-xs transition-all cursor-pointer space-y-2 group"
+                        >
+                          <div className="flex items-start justify-between gap-1">
+                            <h4 className="text-xs font-bold text-navy group-hover:text-primary transition-colors line-clamp-1">
+                              {deal.title}
+                            </h4>
+                            <MoreVertical className="w-3.5 h-3.5 text-slate-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+
+                          <div className="flex items-center space-x-2 text-[11px]">
+                            <span className="font-extrabold text-navy">${deal.amount.toLocaleString()}</span>
+                            <span className="text-slate-400 font-semibold">{deal.probability}%</span>
+                            <span className="text-slate-400">{deal.age}</span>
+                          </div>
+
+                          <div className="text-[10.5px] text-text-muted flex items-center space-x-1">
+                            <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className="truncate">{deal.company}</span>
+                          </div>
+
+                          {deal.notes && (
+                            <p className="text-[10px] text-rose-500 italic line-clamp-2 leading-snug">
+                              {deal.notes}
+                            </p>
+                          )}
+
+                          <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[10px] text-slate-400">
+                            <span className="flex items-center space-x-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>{deal.dueDate}</span>
+                            </span>
+                            <span className="w-5 h-5 rounded-full bg-amber-500 text-white font-black text-[9px] flex items-center justify-center shadow-2xs">
+                              {deal.avatarInitials}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewDealModalStage(st.key)}
+                    className="w-full py-2 rounded-xl border border-dashed border-border hover:border-primary/40 hover:bg-white text-xs font-semibold text-text-muted hover:text-primary transition-all flex items-center justify-center space-x-1 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>New Deal</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Simple New Deal Modal */}
+          {newDealModalStage && (
+            <div className="fixed inset-0 bg-navy/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl border border-border shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-navy">Add New Deal ({newDealModalStage})</h3>
+                  <button onClick={() => setNewDealModalStage(null)} className="p-1 text-slate-400 hover:text-navy">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateNewDealSubmit} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-navy mb-1">Deal Title *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Enterprise Cloud Migration"
+                      value={newDealTitle}
+                      onChange={(e) => setNewDealTitle(e.target.value)}
+                      className="w-full px-3 py-2 border border-border rounded-xl text-xs focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-navy mb-1">Company / Account *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Acme Global Logistics"
+                      value={newDealCompany}
+                      onChange={(e) => setNewDealCompany(e.target.value)}
+                      className="w-full px-3 py-2 border border-border rounded-xl text-xs focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-navy mb-1">Estimated Value ($) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={newDealAmount}
+                      onChange={(e) => setNewDealAmount(e.target.value)}
+                      className="w-full px-3 py-2 border border-border rounded-xl text-xs focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end space-x-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewDealModalStage(null)}
+                      className="px-4 py-2 border border-border rounded-xl text-xs font-bold text-text-muted hover:text-navy cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold cursor-pointer"
+                    >
+                      Create Deal
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* 1. Header Banner & Link to Requests Tracker */}
+          <div className="bg-surface border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
 
-        <div className="space-y-1.5 z-10">
+        <div className="space-y-1 z-10">
           <div className="flex items-center space-x-2">
-            <span className="px-2.5 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1">
-              <Handshake className="w-3 h-3" />
+            <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 text-[9.5px] font-bold uppercase tracking-wider flex items-center space-x-1">
+              <Handshake className="w-2.5 h-2.5" />
               <span>B2B Relationship Engine</span>
             </span>
-            <span className="text-xs text-text-muted">• Partnerships & Connections</span>
+            <span className="text-[11px] text-text-muted">• Partnerships & Connections</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-navy tracking-tight">
+          <h1 className="text-base sm:text-lg font-bold text-navy tracking-tight">
             Partnership Posts & Activities
           </h1>
-          <p className="text-xs sm:text-sm text-text-muted max-w-2xl leading-relaxed">
+          <p className="text-xs text-text-muted max-w-2xl leading-relaxed">
             Discover commercial co-ventures, licensing tenders, and supply chain requests from verified executives.
           </p>
         </div>
@@ -642,9 +1103,9 @@ export const PartnershipsPage: React.FC = () => {
         <div className="flex items-center flex-wrap gap-2 shrink-0 z-10 w-full sm:w-auto">
           <Link
             to="/app/partnerships/requests"
-            className="px-3 sm:px-3.5 py-2 bg-surface hover:bg-surface-muted text-navy font-bold text-xs rounded-xl border border-border transition-colors flex items-center space-x-1.5 shadow-2xs"
+            className="px-3 py-1.5 bg-surface hover:bg-surface-muted text-navy font-semibold text-xs rounded-lg border border-border transition-colors flex items-center space-x-1.5 shadow-2xs"
           >
-            <Inbox className="w-4 h-4 text-primary" />
+            <Inbox className="w-3.5 h-3.5 text-primary" />
             <span>Requests Tracker</span>
             {requestsCount > 0 && (
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-primary/10 text-primary font-bold">
@@ -656,18 +1117,18 @@ export const PartnershipsPage: React.FC = () => {
           {/* Info / Guidelines Modal Button */}
           <button
             onClick={() => setIsGuidelinesOpen(true)}
-            className="px-2.5 sm:px-3 py-2 bg-surface hover:bg-surface-muted text-navy font-bold text-xs rounded-xl border border-border hover:border-primary/40 transition-colors flex items-center space-x-1.5 shadow-2xs cursor-pointer"
+            className="px-2.5 py-1.5 bg-surface hover:bg-surface-muted text-navy font-semibold text-xs rounded-lg border border-border hover:border-primary/40 transition-colors flex items-center space-x-1.5 shadow-2xs cursor-pointer"
             title="Partnership Mandate Guidelines & Standards"
           >
-            <HelpCircle className="w-4 h-4 text-primary" />
+            <HelpCircle className="w-3.5 h-3.5 text-primary" />
             <span className="hidden sm:inline">Guidelines</span>
           </button>
 
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="px-3.5 sm:px-4 py-2 bg-primary hover:bg-primary-dark text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center space-x-1.5"
+            className="px-3 py-1.5 bg-primary hover:bg-primary-dark text-white font-semibold text-xs rounded-lg shadow-xs transition-colors flex items-center space-x-1.5"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Post Partnership Request</span>
             <span className="sm:hidden">Post Request</span>
           </button>
@@ -1078,289 +1539,236 @@ export const PartnershipsPage: React.FC = () => {
             const commentsList = post.comments || [];
             const isTargetHighlight = targetPostId === post.id;
             const authorPerson = NETWORK_PEOPLE.find((p) => p.name === post.authorName);
-            const isConnected = authorPerson ? authorPerson.isActiveConnection : true;
+            void authorPerson;
             const isOwnPost =
               post.authorId === (user?.id || 'current-user') ||
               post.authorName.toLowerCase() === currentUserName.toLowerCase() ||
               post.authorName === 'Srikanth';
             const isSaved = savedPostIds.includes(post.id);
             const isMenuOpen = openMenuPostId === post.id;
+            const categoryLabel = (post.dealTeaser as any)?.category || post.dealTeaser?.scope || 'Strategic Co-Venture';
 
             return (
               <article
                 key={post.id}
                 ref={(el) => (postRefs.current[post.id] = el)}
-                className={`bg-surface border rounded-2xl p-4 sm:p-5 shadow-xs transition-all space-y-3.5 ${
+                className={`bg-white border rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-4 ${
                   isTargetHighlight
                     ? 'border-primary ring-2 ring-primary ring-offset-2'
-                    : 'border-border hover:border-primary/30'
+                    : 'border-border/80 hover:border-primary/40'
                 }`}
               >
-                {/* Author row & 3-Dots Dropdown Menu */}
-                <div className="flex items-start justify-between gap-3 relative">
-                  <div className="flex items-center space-x-3">
-                    {post.authorAvatar ? (
-                      <img
-                        src={post.authorAvatar}
-                        alt={post.authorName}
-                        className="w-10 h-10 rounded-xl object-cover border border-border shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-navy to-[#1E3A8A] text-white font-black text-sm flex items-center justify-center shrink-0">
-                        {post.authorName[0]?.toUpperCase() || 'E'}
-                      </div>
-                    )}
-                    <div>
-                      <div className="flex items-center space-x-1.5">
-                        <span
-                          onClick={() => {
-                            if (authorPerson) setSelectedPerson(authorPerson);
-                          }}
-                          className="text-xs font-bold text-navy hover:text-primary hover:underline cursor-pointer"
-                        >
-                          {post.authorName}
-                        </span>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        {isConnected ? (
-                          <span className="px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 text-[9px] font-bold border border-emerald-200">
-                            1st Degree 🤝
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => authorPerson && handleConnectWithPerson(authorPerson)}
-                            className="text-[10px] font-bold text-primary hover:underline flex items-center space-x-0.5 ml-1"
-                          >
-                            <span>+ Connect</span>
-                          </button>
-                        )}
-                        {post.isArchived && (
-                          <span className="px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 text-[9px] font-bold border border-amber-200">
-                            📦 Archived
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-text-muted font-medium">
-                        {post.authorRole} •{' '}
-                        <button
-                          onClick={() => {
-                            const comp = NETWORK_COMPANIES.find(
-                              (c) => c.name.toLowerCase() === post.authorCompany.toLowerCase()
-                            );
-                            if (comp) setSelectedCompany(comp);
-                          }}
-                          className="font-bold text-navy hover:text-primary hover:underline"
-                        >
-                          {post.authorCompany}
-                        </button>
-                      </div>
-
-                      {/* Verified Decision-Maker & Spending Badges */}
-                      {post.authorBadges && post.authorBadges.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
-                          {post.authorBadges.map((badge, idx) => (
-                            <span
-                              key={idx}
-                              className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 shadow-2xs"
-                            >
-                              {badge.type === 'SIGNATORY' && (
-                                <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                              )}
-                              {badge.type === 'FULFILLMENT' && (
-                                <Award className="w-3 h-3 text-indigo-600 shrink-0" />
-                              )}
-                              {badge.type === 'SLA' && (
-                                <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-                              )}
-                              <span>{badge.label}</span>
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                <div className="flex flex-col md:flex-row gap-5 items-stretch">
+                  {/* Left Visual Category Graphic or Preview (Screenshot 3 style) */}
+                  <div className="w-full md:w-52 h-40 md:h-auto rounded-xl bg-gradient-to-br from-[#102B45] via-[#1E3A8A] to-[#078BCC] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden shrink-0 shadow-inner group">
+                    <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px]" />
+                    <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-2 shadow-sm text-2xl">
+                      {categoryLabel.toLowerCase().includes('invest') ? '💼' : categoryLabel.toLowerCase().includes('prod') ? '🚀' : '🤝'}
                     </div>
+                    <span className="text-[11px] font-black uppercase tracking-wider text-sky-200 text-center line-clamp-1">
+                      {categoryLabel}
+                    </span>
+                    <span className="text-[10px] text-white/80 mt-1 font-semibold flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-sky-300" />
+                      <span className="truncate max-w-[140px]">{post.dealTeaser?.geographicReach || 'Cross-Border'}</span>
+                    </span>
                   </div>
 
-                  {/* Top Right: Location Badge + Visibility Badge + Three-Dots Dropdown Trigger */}
-                  <div className="flex items-center space-x-1.5">
-                    <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                      <MapPin className="w-3 h-3 text-primary shrink-0" />
-                      <span className="max-w-[120px] truncate">{post.dealTeaser?.geographicReach || 'Cross-Border'}</span>
-                    </span>
+                  {/* Right Content & Actions */}
+                  <div className="flex-1 flex flex-col justify-between space-y-3 min-w-0">
+                    <div className="space-y-2">
+                      {/* Top Header: Category Square & 3-Dots Menu */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2 h-2 rounded-xs bg-[#078BCC]" />
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-navy">
+                            {categoryLabel}
+                          </span>
+                          <span className="text-slate-300">&bull;</span>
+                          <span className="text-[10.5px] font-semibold text-text-muted">
+                            {post.visibility === 'PUBLIC' ? 'Global Exchange' : 'Only Connections'}
+                          </span>
+                        </div>
 
-                    <span
-                      className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                        post.visibility === 'PUBLIC'
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                          : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                      }`}
-                    >
-                      {post.visibility === 'PUBLIC' ? (
-                        <>
-                          <Globe className="w-3 h-3 text-emerald-600" />
-                          <span>Public Broadcast</span>
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-3 h-3 text-indigo-600" />
-                          <span>Connections Only</span>
-                        </>
-                      )}
-                    </span>
+                        {/* Three-Dots Menu */}
+                        <div
+                          ref={(el) => (menuContainerRef.current[post.id] = el)}
+                          className="relative"
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenMenuPostId((prev) => (prev === post.id ? null : post.id))
+                            }
+                            className="p-1 rounded-lg text-text-muted hover:text-navy hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="More Post Options"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
 
-                    {/* Three-Dots Menu Container */}
-                    <div
-                      ref={(el) => (menuContainerRef.current[post.id] = el)}
-                      className="relative"
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenuPostId((prev) => (prev === post.id ? null : post.id))
-                        }
-                        className="p-1 rounded-lg text-text-muted hover:text-navy hover:bg-surface-muted transition-colors"
-                        title="More Post Options"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-
-                      {/* Floating Dropdown */}
-                      {isMenuOpen && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-xl shadow-xl z-30 py-1 divide-y divide-border text-xs animate-in fade-in zoom-in-95 duration-100">
-                          {isOwnPost ? (
-                            /* Options for Author's Own Post */
-                            <>
-                              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted bg-surface-muted/40">
-                                Manage Your Post
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenMenuPostId(null);
-                                  setEditTargetPost(post);
-                                }}
-                                className="w-full px-3 py-2 text-left hover:bg-surface-muted flex items-center space-x-2 text-navy font-medium"
-                              >
-                                <Edit3 className="w-3.5 h-3.5 text-primary" />
-                                <span>Edit Post</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleArchivePost(post)}
-                                className="w-full px-3 py-2 text-left hover:bg-surface-muted flex items-center space-x-2 text-navy font-medium"
-                              >
-                                <Archive className="w-3.5 h-3.5 text-amber-600" />
-                                <span>{post.isArchived ? 'Unarchive Post' : 'Archive Post'}</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeletePost(post)}
-                                className="w-full px-3 py-2 text-left hover:bg-rose-50 flex items-center space-x-2 text-rose-600 font-bold"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Delete Post</span>
-                              </button>
-                            </>
-                          ) : (
-                            /* Options for Other Members' Posts */
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleSavePost(post.id)}
-                                className="w-full px-3 py-2 text-left hover:bg-surface-muted flex items-center space-x-2 text-navy font-medium"
-                              >
-                                <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-primary text-primary' : 'text-text-muted'}`} />
-                                <span>{isSaved ? 'Remove from Saved' : 'Save Post'}</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleHidePost(post)}
-                                className="w-full px-3 py-2 text-left hover:bg-surface-muted flex items-center space-x-2 text-navy font-medium"
-                              >
-                                <EyeOff className="w-3.5 h-3.5 text-text-muted" />
-                                <span>Hide Post</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenMenuPostId(null);
-                                  setReportTargetPost(post);
-                                }}
-                                className="w-full px-3 py-2 text-left hover:bg-rose-50 flex items-center space-x-2 text-rose-600 font-bold"
-                              >
-                                <Flag className="w-3.5 h-3.5" />
-                                <span>Report Post</span>
-                              </button>
-                            </>
+                          {isMenuOpen && (
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-border rounded-xl shadow-xl z-30 py-1 divide-y divide-border text-xs animate-in fade-in zoom-in-95 duration-100">
+                              {isOwnPost ? (
+                                <>
+                                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted bg-slate-50">
+                                    Manage Your Post
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuPostId(null);
+                                      setEditTargetPost(post);
+                                    }}
+                                    className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center space-x-2 text-navy font-medium"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5 text-primary" />
+                                    <span>Edit Post</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleArchivePost(post)}
+                                    className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center space-x-2 text-navy font-medium"
+                                  >
+                                    <Archive className="w-3.5 h-3.5 text-amber-600" />
+                                    <span>{post.isArchived ? 'Unarchive Post' : 'Archive Post'}</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeletePost(post)}
+                                    className="w-full px-3 py-2 text-left hover:bg-rose-50 flex items-center space-x-2 text-rose-600 font-bold"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Delete Post</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleSavePost(post.id)}
+                                    className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center space-x-2 text-navy font-medium"
+                                  >
+                                    <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-primary text-primary' : 'text-text-muted'}`} />
+                                    <span>{isSaved ? 'Remove from Saved' : 'Save Post'}</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleHidePost(post)}
+                                    className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center space-x-2 text-navy font-medium"
+                                  >
+                                    <EyeOff className="w-3.5 h-3.5 text-text-muted" />
+                                    <span>Hide Post</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuPostId(null);
+                                      setReportTargetPost(post);
+                                    }}
+                                    className="w-full px-3 py-2 text-left hover:bg-rose-50 flex items-center space-x-2 text-rose-600 font-bold"
+                                  >
+                                    <Flag className="w-3.5 h-3.5" />
+                                    <span>Report Post</span>
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      </div>
+
+                      {/* Title */}
+                      <h3
+                        onClick={() => setDetailTargetPost(post)}
+                        className="text-base sm:text-lg font-black text-navy hover:text-primary transition-colors cursor-pointer line-clamp-1 tracking-tight"
+                      >
+                        {post.title}
+                      </h3>
+
+                      {/* Excerpt */}
+                      <p
+                        onClick={() => setDetailTargetPost(post)}
+                        className="text-xs text-text-muted line-clamp-2 leading-relaxed cursor-pointer hover:text-slate-800"
+                      >
+                        {post.content}
+                      </p>
+
+                      {/* Sector / Topic Tags Chips */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        {post.tags.slice(0, 4).map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200"
+                          >
+                            {tag.replace(/^#/, '')}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Requirement (Title) */}
-                <div className="space-y-0.5">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                    Requirement Mandate
-                  </div>
-                  <h3
-                    onClick={() => setDetailTargetPost(post)}
-                    className="text-sm sm:text-base font-extrabold text-navy hover:text-primary transition-colors cursor-pointer line-clamp-1"
-                  >
-                    {post.title}
-                  </h3>
-                </div>
+                    {/* Footer: Publisher Identity & Action Buttons */}
+                    <div className="pt-3 border-t border-border/80 flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center space-x-2.5 min-w-0">
+                        {post.authorAvatar ? (
+                          <img
+                            src={post.authorAvatar}
+                            alt={post.authorName}
+                            className="w-8 h-8 rounded-full object-cover border border-border shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center shrink-0">
+                            {post.authorName[0]?.toUpperCase() || 'E'}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs font-bold text-navy truncate">{post.authorName}</span>
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                          </div>
+                          <div className="text-[10.5px] text-text-muted truncate">
+                            {post.authorRole} &bull; {post.authorCompany}
+                          </div>
+                        </div>
+                      </div>
 
-                {/* Short Description (Initially Compact 2-Line Truncation) */}
-                <p
-                  onClick={() => setDetailTargetPost(post)}
-                  className="text-xs text-text-muted line-clamp-2 leading-relaxed cursor-pointer hover:text-slate-800 transition-colors"
-                >
-                  {post.content}
-                </p>
+                      <div className="flex items-center space-x-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSavePost(post.id)}
+                          className="p-1.5 rounded-xl border border-border hover:bg-slate-50 text-slate-500 hover:text-navy transition-colors cursor-pointer"
+                          title={isSaved ? 'Remove from Saved' : 'Save Mandate'}
+                        >
+                          <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-primary text-primary' : ''}`} />
+                        </button>
 
-                {/* Compact Action Bar with "View Details" & "Initiate" */}
-                <div className="pt-2.5 border-t border-border flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center space-x-2 text-[11px] text-text-muted">
-                    {post.dealTeaser && (
-                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-primary/5 text-primary text-[10px] font-bold border border-primary/10">
-                        <FileText className="w-3 h-3 text-primary" />
-                        <span>Spec Sheet Attached</span>
-                      </span>
-                    )}
-                    <button
-                      onClick={() => handleToggleComments(post.id)}
-                      className="hover:text-primary flex items-center space-x-1 transition-colors"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5 text-primary" />
-                      <span>{post.commentsCount} Comments</span>
-                    </button>
-                    <button
-                      onClick={() => handleSharePostLink(post)}
-                      className="hover:text-primary p-1 rounded transition-colors"
-                      title="Share Mandate"
-                    >
-                      <Share2 className="w-3.5 h-3.5 text-slate-500" />
-                    </button>
-                  </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleComments(post.id)}
+                          className="p-1.5 rounded-xl border border-border hover:bg-slate-50 text-slate-500 hover:text-navy transition-colors flex items-center space-x-1 text-xs cursor-pointer"
+                          title="Comments"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          <span className="text-[10px] font-bold">{post.commentsCount}</span>
+                        </button>
 
-                  <div className="flex items-center space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => setDetailTargetPost(post)}
-                      className="px-3 py-1.5 rounded-xl border border-border hover:border-primary/40 bg-surface hover:bg-primary-soft text-navy hover:text-primary font-bold text-xs transition-colors flex items-center space-x-1.5 shadow-2xs cursor-pointer"
-                    >
-                      <span>View Details</span>
-                      <ExternalLink className="w-3 h-3 text-primary" />
-                    </button>
+                        <button
+                          type="button"
+                          onClick={() => setDetailTargetPost(post)}
+                          className="px-3 py-1.5 rounded-xl border border-border hover:bg-slate-50 text-navy font-bold text-xs transition-colors cursor-pointer"
+                        >
+                          <span>Details</span>
+                        </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setInitiatePartnerPost(post)}
-                      className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-xs flex items-center space-x-1 shadow-2xs transition-colors cursor-pointer"
-                    >
-                      <Handshake className="w-3.5 h-3.5" />
-                      <span>Initiate</span>
-                    </button>
+                        <button
+                          type="button"
+                          onClick={() => setInitiatePartnerPost(post)}
+                          className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-xs flex items-center space-x-1 shadow-2xs transition-colors cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Initiate</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1460,6 +1868,8 @@ export const PartnershipsPage: React.FC = () => {
           })
         )}
       </div>
+      </>
+    )}
 
       {/* Modals */}
       <CreatePartnershipPostModal

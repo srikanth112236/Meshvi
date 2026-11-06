@@ -4,11 +4,11 @@ import { Footer } from './Footer';
 
 export const PublicLayout = () => {
   const location = useLocation();
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/forgot-password';
 
   return (
     <div className="min-h-screen flex flex-col bg-bg text-text">
-      <Navbar />
+      {!isAuthPage && <Navbar />}
       <main className="flex-1 flex flex-col">
         <Outlet />
       </main>

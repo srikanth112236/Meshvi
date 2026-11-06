@@ -6,7 +6,6 @@ import {
   Sparkles,
   CheckCircle2,
   Check,
-  Filter,
   ShieldCheck,
   Send,
   Briefcase,
@@ -34,6 +33,9 @@ import {
   LayoutGrid,
   List,
   Eye,
+  MapPin,
+  Building,
+  Target,
 } from 'lucide-react';
 import { ConnectOpportunityModal } from '../../components/ui/ConnectOpportunityModal';
 import { SubmitCompanyProposalModal } from '../../components/ui/SubmitCompanyProposalModal';
@@ -56,6 +58,116 @@ const toRecentSearchResult = (item: any, index: number) => {
     location: p.city ? `${p.city}${p.countryCode ? `, ${p.countryCode}` : ''}` : undefined,
     score: rawScore === undefined ? undefined : Math.round(rawScore > 1 ? rawScore : rawScore * 100),
   };
+};
+
+interface MatchSegmentsData {
+  totalScore: number;
+  industryRelevance: number;
+  requirementRelevance: number;
+  geographicRelevance: number;
+}
+
+const SegmentedMatchBadge: React.FC<{
+  score: number;
+  segments?: MatchSegmentsData;
+}> = ({ score, segments }) => {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const safeTotal = score ? Math.round(score > 1 ? score : score * 100) : 55;
+  const ind = segments?.industryRelevance ?? Math.round(safeTotal * 0.54);
+  const req = segments?.requirementRelevance ?? Math.round(safeTotal * 0.36);
+  const geo = segments?.geographicRelevance ?? Math.max(1, safeTotal - ind - req);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  return (
+    <div className="relative inline-block" ref={containerRef}>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(!open);
+        }}
+        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold flex items-center space-x-1 cursor-pointer transition-all border ${
+          open
+            ? 'bg-emerald-100 text-emerald-900 border-emerald-400 ring-2 ring-emerald-200'
+            : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80 hover:border-emerald-300'
+        }`}
+        title="Click to view detailed match % breakdown"
+      >
+        <Sparkles className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+        <span>{safeTotal}%</span>
+        <ChevronDown className={`w-2.5 h-2.5 text-emerald-600 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="absolute right-0 top-full mt-1.5 z-50 w-64 p-3 bg-white border border-slate-200 rounded-xl shadow-xl space-y-2.5 animate-in fade-in zoom-in-95 text-left"
+        >
+          <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+            <span className="text-[11px] font-extrabold text-navy">Match Score Breakdown</span>
+            <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded-md">
+              {safeTotal}% Total
+            </span>
+          </div>
+
+          <div className="w-full bg-slate-100 rounded-full h-2 flex overflow-hidden">
+            <div
+              className="bg-blue-500 h-full transition-all"
+              style={{ width: `${(ind / safeTotal) * 100}%` }}
+              title={`Industry relevance: ${ind}%`}
+            />
+            <div
+              className="bg-emerald-500 h-full transition-all"
+              style={{ width: `${(req / safeTotal) * 100}%` }}
+              title={`Business Requirement: ${req}%`}
+            />
+            <div
+              className="bg-amber-400 h-full transition-all"
+              style={{ width: `${(geo / safeTotal) * 100}%` }}
+              title={`Geographic relevance: ${geo}%`}
+            />
+          </div>
+
+          <div className="space-y-1.5 pt-0.5 text-[11px]">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center space-x-1.5 text-slate-700">
+                <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                <span>Industry relevance:</span>
+              </span>
+              <span className="font-bold text-slate-900 font-mono">{ind}%</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="flex items-center space-x-1.5 text-slate-700">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span>Business Requirement:</span>
+              </span>
+              <span className="font-bold text-slate-900 font-mono">{req}%</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="flex items-center space-x-1.5 text-slate-700">
+                <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                <span>Geographic relevance:</span>
+              </span>
+              <span className="font-bold text-slate-900 font-mono">{geo}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const getRefinedSuggestions = (q: string, backendReformulations?: string[]): string[] => {
@@ -114,6 +226,73 @@ const getRefinedSuggestions = (q: string, backendReformulations?: string[]): str
 };
 
 type SearchMode = 'DECISION_MAKERS' | 'ENTERPRISES' | 'OPPORTUNITY_GRAPH' | 'MARKET_CORRIDOR';
+
+const INDUSTRY_FILTER_OPTIONS = [
+  { value: 'Enterprise Software', label: 'Enterprise Software & Cloud' },
+  { value: 'FMCG & Consumer Goods', label: 'FMCG & Consumer Goods' },
+  { value: 'Logistics & Supply Chain', label: 'Logistics & Supply Chain' },
+  { value: 'Healthcare & Life Sciences', label: 'Healthcare & Life Sciences' },
+  { value: 'Renewable Energy & CleanTech', label: 'Renewable Energy & CleanTech' },
+  { value: 'Industrial Manufacturing', label: 'Industrial Manufacturing' },
+  { value: 'Financial Services', label: 'Financial Services & FinTech' },
+  { value: 'Agriculture & Food Tech', label: 'Agriculture & Food Tech' },
+  { value: 'Aerospace & Defense', label: 'Aerospace & Defense' },
+  { value: 'Retail & E-Commerce', label: 'Retail & E-Commerce' },
+];
+
+const SUB_INDUSTRY_FILTER_OPTIONS = [
+  { value: 'Beverage & Dairy', label: 'Beverage & Dairy' },
+  { value: 'SaaS', label: 'SaaS & Enterprise Platforms' },
+  { value: 'Cold Chain', label: 'Cold Chain & Refrigerated Logistics' },
+  { value: 'Pharmaceuticals', label: 'Pharmaceuticals & Biotech' },
+  { value: 'Solar & Clean Energy', label: 'Solar & Renewable Clean Energy' },
+  { value: 'Packaging & Distribution', label: 'Packaging & Wholesale Distribution' },
+  { value: 'Precision Manufacturing', label: 'Precision Engineering & Industrial Equipment' },
+  { value: 'Food Ingredients', label: 'Food Ingredients & Agro Commodities' },
+  { value: 'Payments & Banking', label: 'Payments & Digital Banking Infrastructure' },
+  { value: 'Halal Products', label: 'Halal Certified Consumer Products' },
+];
+
+const COUNTRY_FILTER_OPTIONS = [
+  { value: 'IN', label: '🇮🇳 India' },
+  { value: 'MY', label: '🇲🇾 Malaysia' },
+  { value: 'SG', label: '🇸🇬 Singapore' },
+  { value: 'AE', label: '🇦🇪 United Arab Emirates' },
+  { value: 'US', label: '🇺🇸 United States' },
+  { value: 'GB', label: '🇬🇧 United Kingdom' },
+  { value: 'JP', label: '🇯🇵 Japan' },
+  { value: 'DE', label: '🇩🇪 Germany' },
+  { value: 'ID', label: '🇮🇩 Indonesia' },
+  { value: 'AU', label: '🇦🇺 Australia' },
+  { value: 'VN', label: '🇻🇳 Vietnam' },
+  { value: 'TH', label: '🇹🇭 Thailand' },
+];
+
+const CITY_FILTER_OPTIONS = [
+  { value: 'Bengaluru', label: 'Bengaluru' },
+  { value: 'Mumbai', label: 'Mumbai' },
+  { value: 'Delhi', label: 'Delhi NCR' },
+  { value: 'Kuala Lumpur', label: 'Kuala Lumpur' },
+  { value: 'Singapore', label: 'Singapore' },
+  { value: 'Dubai', label: 'Dubai' },
+  { value: 'London', label: 'London' },
+  { value: 'New York', label: 'New York' },
+  { value: 'Tokyo', label: 'Tokyo' },
+  { value: 'Jakarta', label: 'Jakarta' },
+  { value: 'Chennai', label: 'Chennai' },
+  { value: 'Hyderabad', label: 'Hyderabad' },
+  { value: 'Pune', label: 'Pune' },
+];
+
+const DESIGNATION_FILTER_OPTIONS = [
+  { value: 'Founder', label: 'Founder / Co-Founder / CEO' },
+  { value: 'VP', label: 'VP / Managing Director' },
+  { value: 'Director', label: 'Director / Head of Department' },
+  { value: 'Procurement', label: 'Sourcing & Procurement Lead' },
+  { value: 'Partnerships', label: 'Commercial & Partnerships Head' },
+  { value: 'Manager', label: 'Operations / Product Manager' },
+  { value: 'Engineer', label: 'Chief Architect / Engineering Lead' },
+];
 
 interface SearchableDropdownFilterProps {
   label: string;
@@ -284,7 +463,7 @@ export const SearchPage = () => {
   const [searchMode, setSearchMode] = useState<
     'DECISION_MAKERS' | 'ENTERPRISES' | 'OPPORTUNITY_GRAPH' | 'MARKET_CORRIDOR'
   >('DECISION_MAKERS');
-  const [candidateViewMode, setCandidateViewMode] = useState<'LIST' | 'GRID'>('LIST');
+  const [candidateViewMode, setCandidateViewMode] = useState<'LIST' | 'GRID'>('GRID');
   const [opportunityGraphData, setOpportunityGraphData] = useState<any | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
 
@@ -304,7 +483,12 @@ export const SearchPage = () => {
   const [query, setQuery] = useState(urlQuery);
   const [functionFilter, setFunctionFilter] = useState('');
   const [industryFilter, setIndustryFilter] = useState('');
+  const [subIndustryFilter, setSubIndustryFilter] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [designationFilter, setDesignationFilter] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('');
+  const [businessRequirementFilter, setBusinessRequirementFilter] = useState<'ALL' | 'LOOKING_FOR' | 'OFFERING'>('ALL');
   const [seniorityFilter, setSeniorityFilter] = useState('');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [corridorFilter, setCorridorFilter] = useState('');
@@ -544,7 +728,12 @@ export const SearchPage = () => {
     filterOverrides?: Partial<{
       functionFilter: string;
       industryFilter: string;
+      subIndustryFilter: string;
       countryFilter: string;
+      cityFilter: string;
+      designationFilter: string;
+      companyFilter: string;
+      businessRequirementFilter: 'ALL' | 'LOOKING_FOR' | 'OFFERING';
       seniorityFilter: string;
       verifiedOnly: boolean;
       excludeKeywords: string;
@@ -563,7 +752,12 @@ export const SearchPage = () => {
     const currentMode = overrideMode !== undefined ? overrideMode : searchMode;
     const activeFunction = filterOverrides?.functionFilter !== undefined ? filterOverrides.functionFilter : functionFilter;
     const activeIndustry = filterOverrides?.industryFilter !== undefined ? filterOverrides.industryFilter : industryFilter;
+    const activeSubIndustry = filterOverrides?.subIndustryFilter !== undefined ? filterOverrides.subIndustryFilter : subIndustryFilter;
     const activeCountry = filterOverrides?.countryFilter !== undefined ? filterOverrides.countryFilter : countryFilter;
+    const activeCity = filterOverrides?.cityFilter !== undefined ? filterOverrides.cityFilter : cityFilter;
+    const activeDesignation = filterOverrides?.designationFilter !== undefined ? filterOverrides.designationFilter : designationFilter;
+    const activeCompany = filterOverrides?.companyFilter !== undefined ? filterOverrides.companyFilter : companyFilter;
+    const activeBusinessRequirement = filterOverrides?.businessRequirementFilter !== undefined ? filterOverrides.businessRequirementFilter : businessRequirementFilter;
     const activeSeniority = filterOverrides?.seniorityFilter !== undefined ? filterOverrides.seniorityFilter : seniorityFilter;
     const activeVerifiedOnly = filterOverrides?.verifiedOnly !== undefined ? filterOverrides.verifiedOnly : verifiedOnly;
     const activeExcludeKeywords = filterOverrides?.excludeKeywords !== undefined ? filterOverrides.excludeKeywords : excludeKeywords;
@@ -599,7 +793,12 @@ export const SearchPage = () => {
         params.append('limit', String(targetLimit));
         if (activeFunction) params.append('function', activeFunction);
         if (activeIndustry) params.append('industry', activeIndustry);
+        if (activeSubIndustry) params.append('subIndustry', activeSubIndustry);
         if (activeCountry) params.append('countryCode', activeCountry);
+        if (activeCity) params.append('city', activeCity);
+        if (activeDesignation) params.append('designation', activeDesignation);
+        if (activeCompany) params.append('company', activeCompany);
+        if (activeBusinessRequirement && activeBusinessRequirement !== 'ALL') params.append('businessRequirement', activeBusinessRequirement);
         if (activeSeniority) params.append('seniority', activeSeniority);
         if (activeVerifiedOnly) params.append('verifiedOnly', 'true');
         if (activeExcludeKeywords) params.append('excludeKeywords', activeExcludeKeywords);
@@ -701,6 +900,11 @@ export const SearchPage = () => {
     setCorridorData(null);
     setCountryFilter('');
     setIndustryFilter('');
+    setSubIndustryFilter('');
+    setCityFilter('');
+    setDesignationFilter('');
+    setCompanyFilter('');
+    setBusinessRequirementFilter('ALL');
     setFunctionFilter('');
     setSeniorityFilter('');
     setVerifiedOnly(false);
@@ -718,6 +922,11 @@ export const SearchPage = () => {
     handleSearch('', searchMode, 1, pageSize, {
       countryFilter: '',
       industryFilter: '',
+      subIndustryFilter: '',
+      cityFilter: '',
+      designationFilter: '',
+      companyFilter: '',
+      businessRequirementFilter: 'ALL',
       functionFilter: '',
       seniorityFilter: '',
       verifiedOnly: false,
@@ -736,6 +945,11 @@ export const SearchPage = () => {
   const handleResetFiltersKeepQuery = () => {
     setCountryFilter('');
     setIndustryFilter('');
+    setSubIndustryFilter('');
+    setCityFilter('');
+    setDesignationFilter('');
+    setCompanyFilter('');
+    setBusinessRequirementFilter('ALL');
     setFunctionFilter('');
     setSeniorityFilter('');
     setVerifiedOnly(false);
@@ -753,6 +967,11 @@ export const SearchPage = () => {
     handleSearch(query, searchMode, 1, pageSize, {
       countryFilter: '',
       industryFilter: '',
+      subIndustryFilter: '',
+      cityFilter: '',
+      designationFilter: '',
+      companyFilter: '',
+      businessRequirementFilter: 'ALL',
       functionFilter: '',
       seniorityFilter: '',
       verifiedOnly: false,
@@ -787,6 +1006,11 @@ export const SearchPage = () => {
     handleSearch(q, mode, 1, pageSize, {
       countryFilter,
       industryFilter,
+      subIndustryFilter,
+      cityFilter,
+      designationFilter,
+      companyFilter,
+      businessRequirementFilter,
       functionFilter,
       seniorityFilter,
       verifiedOnly,
@@ -832,9 +1056,24 @@ export const SearchPage = () => {
     } else if (key === 'industry') {
       setIndustryFilter(value);
       handleSearch(query, searchMode, 1, pageSize, { industryFilter: value });
+    } else if (key === 'subIndustry') {
+      setSubIndustryFilter(value);
+      handleSearch(query, searchMode, 1, pageSize, { subIndustryFilter: value });
     } else if (key === 'country') {
       setCountryFilter(value);
       handleSearch(query, searchMode, 1, pageSize, { countryFilter: value });
+    } else if (key === 'city') {
+      setCityFilter(value);
+      handleSearch(query, searchMode, 1, pageSize, { cityFilter: value });
+    } else if (key === 'designation') {
+      setDesignationFilter(value);
+      handleSearch(query, searchMode, 1, pageSize, { designationFilter: value });
+    } else if (key === 'company') {
+      setCompanyFilter(value);
+      handleSearch(query, searchMode, 1, pageSize, { companyFilter: value });
+    } else if (key === 'businessRequirement') {
+      setBusinessRequirementFilter(value);
+      handleSearch(query, searchMode, 1, pageSize, { businessRequirementFilter: value });
     } else if (key === 'seniority') {
       setSeniorityFilter(value);
       handleSearch(query, searchMode, 1, pageSize, { seniorityFilter: value });
@@ -915,7 +1154,12 @@ export const SearchPage = () => {
   const clearAllFilters = () => {
     setFunctionFilter('');
     setIndustryFilter('');
+    setSubIndustryFilter('');
     setCountryFilter('');
+    setCityFilter('');
+    setDesignationFilter('');
+    setCompanyFilter('');
+    setBusinessRequirementFilter('ALL');
     setSeniorityFilter('');
     setVerifiedOnly(false);
     setExcludeKeywords('');
@@ -928,7 +1172,12 @@ export const SearchPage = () => {
     handleSearch(query, searchMode, 1, pageSize, {
       functionFilter: '',
       industryFilter: '',
+      subIndustryFilter: '',
       countryFilter: '',
+      cityFilter: '',
+      designationFilter: '',
+      companyFilter: '',
+      businessRequirementFilter: 'ALL',
       seniorityFilter: '',
       verifiedOnly: false,
       excludeKeywords: '',
@@ -941,9 +1190,14 @@ export const SearchPage = () => {
   };
 
   const activeFiltersCount = [
-    functionFilter,
     industryFilter,
+    subIndustryFilter,
     countryFilter,
+    cityFilter,
+    designationFilter,
+    companyFilter,
+    businessRequirementFilter !== 'ALL' ? businessRequirementFilter : '',
+    functionFilter,
     seniorityFilter,
     verifiedOnly,
     excludeKeywords,
@@ -1091,11 +1345,11 @@ export const SearchPage = () => {
       {/* Clean Compact Search Header */}
       <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-navy tracking-tight">
-            Search Decision Makers
+          <h1 className="text-xl sm:text-2xl font-bold text-[#142B45] tracking-tight">
+            Discover Decision Makers
           </h1>
-          <p className="text-xs text-text-muted mt-0.5">
-            Discover verified executives, suppliers, and commercial partners.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Find verified professionals and business partners.
           </p>
         </div>
 
@@ -1303,86 +1557,248 @@ export const SearchPage = () => {
           </button>
         </form>
 
-        {/* Positive Filters Bar */}
-        <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
-          <div className="flex items-center space-x-1.5 text-xs text-slate-500 font-bold mr-1">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
-            <span>Filters:</span>
+        {/* Positive Filters Bar (7 Core Filters) */}
+        <div className="pt-2.5 border-t border-slate-100 flex flex-col gap-2.5">
+          {/* Row 1: Dropdown & Input Filters */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="flex items-center space-x-1.5 text-xs text-slate-500 font-bold mr-1">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
+              <span>Filters:</span>
+              {activeFiltersCount > 0 && (
+                <span className="px-2 py-0.5 bg-primary text-white text-[9.5px] font-black rounded-full uppercase tracking-wider">
+                  {activeFiltersCount} Active
+                </span>
+              )}
+            </div>
+
+            {/* 1. Industry Filter */}
+            <SearchableDropdownFilter
+              label="Industry"
+              allLabel="All Industries"
+              selectedValue={industryFilter}
+              options={
+                facets.industries && facets.industries.length > 0
+                  ? facets.industries.map((ind) => ({ value: ind.value, label: ind.label, count: ind.count }))
+                  : INDUSTRY_FILTER_OPTIONS
+              }
+              onSelect={(val) => applyFilter('industry', val)}
+              icon={<Building2 className="w-3.5 h-3.5 shrink-0" />}
+            />
+
+            {/* 2. Sub Industry Filter */}
+            <SearchableDropdownFilter
+              label="Sub Industry"
+              allLabel="All Sub-Industries"
+              selectedValue={subIndustryFilter}
+              options={SUB_INDUSTRY_FILTER_OPTIONS}
+              onSelect={(val) => applyFilter('subIndustry', val)}
+              icon={<Layers className="w-3.5 h-3.5 shrink-0" />}
+            />
+
+            {/* 3. Country Filter */}
+            <SearchableDropdownFilter
+              label="Country"
+              allLabel="All Countries"
+              selectedValue={countryFilter}
+              options={
+                facets.territories && facets.territories.length > 0
+                  ? facets.territories.map((t) => ({ value: t.value, label: t.label, count: t.count }))
+                  : COUNTRY_FILTER_OPTIONS
+              }
+              onSelect={(val) => applyFilter('country', val)}
+              icon={<Globe className="w-3.5 h-3.5 shrink-0" />}
+            />
+
+            {/* 4. City Filter */}
+            <SearchableDropdownFilter
+              label="City"
+              allLabel="All Cities"
+              selectedValue={cityFilter}
+              options={CITY_FILTER_OPTIONS}
+              onSelect={(val) => applyFilter('city', val)}
+              icon={<MapPin className="w-3.5 h-3.5 shrink-0" />}
+            />
+
+            {/* 5. Designation Filter */}
+            <SearchableDropdownFilter
+              label="Designation"
+              allLabel="All Designations"
+              selectedValue={designationFilter}
+              options={DESIGNATION_FILTER_OPTIONS}
+              onSelect={(val) => applyFilter('designation', val)}
+              icon={<Briefcase className="w-3.5 h-3.5 shrink-0" />}
+            />
+
+            {/* 6. Company Filter */}
+            <div className="relative inline-flex items-center">
+              <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all bg-surface text-text-muted border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
+                <Building className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Filter company..."
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyFilter('company', companyFilter);
+                    }
+                  }}
+                  className="w-24 sm:w-28 text-xs bg-transparent text-navy placeholder:text-slate-400 focus:outline-none"
+                />
+                {companyFilter ? (
+                  <button
+                    type="button"
+                    onClick={() => applyFilter('company', '')}
+                    className="p-0.5 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
+                    title="Clear company filter"
+                  >
+                    <X className="w-3 h-3 text-slate-500" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => applyFilter('company', companyFilter)}
+                    className="text-[10px] text-primary hover:underline font-bold"
+                    title="Apply company filter"
+                  >
+                    Apply
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Reset All Filters Button */}
             {activeFiltersCount > 0 && (
-              <span className="px-2 py-0.5 bg-primary text-white text-[9.5px] font-black rounded-full uppercase tracking-wider">
-                {activeFiltersCount} Active
-              </span>
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="px-2.5 py-1 text-xs font-extrabold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 flex items-center space-x-1 transition-colors shrink-0 shadow-xs cursor-pointer"
+                title="Reset all filters"
+              >
+                <X className="w-3 h-3" />
+                <span>Reset ({activeFiltersCount})</span>
+              </button>
+            )}
+
+            {/* 1-Click Clear Search & Directory Reset */}
+            {(query || resultsData || companyResults.length > 0) && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="px-2.5 py-1 text-xs font-bold text-neutral-700 hover:text-black bg-neutral-100 hover:bg-neutral-200 rounded-lg border border-neutral-300 flex items-center space-x-1 transition-colors shrink-0 shadow-2xs ml-auto cursor-pointer"
+                title="Clear search and restore clean directory browse"
+              >
+                <RotateCcw className="w-3 h-3 text-neutral-500" />
+                <span>Clear Search</span>
+              </button>
             )}
           </div>
 
-          {/* Function Filter */}
-          <SearchableDropdownFilter
-            label="Function"
-            allLabel="All Functions"
-            selectedValue={functionFilter}
-            options={
-              facets.functions && facets.functions.length > 0
-                ? facets.functions.map((f) => ({ value: f.value, label: f.label, count: f.count }))
-                : [
-                  { value: 'Procurement', label: 'Procurement & Sourcing' },
-                  { value: 'Partnerships', label: 'Strategic Alliances & BD' },
-                  { value: 'Supply Chain', label: 'Supply Chain & Operations' },
-                  { value: 'Sales', label: 'Commercial Sales & Channel' },
-                  { value: 'Executive Management', label: 'Executive Management' },
-                ]
-            }
-            onSelect={(val) => applyFilter('function', val)}
-            icon={<Briefcase className="w-3.5 h-3.5 shrink-0" />}
-          />
+          {/* Row 2: 7. Business Requirement Filter & Active Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
+              <Target className="w-3.5 h-3.5 text-primary" />
+              <span>Business Requirement:</span>
+            </span>
+            <div className="inline-flex p-0.5 bg-slate-100 border border-slate-200 rounded-lg">
+              <button
+                type="button"
+                onClick={() => applyFilter('businessRequirement', 'ALL')}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                  businessRequirementFilter === 'ALL'
+                    ? 'bg-white text-navy font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-navy'
+                }`}
+              >
+                All Requirements
+              </button>
+              <button
+                type="button"
+                onClick={() => applyFilter('businessRequirement', 'LOOKING_FOR')}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                  businessRequirementFilter === 'LOOKING_FOR'
+                    ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-emerald-700'
+                }`}
+              >
+                <span>🔍 Sourcing / Looking For</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => applyFilter('businessRequirement', 'OFFERING')}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                  businessRequirementFilter === 'OFFERING'
+                    ? 'bg-blue-600 text-white font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-blue-700'
+                }`}
+              >
+                <span>📦 Supplying / Offering</span>
+              </button>
+            </div>
 
-          {/* Industry Filter */}
-          <SearchableDropdownFilter
-            label="Industry"
-            allLabel="All Industries"
-            selectedValue={industryFilter}
-            options={
-              facets.industries && facets.industries.length > 0
-                ? facets.industries.map((ind) => ({ value: ind.value, label: ind.label, count: ind.count }))
-                : [
-                  { value: 'FMCG & Consumer Goods', label: 'FMCG & Consumer Goods' },
-                  { value: 'Enterprise Software', label: 'Enterprise Software & Cloud' },
-                  { value: 'Logistics & Supply Chain', label: 'Logistics & Supply Chain' },
-                  { value: 'Renewable Energy & CleanTech', label: 'Renewable Energy & CleanTech' },
-                  { value: 'Healthcare & Life Sciences', label: 'Healthcare & Life Sciences' },
-                  { value: 'Industrial Manufacturing', label: 'Industrial Manufacturing' },
-                ]
-            }
-            onSelect={(val) => applyFilter('industry', val)}
-            icon={<Filter className="w-3.5 h-3.5 shrink-0" />}
-          />
-
-          {/* Advanced enterprise filters (Territories, Seniorities, Corridors, Certifications, Exclusions, DNS Verified) hidden to keep search compact & simple */}
-
-          {/* Reset All Filters Button */}
-          {activeFiltersCount > 0 && (
-            <button
-              type="button"
-              onClick={clearAllFilters}
-              className="px-2.5 py-1 text-xs font-extrabold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 flex items-center space-x-1 transition-colors shrink-0 shadow-xs"
-              title="Reset all filters"
-            >
-              <X className="w-3 h-3" />
-              <span>Reset Filters ({activeFiltersCount})</span>
-            </button>
-          )}
-
-          {/* 1-Click Clear Search & Directory Reset */}
-          {(query || resultsData || companyResults.length > 0) && (
-            <button
-              type="button"
-              onClick={handleClearSearch}
-              className="px-2.5 py-1 text-xs font-bold text-neutral-700 hover:text-black bg-neutral-100 hover:bg-neutral-200 rounded-lg border border-neutral-300 flex items-center space-x-1 transition-colors shrink-0 shadow-2xs ml-auto"
-              title="Clear search and restore clean directory browse"
-            >
-              <RotateCcw className="w-3 h-3 text-neutral-500" />
-              <span>Clear Search</span>
-            </button>
-          )}
+            {/* Active Filter Pills Bar */}
+            {activeFiltersCount > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 ml-auto">
+                {industryFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-[11px] font-semibold">
+                    <span>Industry: {industryFilter}</span>
+                    <button type="button" onClick={() => applyFilter('industry', '')} className="hover:text-blue-900 cursor-pointer">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {subIndustryFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md text-[11px] font-semibold">
+                    <span>Sub: {subIndustryFilter}</span>
+                    <button type="button" onClick={() => applyFilter('subIndustry', '')} className="hover:text-indigo-900 cursor-pointer">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {countryFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-[11px] font-semibold">
+                    <span>Country: {countryFilter}</span>
+                    <button type="button" onClick={() => applyFilter('country', '')} className="hover:text-emerald-900 cursor-pointer">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {cityFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-[11px] font-semibold">
+                    <span>City: {cityFilter}</span>
+                    <button type="button" onClick={() => applyFilter('city', '')} className="hover:text-amber-900 cursor-pointer">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {designationFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-[11px] font-semibold">
+                    <span>Role: {designationFilter}</span>
+                    <button type="button" onClick={() => applyFilter('designation', '')} className="hover:text-purple-900 cursor-pointer">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {companyFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-800 border border-slate-300 rounded-md text-[11px] font-semibold">
+                    <span>Co: {companyFilter}</span>
+                    <button type="button" onClick={() => applyFilter('company', '')} className="hover:text-slate-900 cursor-pointer">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {businessRequirementFilter !== 'ALL' && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-50 text-cyan-800 border border-cyan-200 rounded-md text-[11px] font-semibold">
+                    <span>{businessRequirementFilter === 'LOOKING_FOR' ? 'Seeking' : 'Offering'}</span>
+                    <button type="button" onClick={() => applyFilter('businessRequirement', 'ALL')} className="hover:text-cyan-900 cursor-pointer">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Feature #16: Negative Exclusion Filter Drawer */}
@@ -1621,7 +2037,7 @@ export const SearchPage = () => {
                 <Compass className="w-4 h-4 text-black" />
                 <div>
                   <h3 className="text-xs font-extrabold text-navy">
-                    Bilateral Market Corridor Explorer
+                    Cross-Border Trade Route Explorer
                   </h3>
                   <p className="text-[11px] text-text-muted">
                     Connect origin manufacturers and exporters with destination distributors, logistics operators, and retail buyers
@@ -1717,7 +2133,7 @@ export const SearchPage = () => {
           {loadingCorridors ? (
             <div className="py-16 text-center bg-surface border border-border rounded-xl space-y-2">
               <Compass className="w-8 h-8 text-black mx-auto animate-spin" />
-              <h3 className="text-xs font-bold text-navy">Synthesizing Market Corridor Bilateral Fit...</h3>
+              <h3 className="text-xs font-bold text-navy">Finding Cross-Border Business Matches...</h3>
               <p className="text-[11px] text-text-muted max-w-md mx-auto">
                 Analyzing tariff schedules, regulatory compliance, and distributor mandates.
               </p>
@@ -1851,7 +2267,7 @@ export const SearchPage = () => {
 
                     <div className="flex items-center justify-between text-xs text-text-muted px-1">
                       <span className="font-bold text-navy text-[11px]">
-                        {visibleCorridors.length} of {corridorData.totalActiveCorridors} Bilateral Trade Corridors Active ({corridorData.corridorRoute})
+                        {visibleCorridors.length} of {corridorData.totalActiveCorridors} Active Trade Routes ({corridorData.corridorRoute})
                       </span>
                       <span className="flex items-center space-x-1 text-emerald-700 font-bold text-[11px]">
                         <ShieldCheck className="w-3.5 h-3.5" />
@@ -2601,7 +3017,7 @@ export const SearchPage = () => {
 
           {loading ? (
             <div className="py-16 text-center text-xs text-text-muted bg-surface rounded-2xl border border-border">
-              Evaluating strategic intent and query parameters...
+              Finding the best verified business matches for you...
             </div>
           ) : !query && !resultsData ? (
             /* NEW CHAT / EMPTY STATE MATCHING GIVEN IMAGE */
@@ -2862,7 +3278,7 @@ export const SearchPage = () => {
                   </span>
                   <span className="text-slate-400 hidden sm:inline">&bull;</span>
                   <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
-                    Double-opt-in bilateral trust active
+                    Spam-free: Both people agree to connect
                   </span>
                 </div>
                 <div className="flex items-center space-x-1 bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs">
@@ -2916,10 +3332,7 @@ export const SearchPage = () => {
                             </div>
                             <div className="flex items-center space-x-1.5 shrink-0">
                               {matchScore && (
-                                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold flex items-center space-x-1">
-                                  <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
-                                  <span>{matchScore}%</span>
-                                </span>
+                                <SegmentedMatchBadge score={matchScore} segments={r.matchSegments} />
                               )}
                               <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                 Verified
@@ -2941,6 +3354,15 @@ export const SearchPage = () => {
                             <p className="text-[11px] text-slate-500 truncate pt-0.5">
                               {r.profile.companyName || r.profile.company?.name || 'Enterprise'} &bull; {[r.profile.city, r.profile.countryCode].filter(Boolean).join(', ') || 'Global'}
                             </p>
+
+                            {/* Segmented Match Summary Line */}
+                            {matchScore && (
+                              <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-x-2 pt-1.5 border-t border-slate-100/80 font-medium">
+                                <span className="text-blue-700 font-semibold">• Industry: {r.matchSegments?.industryRelevance ?? Math.round(matchScore * 0.54)}%</span>
+                                <span className="text-emerald-700 font-semibold">• Need: {r.matchSegments?.requirementRelevance ?? Math.round(matchScore * 0.36)}%</span>
+                                <span className="text-amber-700 font-semibold">• Geo: {r.matchSegments?.geographicRelevance ?? Math.max(1, matchScore - (r.matchSegments?.industryRelevance ?? Math.round(matchScore * 0.54)) - (r.matchSegments?.requirementRelevance ?? Math.round(matchScore * 0.36)))}%</span>
+                              </div>
+                            )}
                           </div>
 
                           <div className="text-[10.5px] pt-1 border-t border-slate-100">
@@ -3031,9 +3453,7 @@ export const SearchPage = () => {
                               {r.profile.displayName}
                             </h3>
                             {matchScore && (
-                              <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold shrink-0">
-                                {matchScore}% Match
-                              </span>
+                              <SegmentedMatchBadge score={matchScore} segments={r.matchSegments} />
                             )}
                           </div>
                           <div className="text-[11px] sm:text-xs text-slate-600 flex flex-wrap items-center gap-1.5 pt-0.5">
@@ -3053,6 +3473,14 @@ export const SearchPage = () => {
                               </>
                             )}
                           </div>
+                          {/* Segmented Match Breakdown Line */}
+                          {matchScore && (
+                            <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-x-2 pt-1 font-medium">
+                              <span className="text-blue-700 font-semibold">• Industry: {r.matchSegments?.industryRelevance ?? Math.round(matchScore * 0.54)}%</span>
+                              <span className="text-emerald-700 font-semibold">• Need: {r.matchSegments?.requirementRelevance ?? Math.round(matchScore * 0.36)}%</span>
+                              <span className="text-amber-700 font-semibold">• Geo: {r.matchSegments?.geographicRelevance ?? Math.max(1, matchScore - (r.matchSegments?.industryRelevance ?? Math.round(matchScore * 0.54)) - (r.matchSegments?.requirementRelevance ?? Math.round(matchScore * 0.36)))}%</span>
+                            </div>
+                          )}
                           {/* Contact Privacy Indicator */}
                           <div className="pt-1 text-[10.5px]">
                             {r.profile.connectionStatus === 'CONNECTED' ? (
@@ -3153,7 +3581,7 @@ export const SearchPage = () => {
 
                 if (directSuppliersList.length === 0) {
                   return (
-                    <div className={candidateViewMode === 'GRID' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-2'}>
+                    <div className={candidateViewMode === 'GRID' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5' : 'space-y-2'}>
                       {candidateResults.map((r: any, idx: number) => renderCandidateCard(r, idx))}
                     </div>
                   );
@@ -3176,7 +3604,7 @@ export const SearchPage = () => {
                           </span>
                         )}
                       </div>
-                      <div className={candidateViewMode === 'GRID' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-2'}>
+                      <div className={candidateViewMode === 'GRID' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5' : 'space-y-2'}>
                         {directSuppliersList.map((r: any, idx: number) => renderCandidateCard(r, idx))}
                       </div>
                     </div>
@@ -3193,7 +3621,7 @@ export const SearchPage = () => {
                           </span>
                           <span className="text-[11px] text-neutral-500 hidden sm:inline">Advisory & Distribution Mandates</span>
                         </div>
-                        <div className={candidateViewMode === 'GRID' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-2'}>
+                        <div className={candidateViewMode === 'GRID' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5' : 'space-y-2'}>
                           {tradeAdvisorsList.map((r: any, idx: number) => renderCandidateCard(r, idx))}
                         </div>
                       </div>
@@ -3897,7 +4325,7 @@ export const SearchPage = () => {
 
                     <div className="flex items-baseline space-x-2">
                       <span className="text-3xl font-black text-navy">{twoSidedData.symmetricalFitScore}%</span>
-                      <span className="text-xs text-text-muted">bilateral match alignment</span>
+                      <span className="text-xs text-text-muted">overall mutual fit</span>
                     </div>
 
                     <div className="w-full bg-border rounded-full h-2 overflow-hidden">

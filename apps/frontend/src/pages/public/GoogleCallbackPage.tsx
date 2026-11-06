@@ -49,6 +49,27 @@ export const GoogleCallbackPage = () => {
       const portalScope = resData.portalScope || 'CONSUMER';
       const isNew = !!resData.isNewUser;
 
+      // If Google sign-up was initiated from RegisterPage, enforce mandatory email OTP verification
+      if (state && (state.startsWith('register_') || state.includes('register'))) {
+        const emailToVerify = user?.email;
+        const nameToVerify = user?.profile?.displayName || user?.email?.split('@')[0] || 'Executive';
+        fetch('/api/v1/auth/register-init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: nameToVerify,
+            email: emailToVerify,
+            password: 'GoogleOAuthSecure#2026',
+            agreeTerms: true,
+            authProvider: 'GOOGLE',
+          }),
+        }).catch(() => {});
+
+        clearOAuthHandshakeState();
+        navigate(`/register?step=otp&email=${encodeURIComponent(emailToVerify || '')}&name=${encodeURIComponent(nameToVerify)}&google=1`, { replace: true });
+        return;
+      }
+
       // Save token and user in AuthContext
       login(token, user, refreshToken, portalScope);
       setIsVerified(true);

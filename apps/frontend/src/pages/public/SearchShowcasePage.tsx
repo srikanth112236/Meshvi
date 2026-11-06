@@ -210,19 +210,19 @@ export const SearchShowcasePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-center">
           <MotionContainer className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-bold tracking-wide shadow-xs">
             <Cpu className="w-3.5 h-3.5 text-primary animate-pulse" />
-            <span>Deterministic Commercial Intent Engine</span>
+            <span>Find Exactly What Your Business Needs</span>
           </MotionContainer>
 
           <MotionContainer delay={0.1} className="max-w-4xl mx-auto space-y-5">
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-navy tracking-tight leading-[1.12]">
-              Search by Commercial Intent.{' '}
+              Find by What You Need.{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-teal-600 to-emerald-600">
-                Not Flawed Job Titles.
+                Not Just Job Titles.
               </span>
             </h1>
             <p className="text-sm sm:text-lg text-text-muted leading-relaxed max-w-3xl mx-auto">
-              Traditional databases match arbitrary strings like &quot;Manager&quot; or &quot;Director&quot;.
-              Meshvi interprets your commercial goal, normalizes complex industrial requirements, and verifies match signals with an explainable 100-point rubric.
+              Traditional platforms only look for generic words like "Manager" or "Director".
+              Meshvi understands your exact business requirement, finds the right company and decision-maker, and shows you why they are a match.
             </p>
           </MotionContainer>
 
@@ -263,10 +263,10 @@ export const SearchShowcasePage = () => {
             <span>Interactive Live Simulation</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-black text-navy tracking-tight">
-            See the Semantic Intent Normalizer in Action
+            See How Plain English Search Works
           </h2>
           <p className="text-xs sm:text-sm text-text-muted">
-            Select a C-level commercial procurement prompt below to observe how Meshvi deconstructs unstructured executive requirements into deterministic taxonomy signals.
+            Select an example below to see how Meshvi converts everyday business requests into accurate verified matches.
           </p>
         </div>
 
@@ -362,7 +362,7 @@ export const SearchShowcasePage = () => {
                   {activeScenario.rubric.total}<span className="text-lg font-normal text-emerald-600">/100</span>
                 </div>
                 <span className="text-[10px] text-emerald-700 font-medium block">
-                  Exceeds 85% high-confidence bilateral threshold
+                  High-confidence mutual fit (over 85%)
                 </span>
               </div>
 
@@ -477,7 +477,7 @@ export const SearchShowcasePage = () => {
 
                     <div className="flex items-center justify-between pt-1">
                       <span className="text-[11px] font-bold text-indigo-600 flex items-center">
-                        <Lock className="w-3 h-3 mr-1" /> Bilateral Double-Opt-In
+                        <Lock className="w-3 h-3 mr-1" /> Both Sides Agree First
                       </span>
                       <Link
                         to="/register"
@@ -541,9 +541,9 @@ export const SearchShowcasePage = () => {
                 <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
                   <Lock className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-bold text-navy">Contact Privacy Firewall</h3>
+                <h3 className="text-base font-bold text-navy">Contact Privacy by Default</h3>
                 <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-                  Executives do not have their direct phone numbers or email addresses published for cold spamming. Outreach requires business context and bilateral acceptance.
+                  Your phone number and email are never shared for cold spamming. Connecting requires a real business reason and both people must agree.
                 </p>
               </div>
             </MotionItem>
@@ -583,7 +583,7 @@ export const SearchShowcasePage = () => {
               <tr className="bg-surface-muted border-b border-border text-navy">
                 <th className="p-4 sm:p-5 font-bold">Search & Discovery Capabilities</th>
                 <th className="p-4 sm:p-5 font-bold text-primary bg-primary/5 border-x border-primary/20">
-                  Meshvi Intent Engine
+                  Meshvi Search
                 </th>
                 <th className="p-4 sm:p-5 font-bold text-slate-500">Traditional Scraping Tools (Apollo/ZoomInfo)</th>
                 <th className="p-4 sm:p-5 font-bold text-slate-500">General Networks (LinkedIn Recruiter)</th>
@@ -593,7 +593,7 @@ export const SearchShowcasePage = () => {
               <tr>
                 <td className="p-4 sm:p-5 font-bold text-navy">Search Input Format</td>
                 <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-primary/5 border-x border-primary/20">
-                  Plain English Commercial Intent & Scope
+                  Plain English Business Needs & Goals
                 </td>
                 <td className="p-4 sm:p-5">Rigid boolean title strings</td>
                 <td className="p-4 sm:p-5">Exact job title keywords</td>
@@ -601,7 +601,7 @@ export const SearchShowcasePage = () => {
               <tr>
                 <td className="p-4 sm:p-5 font-bold text-navy">Match Justification</td>
                 <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-primary/5 border-x border-primary/20">
-                  Transparent 100-pt rubric with exact reasoning
+                  Transparent 100-pt breakdown with clear reasons
                 </td>
                 <td className="p-4 sm:p-5">None (Raw database filter)</td>
                 <td className="p-4 sm:p-5">Black-box algorithm</td>
@@ -609,7 +609,7 @@ export const SearchShowcasePage = () => {
               <tr>
                 <td className="p-4 sm:p-5 font-bold text-navy">Outbound Spam Vulnerability</td>
                 <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-primary/5 border-x border-primary/20">
-                  Zero. Protected by Double-Opt-In
+                  Zero. Both people must agree to connect
                 </td>
                 <td className="p-4 sm:p-5">Severe (direct email exposed)</td>
                 <td className="p-4 sm:p-5">High (unlimited InMail spam)</td>
@@ -617,7 +617,7 @@ export const SearchShowcasePage = () => {
               <tr>
                 <td className="p-4 sm:p-5 font-bold text-navy">Data Provenance & Audit</td>
                 <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-primary/5 border-x border-primary/20">
-                  Strictly permitted & DNS verified records
+                  Verified business email and identity
                 </td>
                 <td className="p-4 sm:p-5">Scraped without consent; high bounce rate</td>
                 <td className="p-4 sm:p-5">Self-reported without verification</td>
@@ -625,7 +625,7 @@ export const SearchShowcasePage = () => {
               <tr>
                 <td className="p-4 sm:p-5 font-bold text-navy">Post-Search Collaboration</td>
                 <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-primary/5 border-x border-primary/20">
-                  Bilateral Deal Rooms, NDAs & Milestones
+                  Private Deal Rooms, Easy NDAs & Milestones
                 </td>
                 <td className="p-4 sm:p-5">None (Exports to CSV)</td>
                 <td className="p-4 sm:p-5">Casual messaging thread</td>
@@ -647,7 +647,7 @@ export const SearchShowcasePage = () => {
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            Stop Guessing Titles. Start Connecting on Real Commercial Intent.
+            Stop Guessing Job Titles. Connect on Real Business Needs.
           </h2>
 
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">

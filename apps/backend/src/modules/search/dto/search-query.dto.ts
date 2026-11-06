@@ -18,15 +18,40 @@ export class SearchQueryDto {
   @IsOptional()
   industry?: string;
 
+  @ApiPropertyOptional({ example: 'Beverage & Dairy' })
+  @IsString()
+  @IsOptional()
+  subIndustry?: string;
+
   @ApiPropertyOptional({ example: 'MY' })
   @IsString()
   @IsOptional()
   countryCode?: string;
 
+  @ApiPropertyOptional({ example: 'Kuala Lumpur' })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
   @ApiPropertyOptional({ example: 'Director' })
   @IsString()
   @IsOptional()
   seniority?: string;
+
+  @ApiPropertyOptional({ example: 'Founder & CEO' })
+  @IsString()
+  @IsOptional()
+  designation?: string;
+
+  @ApiPropertyOptional({ example: 'Vedasynk Technologies' })
+  @IsString()
+  @IsOptional()
+  company?: string;
+
+  @ApiPropertyOptional({ example: 'LOOKING_FOR', enum: ['ALL', 'LOOKING_FOR', 'OFFERING'] })
+  @IsString()
+  @IsOptional()
+  businessRequirement?: 'ALL' | 'LOOKING_FOR' | 'OFFERING';
 
   @ApiPropertyOptional({ example: 'staffing, recruiter, agency' })
   @IsString()

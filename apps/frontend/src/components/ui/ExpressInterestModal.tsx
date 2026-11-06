@@ -23,7 +23,7 @@ export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
 
   const [selectedMyOppId, setSelectedMyOppId] = useState<string>('');
   const [message, setMessage] = useState(
-    'We reviewed your opportunity on MESHVI and identified significant bilateral alignment with our distribution network. Would love to coordinate next steps.'
+    'We reviewed your opportunity on Meshvi and identified great mutual fit with our network. Would love to coordinate next steps.'
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');

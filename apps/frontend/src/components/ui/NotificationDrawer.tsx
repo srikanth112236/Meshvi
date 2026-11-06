@@ -7,6 +7,7 @@ import {
   Users,
   Building2,
   ArrowRight,
+  Compass,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -20,7 +21,10 @@ export const NotificationDrawer: React.FC = () => {
     markAllAsRead,
   } = useNotifications();
 
-  const getIconForType = (type: AppNotification['type']) => {
+  const getIconForType = (type: AppNotification['type'], title: string = '') => {
+    if (title.includes('Weekly') || title.includes('Recommendations')) {
+      return <Compass className="w-4 h-4 text-[#078BCC]" />;
+    }
     switch (type) {
       case 'CONNECTION_REQUEST':
         return <Users className="w-4 h-4 text-primary" />;
@@ -66,64 +70,83 @@ export const NotificationDrawer: React.FC = () => {
             </p>
           </div>
         ) : (
-          notifications.map((n) => (
-            <div
-              key={n.id}
-              onClick={() => {
-                if (!n.read) markAsRead(n.id);
-              }}
-              className={`p-3.5 rounded-xl border transition-all cursor-pointer space-y-2 ${
-                n.read
-                  ? 'bg-surface border-border opacity-75'
-                  : 'bg-primary-soft/30 border-primary/20 shadow-xs'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-7 h-7 rounded-lg bg-surface border border-border flex items-center justify-center shrink-0">
-                    {getIconForType(n.type)}
+          notifications.map((n) => {
+            const isWeekly = n.title?.includes('Weekly') || n.title?.includes('Recommendations');
+            return (
+              <div
+                key={n.id}
+                onClick={() => {
+                  if (!n.read) markAsRead(n.id);
+                }}
+                className={`p-3.5 rounded-xl border transition-all cursor-pointer space-y-2 ${
+                  isWeekly
+                    ? n.read
+                      ? 'bg-blue-50/40 border-blue-200/60'
+                      : 'bg-gradient-to-r from-sky-50/90 via-white to-blue-50/70 border-sky-300 shadow-xs'
+                    : n.read
+                    ? 'bg-surface border-border opacity-75'
+                    : 'bg-primary-soft/30 border-primary/20 shadow-xs'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${
+                        isWeekly ? 'bg-sky-100/70 border-sky-300' : 'bg-surface border-border'
+                      }`}
+                    >
+                      {getIconForType(n.type, n.title)}
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-xs font-bold text-navy block leading-tight">
+                          {n.title}
+                        </span>
+                        {isWeekly && (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-sky-100 text-[#078BCC] border border-sky-200 shrink-0">
+                            Weekly Match
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-text-muted">
+                        {new Date(n.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} ·{' '}
+                        {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-xs font-bold text-navy block leading-tight">
-                      {n.title}
-                    </span>
-                    <span className="text-[10px] text-text-muted">
-                      {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
+
+                  {!n.read && (
+                    <span className="w-2 h-2 rounded-full bg-[#078BCC] shrink-0 mt-1" />
+                  )}
                 </div>
 
-                {!n.read && (
-                  <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1" />
+                <p className="text-xs text-text leading-relaxed">{n.body}</p>
+
+                {n.actionUrl && (
+                  <div className="pt-1 flex justify-end">
+                    <Link
+                      to={
+                        (window.location.pathname.startsWith('/company') || n.actionUrl.includes('company')) &&
+                        (n.type === 'CONNECTION_REQUEST' || n.type === 'INTRO_REQUEST' || n.actionUrl === '/app/requests')
+                          ? (n.type === 'INTRO_REQUEST' ? '/company/pipeline' : '/company/connections')
+                          : n.actionUrl
+                      }
+                      onClick={() => {
+                        markAsRead(n.id);
+                        setDrawerOpen(false);
+                      }}
+                      className={`inline-flex items-center space-x-1 text-[11px] font-bold ${
+                        isWeekly ? 'text-[#078BCC] hover:underline' : 'text-primary hover:underline'
+                      }`}
+                    >
+                      <span>{isWeekly ? 'Explore Matches' : 'View Details'}</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
                 )}
               </div>
-
-              <p className="text-xs text-text leading-relaxed">
-                {n.body}
-              </p>
-
-              {n.actionUrl && (
-                <div className="pt-1 flex justify-end">
-                  <Link
-                    to={
-                      (window.location.pathname.startsWith('/company') || n.actionUrl.includes('company')) &&
-                      (n.type === 'CONNECTION_REQUEST' || n.type === 'INTRO_REQUEST' || n.actionUrl === '/app/requests')
-                        ? (n.type === 'INTRO_REQUEST' ? '/company/pipeline' : '/company/connections')
-                        : n.actionUrl
-                    }
-                    onClick={() => {
-                      markAsRead(n.id);
-                      setDrawerOpen(false);
-                    }}
-                    className="inline-flex items-center space-x-1 text-[11px] font-bold text-primary hover:underline"
-                  >
-                    <span>View Details</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              )}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </Drawer>

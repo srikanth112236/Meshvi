@@ -63,6 +63,14 @@ export class NotificationsController {
     return this.notificationsService.markAsRead(user.id, notificationId);
   }
 
+  @Post('trigger-weekly')
+  @ApiOperation({ summary: 'Trigger weekly recommendations notification for current user' })
+  async triggerWeekly(@CurrentUser() user: any) {
+    if (!user?.id) return { success: false, message: 'Unauthenticated' };
+    const notif = await this.notificationsService.ensureWeeklyRecommendationsNotification(user.id);
+    return { success: true, data: notif };
+  }
+
   @Post('mark-all-read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark all notifications as read for current user' })

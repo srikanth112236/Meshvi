@@ -25,7 +25,7 @@ export const TermsPage = () => {
           <div className="p-4 bg-indigo-500/10 border border-indigo-500/25 rounded-2xl text-xs text-indigo-950 leading-relaxed flex items-start space-x-2.5">
             <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
             <div>
-              <strong className="font-bold">Executive Code of Integrity:</strong> MESHVI is a professional bilateral discovery environment. All users agree to accurate profile representations, good-faith commercial intent, and zero scraping or harassment.
+              <strong className="font-bold">Executive Code of Integrity:</strong> Meshvi is a professional, spam-free business network. All users agree to accurate profile representations, honest business intent, and zero scraping or harassment.
             </div>
           </div>
         </div>
@@ -84,7 +84,7 @@ export const TermsPage = () => {
 
           {/* Section 4 */}
           <section className="p-6 sm:p-8 bg-surface rounded-2xl border border-border space-y-3">
-            <h2 className="text-base font-bold text-navy">4. Bilateral Deal Rooms & Mutual Non-Disclosure Agreements (MNDA)</h2>
+            <h2 className="text-base font-bold text-navy">4. Private Deal Rooms & Mutual Non-Disclosure Agreements (MNDA)</h2>
             <p>
               MESHVI provides cryptographic Deal Room environments equipped with digital Mutual Non-Disclosure Agreement (MNDA) execution. By executing an MNDA inside a Deal Room, the participating parties enter into a binding bilateral confidentiality contract directly with one another.
             </p>

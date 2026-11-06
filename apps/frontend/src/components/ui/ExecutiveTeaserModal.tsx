@@ -83,7 +83,7 @@ export const ExecutiveTeaserModal: React.FC<Props> = ({
                   <span>{post.authorCompany}</span>
                 </span>
                 <span className="text-text-muted">&bull;</span>
-                <span className="text-[11px] text-text-muted">Bilateral Mandate Dossier</span>
+                <span className="text-[11px] text-text-muted">Partnership Proposal</span>
               </div>
               <h2 className="text-lg sm:text-xl font-black text-navy tracking-tight">{post.title}</h2>
             </div>

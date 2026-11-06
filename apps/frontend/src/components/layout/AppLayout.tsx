@@ -3,10 +3,9 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard,
+  Compass,
   Handshake,
-  Search,
   Users,
-  Network,
   MessageSquare,
   LogOut,
   Menu,
@@ -16,11 +15,13 @@ import {
   ChevronDown,
   ChevronUp,
   MoreHorizontal,
-  Shield,
-  ShieldCheck,
+  Search,
   Bell,
   History,
-  Plus,
+  Building2,
+  Shield,
+  Settings,
+  User,
 } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useSearchHistory } from '../../context/SearchHistoryContext';
@@ -31,16 +32,17 @@ import { RecentSearchesModal } from '../ui/RecentSearchesModal';
 export const AppLayout = () => {
   const { user, logout } = useAuth();
   const { unreadCount, setDrawerOpen } = useNotifications();
-  const { recent, setActiveSessionId, startNewSearchSession } = useSearchHistory();
+  const { recent, startNewSearchSession } = useSearchHistory();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commandBarOpen, setCommandBarOpen] = useState(false);
   const [recentModalOpen, setRecentModalOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
-  // Sidebar starts collapsed (icon rail) and remembers the user's choice.
+  // Sidebar starts expanded on desktop by default (228px), with collapsible rail (68px)
   const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem('setu_sidebar_collapsed') !== '0'
+    () => localStorage.getItem('setu_sidebar_collapsed') === '1'
   );
 
   const toggleCollapsed = () => {
@@ -51,10 +53,9 @@ export const AppLayout = () => {
     });
   };
 
-  // On mobile the drawer always shows the complete labelled sidebar.
   const showLabels = mobileMenuOpen || !collapsed;
 
-  // Global Ctrl+K / Cmd+K shortcut listener
+  // Global Ctrl+K / Cmd+K listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -66,7 +67,7 @@ export const AppLayout = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Intercept users who haven't completed onboarding and route them to Onboarding Wizard
+  // Route unonboarded users
   useEffect(() => {
     if (user && user.onboardingCompleted === false && !location.pathname.startsWith('/app/onboarding')) {
       navigate('/app/onboarding', { replace: true });
@@ -78,22 +79,11 @@ export const AppLayout = () => {
     navigate('/login');
   };
 
-  const runRecentSearch = (query: string, sessionId?: string) => {
-    setRecentModalOpen(false);
-    setMobileMenuOpen(false);
-    if (sessionId) {
-      setActiveSessionId(sessionId);
-      navigate(`/app/search?q=${encodeURIComponent(query)}&session=${sessionId}`);
-    } else {
-      navigate(`/app/search?q=${encodeURIComponent(query)}`);
-    }
-  };
-
   const handleStartNewSearch = (e: React.MouseEvent) => {
     e.preventDefault();
     const newSessionId = startNewSearchSession();
     setMobileMenuOpen(false);
-    navigate(`/app/home?new_search=true&session=${newSessionId}`);
+    navigate(`/app/search?session=${newSessionId}`);
   };
 
   const openRecentModal = () => {
@@ -101,101 +91,102 @@ export const AppLayout = () => {
     setMobileMenuOpen(false);
   };
 
-  // Primary 4 items — clean, focused, essential
+  // The 5 Primary Destinations (Strict Linear / Attio style navigation)
   const primaryNavItems = [
-    { name: 'Search', href: '/app/search', icon: Search },
-    { name: 'Dashboard', href: '/app/home', icon: LayoutDashboard },
-    { name: 'Deal Rooms', href: '/app/partnerships', icon: Handshake },
-    { name: 'Messages', href: '/app/messages', icon: MessageSquare, hasBadge: unreadCount > 0 },
+    {
+      name: 'Home',
+      href: '/app/home',
+      icon: LayoutDashboard,
+      isActive: (pathname: string) => pathname === '/app/home' || pathname === '/app',
+    },
+    {
+      name: 'Discover',
+      href: '/app/search',
+      icon: Compass,
+      isActive: (pathname: string) => pathname.startsWith('/app/search'),
+    },
+    {
+      name: 'Partnerships',
+      href: '/app/partnerships',
+      icon: Handshake,
+      isActive: (pathname: string) => pathname.startsWith('/app/partnerships') || pathname.startsWith('/app/deal-rooms'),
+    },
+    {
+      name: 'My Network',
+      href: '/app/connections',
+      icon: Users,
+      isActive: (pathname: string) => pathname.startsWith('/app/connections') || pathname.startsWith('/app/introductions') || pathname.startsWith('/app/requests'),
+    },
+    {
+      name: 'Messages',
+      href: '/app/messages',
+      icon: MessageSquare,
+      hasBadge: unreadCount > 0,
+      badgeCount: unreadCount,
+      isActive: (pathname: string) => pathname.startsWith('/app/messages'),
+    },
   ];
 
-  // Secondary items — disclosed via "More Options"
-  const secondaryNavItems = [
-    { name: 'Connections', href: '/app/connections', icon: Users },
-    { name: 'Introductions', href: '/app/introductions', icon: Network },
-  ];
-
-  const isActive = (path: string) =>
-    location.pathname === path || (path !== '/app/home' && location.pathname.startsWith(path));
-
-  const isSecondaryActive =
-    secondaryNavItems.some((item) => isActive(item.href)) ||
-    location.pathname.startsWith('/company') ||
-    location.pathname.startsWith('/admin');
-
-  // Progressive disclosure state: auto-expanded if currently viewing a secondary tool
-  const [moreOptionsOpen, setMoreOptionsOpen] = useState(
-    () => isSecondaryActive || localStorage.getItem('setu_sidebar_more_open') === '1'
-  );
-
-  useEffect(() => {
-    if (isSecondaryActive) {
-      setMoreOptionsOpen(true);
-    }
-  }, [isSecondaryActive]);
-
-  const toggleMoreOptions = () => {
-    setMoreOptionsOpen((prev) => {
-      const next = !prev;
-      localStorage.setItem('setu_sidebar_more_open', next ? '1' : '0');
-      return next;
-    });
-  };
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
 
   const getPageTitle = () => {
-    if (location.pathname.startsWith('/app/search')) return 'Search & Discovery';
-    if (location.pathname.startsWith('/app/home')) return 'Dashboard';
-    if (location.pathname.startsWith('/app/partnerships')) return 'Deal Rooms';
-    if (location.pathname.startsWith('/app/messages')) return 'Messages';
-    if (location.pathname.startsWith('/app/connections')) return 'Connections';
-    if (location.pathname.startsWith('/app/introductions')) return 'Warm Introductions';
-    if (location.pathname.startsWith('/app/profile')) return 'Profile Dossier';
-    if (location.pathname.startsWith('/app/settings')) return 'Settings';
-    return 'Dashboard';
+    const p = location.pathname;
+    if (p.startsWith('/app/search')) return 'Discover Decision Makers';
+    if (p.startsWith('/app/home')) return 'Intelligence Dashboard';
+    if (p.startsWith('/app/partnerships')) return 'Partnership Marketplace';
+    if (p.startsWith('/app/deal-rooms')) return 'Deal Rooms';
+    if (p.startsWith('/app/messages')) return 'Messages';
+    if (p.startsWith('/app/connections')) return 'My Network';
+    if (p.startsWith('/app/introductions')) return 'Warm Introductions';
+    if (p.startsWith('/app/profile')) return 'Executive Profile';
+    if (p.startsWith('/app/settings')) return 'Account Settings';
+    return 'Meshvi Workspace';
   };
 
   return (
-    <div className="min-h-screen bg-bg text-text flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#142B45] flex flex-col md:flex-row selection:bg-blue-100">
       {/* Mobile Sidebar Overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-navy/50 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* Main Sidebar — collapsed icon rail by default, expandable to the full panel */}
+      {/* Main Consolidated Sidebar (228px expanded, 68px collapsed) */}
       <aside
-        className={`fixed md:sticky top-0 inset-y-0 left-0 z-50 bg-surface border-r border-border flex flex-col justify-between transition-all duration-200 ease-in-out md:translate-x-0 w-60 ${
-          collapsed ? 'md:w-[68px]' : 'md:w-60'
-        } ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} h-screen`}
+        className={`fixed md:sticky top-0 inset-y-0 left-0 z-50 bg-white border-r border-[#E8EDF3] flex flex-col justify-between transition-all duration-200 ease-in-out md:translate-x-0 ${
+          collapsed ? 'md:w-[68px]' : 'md:w-[228px]'
+        } ${mobileMenuOpen ? 'translate-x-0 w-[240px]' : '-translate-x-full w-[228px]'} h-screen`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-          {/* Brand & Collapse Toggle */}
+          {/* Top Brand & Header */}
           <div
-            className={`border-b border-border flex ${
+            className={`border-b border-[#E8EDF3] flex ${
               showLabels
-                ? 'items-center justify-between px-3 py-2.5'
-                : 'flex-col items-center gap-1.5 px-2 py-2.5'
+                ? 'items-center justify-between px-3.5 py-3'
+                : 'flex-col items-center gap-1.5 px-2 py-3'
             }`}
           >
             <Link
               to="/app/home"
-              className="flex items-center space-x-2.5 min-w-0"
-              title="MESHVI Member Portal"
+              className="flex items-center space-x-2.5 min-w-0 group"
+              title="Meshvi Enterprise"
             >
-              <img
-                src="/meshvi-mark.png"
-                alt="Meshvi"
-                className="w-8 h-8 object-contain shrink-0"
-              />
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#078BCC] to-[#056FA8] flex items-center justify-center p-1.5 shadow-2xs shrink-0 transition-transform group-hover:scale-105">
+                <img
+                  src="/meshvi-mark.png"
+                  alt="Meshvi"
+                  className="w-full h-full object-contain brightness-0 invert"
+                />
+              </div>
               {showLabels && (
                 <div className="min-w-0">
-                  <span className="text-sm font-black text-navy tracking-tight block leading-tight">
-                    MESHVI
+                  <span className="text-sm font-bold text-[#142B45] tracking-tight block leading-tight">
+                    Meshvi
                   </span>
-                  <span className="text-[9px] font-extrabold text-primary uppercase tracking-widest block leading-tight">
-                    Member Portal
+                  <span className="text-[9px] font-bold text-[#078BCC] tracking-[0.2em] uppercase block leading-tight">
+                    ENTERPRISE
                   </span>
                 </div>
               )}
@@ -205,7 +196,7 @@ export const AppLayout = () => {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 text-text-muted hover:text-navy md:hidden"
+                className="p-1.5 text-slate-400 hover:text-slate-700 md:hidden"
                 aria-label="Close navigation menu"
               >
                 <X className="w-4 h-4" />
@@ -215,7 +206,7 @@ export const AppLayout = () => {
             <button
               type="button"
               onClick={toggleCollapsed}
-              className="hidden md:inline-flex items-center justify-center w-6 h-6 rounded-md text-text-muted hover:text-navy hover:bg-surface-muted transition-colors shrink-0"
+              className="hidden md:inline-flex items-center justify-center w-6 h-6 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
@@ -227,254 +218,242 @@ export const AppLayout = () => {
             </button>
           </div>
 
-          {/* New search */}
-          <div className={showLabels ? 'px-2.5 pt-2.5' : 'px-2 pt-2.5 flex justify-center'}>
+          {/* Quick Search Action */}
+          <div className={showLabels ? 'px-3 pt-3 pb-1' : 'px-2 pt-3 pb-1 flex justify-center'}>
             {showLabels ? (
               <button
                 type="button"
                 onClick={handleStartNewSearch}
-                className="flex items-center justify-center gap-1.5 w-full rounded-lg border border-border bg-surface hover:bg-surface-muted px-2 py-1.5 text-[11px] font-bold text-navy transition-colors cursor-pointer"
+                className="flex items-center justify-between w-full rounded-xl border border-[#E8EDF3] bg-slate-50 hover:bg-slate-100/80 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 text-primary" />
-                <span>New search</span>
+                <div className="flex items-center space-x-2">
+                  <Search className="w-3.5 h-3.5 text-[#078BCC]" />
+                  <span>Discover leaders</span>
+                </div>
+                <kbd className="text-[10px] font-mono text-slate-400 bg-white border border-slate-200 px-1.5 py-0.2 rounded">
+                  ⌘K
+                </kbd>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={handleStartNewSearch}
-                title="New search"
-                aria-label="New search"
-                className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-primary hover:bg-surface-muted transition-colors cursor-pointer"
+                title="Discover leaders (Cmd+K)"
+                className="w-9 h-9 rounded-xl border border-[#E8EDF3] bg-slate-50 flex items-center justify-center text-slate-500 hover:text-[#078BCC] hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
+                <Search className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Compact Primary Navigation Links */}
-          <nav className={showLabels ? 'p-2.5 pt-2 space-y-1' : 'p-2 pt-2 space-y-1.5'}>
+          {/* 5 Primary Navigation Items */}
+          <nav className={showLabels ? 'p-3 space-y-1' : 'p-2 space-y-1.5'}>
             {primaryNavItems.map((item) => {
-              const active = isActive(item.href);
+              const active = item.isActive(location.pathname);
               return (
                 <Link
                   key={item.name}
                   to={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   title={item.name}
-                  aria-label={item.name}
                   className={`flex items-center rounded-xl text-xs font-semibold transition-all ${
-                    showLabels ? 'justify-between px-3 py-2' : 'justify-center px-0 py-2.5'
+                    showLabels ? 'justify-between px-3 py-2.5' : 'justify-center px-0 py-2.5'
                   } ${
                     active
-                      ? 'bg-primary text-white shadow-sm font-bold'
-                      : 'text-text-muted hover:text-navy hover:bg-surface-muted'
+                      ? 'bg-[#078BCC] text-white shadow-xs font-bold'
+                      : 'text-slate-600 hover:text-[#142B45] hover:bg-slate-100/70'
                   }`}
                 >
                   <div className={`flex items-center ${showLabels ? 'space-x-2.5' : ''}`}>
                     <div className="relative">
-                      <item.icon className={`w-4 h-4 ${active ? 'text-white' : 'text-text-muted'}`} />
+                      <item.icon className={`w-4 h-4 ${active ? 'text-white' : 'text-slate-500'}`} />
                       {item.hasBadge && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary ring-2 ring-surface" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#36C4E8] ring-2 ring-white" />
                       )}
                     </div>
                     {showLabels && <span>{item.name}</span>}
                   </div>
-                  {showLabels && active && <ChevronRight className="w-3 h-3 text-white/80" />}
-                  {showLabels && !active && item.hasBadge && unreadCount > 0 && (
-                    <span className="text-[9px] font-black bg-primary text-white px-1.5 py-0.2 rounded-full">
-                      {unreadCount > 9 ? '9+' : unreadCount}
+                  {showLabels && active && <ChevronRight className="w-3 h-3 text-white/70" />}
+                  {showLabels && !active && item.hasBadge && (item.badgeCount ?? 0) > 0 && (
+                    <span className="text-[10px] font-bold bg-[#078BCC] text-white px-1.5 py-0.2 rounded-full">
+                      {(item.badgeCount ?? 0) > 9 ? '9+' : item.badgeCount}
                     </span>
                   )}
                 </Link>
               );
             })}
 
-            {/* "More Options" Toggle Button */}
+            {/* Contextual "More" Submenu (Search History, Corporate, Admin) */}
             {showLabels ? (
-              <div className="pt-1.5">
+              <div className="pt-2">
                 <button
                   type="button"
-                  onClick={toggleMoreOptions}
+                  onClick={() => setMoreOptionsOpen(!moreOptionsOpen)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                    moreOptionsOpen || isSecondaryActive
-                      ? 'text-navy bg-surface-muted/70 font-bold'
-                      : 'text-text-muted hover:text-navy hover:bg-surface-muted'
+                    moreOptionsOpen
+                      ? 'text-[#142B45] bg-slate-100 font-bold'
+                      : 'text-slate-500 hover:text-[#142B45] hover:bg-slate-100/70'
                   }`}
-                  aria-expanded={moreOptionsOpen}
-                  title="View additional tools and portals"
                 >
                   <div className="flex items-center space-x-2.5">
-                    <MoreHorizontal className="w-4 h-4 text-text-muted" />
-                    <span>More Options</span>
+                    <MoreHorizontal className="w-4 h-4 text-slate-400" />
+                    <span>More Tools</span>
                   </div>
                   {moreOptionsOpen ? (
-                    <ChevronUp className="w-3.5 h-3.5 text-text-muted" />
+                    <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
                   ) : (
-                    <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                   )}
                 </button>
 
-                {/* Expanded Secondary Options Drawer */}
                 {moreOptionsOpen && (
-                  <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-border/70 ml-2 animate-fadeIn">
-                    {secondaryNavItems.map((item) => {
-                      const active = isActive(item.href);
-                      return (
-                        <Link
-                          key={item.name}
-                          to={item.href}
-                          onClick={() => setMobileMenuOpen(false)}
-                          title={item.name}
-                          aria-label={item.name}
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                            active
-                              ? 'bg-primary/10 text-primary font-bold'
-                              : 'text-text-muted hover:text-navy hover:bg-surface-muted'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <item.icon className={`w-3.5 h-3.5 ${active ? 'text-primary' : 'text-text-muted'}`} />
-                            <span>{item.name}</span>
-                          </div>
-                          {active && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                        </Link>
-                      );
-                    })}
-
-                    {/* Search History Button */}
+                  <div className="mt-1 space-y-0.5 pl-3 border-l-2 border-slate-200 ml-3 animate-fade-in">
                     <button
                       type="button"
                       onClick={openRecentModal}
-                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-text-muted hover:text-navy hover:bg-surface-muted transition-colors text-left cursor-pointer"
-                      title="Open search history"
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors text-left cursor-pointer"
                     >
                       <div className="flex items-center space-x-2">
-                        <History className="w-3.5 h-3.5 text-text-muted" />
+                        <History className="w-3.5 h-3.5 text-slate-400" />
                         <span>Search History</span>
                       </div>
                       {recent.length > 0 && (
-                        <span className="text-[9px] font-bold bg-surface-muted px-1.5 py-0.2 rounded-full text-text-muted">
+                        <span className="text-[9px] font-bold bg-slate-200 px-1.5 py-0.2 rounded-full text-slate-700">
                           {recent.length}
                         </span>
                       )}
                     </button>
 
-                    {/* Portals Sub-group */}
-                    <div className="pt-1 mt-1 border-t border-border/50">
+                    <Link
+                      to="/company"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Corporate Portal</span>
+                      </div>
+                    </Link>
+
+                    {user?.roles?.includes('SUPER_ADMIN') && (
                       <Link
-                        to="/company"
+                        to="/admin"
                         onClick={() => setMobileMenuOpen(false)}
-                        title="Corporate Portal"
-                        className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-text-muted hover:text-navy hover:bg-surface-muted transition-all"
+                        className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 hover:bg-amber-50 transition-colors"
                       >
                         <div className="flex items-center space-x-2">
-                          <Shield className="w-3.5 h-3.5 text-indigo-600" />
-                          <span>Corporate Portal</span>
+                          <Shield className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Admin Ops</span>
                         </div>
                       </Link>
-
-                      {user?.roles?.includes('SUPER_ADMIN') && (
-                        <Link
-                          to="/admin/dashboard"
-                          onClick={() => setMobileMenuOpen(false)}
-                          title="Admin Ops Portal"
-                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-text-muted hover:text-navy hover:bg-surface-muted transition-all"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-                            <span>Admin Ops</span>
-                          </div>
-                        </Link>
-                      )}
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
-            ) : (
-              /* Collapsed mode icon-rail trigger for More Options */
-              <div className="pt-1 flex flex-col items-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    toggleCollapsed();
-                    setMoreOptionsOpen(true);
-                  }}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-                    isSecondaryActive
-                      ? 'bg-primary-soft text-primary'
-                      : 'text-text-muted hover:text-navy hover:bg-surface-muted'
-                  }`}
-                  title="More Options (Expand)"
-                  aria-label="More Options (Expand)"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+            ) : null}
           </nav>
         </div>
 
-        {/* Compact User Footer */}
-        <div className={`border-t border-border bg-surface-muted/40 ${showLabels ? 'p-2.5' : 'p-2'}`}>
+        {/* Bottom Profile & Account Destination */}
+        <div className="border-t border-[#E8EDF3] p-2.5 relative">
           {showLabels ? (
-            <div className="p-2.5 bg-surface rounded-xl border border-border/80 flex items-center justify-between shadow-2xs">
-              <div className="flex items-center space-x-2 min-w-0">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer text-left"
+              >
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  {user?.profile?.avatarUrl || user?.avatarUrl ? (
+                    <img
+                      src={user?.profile?.avatarUrl || user?.avatarUrl}
+                      alt={user?.profile?.displayName || 'Executive'}
+                      referrerPolicy="no-referrer"
+                      className="w-8 h-8 rounded-full object-cover border border-slate-200 bg-white shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-[#102B45] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                      {user?.profile?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'M'}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-[#142B45] truncate leading-tight">
+                      {user?.profile?.displayName || 'Executive Leader'}
+                    </p>
+                    <p className="text-[10px] text-slate-500 truncate leading-tight mt-0.5">
+                      {user?.profile?.currentTitle || user?.email}
+                    </p>
+                  </div>
+                </div>
+                <MoreHorizontal className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+              </button>
+
+              {/* Account Flyout Menu */}
+              {accountMenuOpen && (
+                <div className="absolute bottom-full left-0 mb-2 w-full bg-white border border-[#E8EDF3] rounded-2xl shadow-xl p-1.5 z-50 animate-fade-in">
+                  <Link
+                    to="/app/profile"
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
+                  >
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Executive Profile</span>
+                  </Link>
+
+                  <Link
+                    to="/app/settings"
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Account Settings</span>
+                  </Link>
+
+                  <div className="border-t border-slate-100 my-1" />
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/app/profile')}
+                className="cursor-pointer"
+                title={user?.profile?.displayName || user?.email}
+              >
                 {user?.profile?.avatarUrl || user?.avatarUrl ? (
                   <img
                     src={user?.profile?.avatarUrl || user?.avatarUrl}
                     alt={user?.profile?.displayName || 'Executive'}
                     referrerPolicy="no-referrer"
-                    className="w-7 h-7 rounded-full object-cover border border-border shrink-0 bg-white"
+                    className="w-8 h-8 rounded-full object-cover border border-slate-200 bg-white"
                   />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center shrink-0">
-                    {user?.profile?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+                  <div className="w-8 h-8 rounded-full bg-[#102B45] text-white text-xs font-bold flex items-center justify-center">
+                    {user?.profile?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'M'}
                   </div>
                 )}
-                <div className="min-w-0">
-                  <div className="text-xs font-bold text-navy truncate">
-                    {user?.profile?.displayName || user?.email?.split('@')[0]}
-                  </div>
-                  <div className="text-[9px] text-text-muted flex items-center space-x-1">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-success"></span>
-                    <span className="truncate">{user?.profile?.currentTitle || 'Member'}</span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="p-1.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors shrink-0"
-                title="Sign Out"
-              >
-                <LogOut className="w-3.5 h-3.5" />
               </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-1.5">
-              {user?.profile?.avatarUrl || user?.avatarUrl ? (
-                <img
-                  src={user?.profile?.avatarUrl || user?.avatarUrl}
-                  alt={user?.profile?.displayName || 'Executive'}
-                  referrerPolicy="no-referrer"
-                  className="w-8 h-8 rounded-full object-cover border border-border bg-white"
-                  title={user?.profile?.displayName || user?.email}
-                />
-              ) : (
-                <div
-                  className="w-8 h-8 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center"
-                  title={user?.profile?.displayName || user?.email}
-                >
-                  {user?.profile?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-                </div>
-              )}
               <button
                 type="button"
                 onClick={handleLogout}
-                className="p-1.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                 title="Sign Out"
-                aria-label="Sign Out"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -483,134 +462,80 @@ export const AppLayout = () => {
         </div>
       </aside>
 
-      {/* Main Content Area — full-width workspace */}
+      {/* Main Content Area — Full-width clean workspace */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-border px-3 sm:px-4 h-12 sm:h-13 flex items-center justify-between">
-          <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Global Standard Header (Linear + Stripe inspired) */}
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-[#E8EDF3] px-4 sm:px-6 h-13 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="p-1.5 text-text-muted hover:text-navy md:hidden rounded-lg hover:bg-surface-muted"
+              className="p-1.5 text-slate-500 hover:text-slate-900 md:hidden rounded-lg hover:bg-slate-100"
               aria-label="Open navigation menu"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              className="hidden md:inline-flex p-1.5 text-text-muted hover:text-navy rounded-lg hover:bg-surface-muted transition-colors"
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              <Menu className="w-4 h-4" />
-            </button>
-            <div className="flex items-center space-x-2 text-xs sm:text-sm">
-              <span className="font-bold text-navy text-xs sm:text-sm">{getPageTitle()}</span>
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-[#142B45] text-sm tracking-tight">{getPageTitle()}</span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-1.5 sm:space-x-2.5">
-            {/* Quick Command Bar Trigger */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Global Search / Command Bar Trigger */}
             <button
               type="button"
               onClick={() => setCommandBarOpen(true)}
-              className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl text-text-muted hover:text-navy hover:bg-surface-muted transition-colors border border-border text-xs"
-              title="Launch Universal Command Bar (Ctrl+K)"
+              className="flex items-center space-x-2 px-3 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200/80 bg-slate-50/70 text-xs shadow-2xs"
+              title="Launch Command Bar (Ctrl+K)"
             >
-              <Search className="w-3.5 h-3.5" />
-              <span>Search / Jump to...</span>
-              <kbd className="px-1.5 py-0.2 bg-surface text-[10px] font-black rounded border border-border text-navy">
-                Ctrl+K
+              <Search className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Search anything...</span>
+              <kbd className="hidden sm:inline text-[10px] font-mono text-slate-400 bg-white border border-slate-200 px-1.5 py-0.2 rounded">
+                ⌘K
               </kbd>
             </button>
 
-            {/* Network Connectivity Status Pill */}
+            {/* Live Network Status Indicator */}
             <NetworkStatusPill />
 
-            {/* Real-time Notification Bell */}
+            {/* Notifications Drawer Bell */}
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="relative p-2 rounded-xl text-text-muted hover:text-navy hover:bg-surface-muted transition-colors border border-border"
-              title="Open Notifications"
+              className="relative p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              title="Notifications"
             >
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-primary text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 shadow-sm animate-pulse">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#078BCC] ring-2 ring-white" />
               )}
             </button>
-
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-soft text-primary border border-primary/20 shrink-0">
-              <Shield className="w-3 h-3 mr-1 shrink-0" />
-              <span className="hidden xs:inline">Verified Network</span>
-            </span>
           </div>
         </header>
 
-        <main className="flex-1 w-full p-3 sm:p-4 lg:p-5 pb-[max(5.5rem,calc(4.5rem+env(safe-area-inset-bottom)))] md:pb-5">
+        {/* Routed Workspace View */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1440px] w-full mx-auto">
           <Outlet />
         </main>
-
-        <footer className="border-t border-border/60 bg-surface/50 py-1.5 px-4 flex items-center justify-between text-[10px] text-text-muted hidden md:flex">
-          <span>MESHVI &bull; Intent-First Enterprise Network</span>
-          <span>Encrypted Session</span>
-        </footer>
-
-        {/* Mobile Persistent Bottom Navigation Bar (iOS Home-Indicator Safe) */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-border px-1 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-lg flex items-center justify-around">
-          {primaryNavItems.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all ${
-                  active
-                    ? 'text-primary font-bold'
-                    : 'text-text-muted hover:text-navy'
-                }`}
-              >
-                <div className="relative">
-                  <item.icon className={`w-5 h-5 ${active ? 'text-primary stroke-[2.5]' : 'text-text-muted stroke-[1.75]'}`} />
-                  {item.href === '/app/messages' && unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 bg-primary rounded-full ring-2 ring-surface animate-pulse" />
-                  )}
-                </div>
-                <span className={`text-[10px] mt-0.5 tracking-tight ${active ? 'font-black text-primary' : 'font-medium'}`}>
-                  {item.name}
-                </span>
-              </Link>
-            );
-          })}
-          {/* Mobile 5th Item: More Drawer Toggle */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(true)}
-            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all ${
-              isSecondaryActive ? 'text-primary font-bold' : 'text-text-muted hover:text-navy'
-            }`}
-          >
-            <MoreHorizontal className={`w-5 h-5 ${isSecondaryActive ? 'text-primary stroke-[2.5]' : 'text-text-muted stroke-[1.75]'}`} />
-            <span className={`text-[10px] mt-0.5 tracking-tight ${isSecondaryActive ? 'font-black text-primary' : 'font-medium'}`}>
-              More
-            </span>
-          </button>
-        </nav>
       </div>
 
-      {/* Feature #48: Universal Command Bar Modal */}
+      {/* Shared Modals */}
       <UniversalCommandBar
         isOpen={commandBarOpen}
         onClose={() => setCommandBarOpen(false)}
       />
 
-      {/* Recent searches — full searchable history */}
       <RecentSearchesModal
         open={recentModalOpen}
         onClose={() => setRecentModalOpen(false)}
-        onSelect={runRecentSearch}
+        onSelect={(query: string, sessionId?: string) => {
+          setRecentModalOpen(false);
+          if (sessionId) {
+            navigate(`/app/search?q=${encodeURIComponent(query)}&session=${sessionId}`);
+          } else {
+            navigate(`/app/search?q=${encodeURIComponent(query)}`);
+          }
+        }}
       />
     </div>
   );

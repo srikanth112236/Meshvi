@@ -59,9 +59,90 @@ export class NotificationsService {
   }
 
   /**
+   * Generates a weekly personalized partner recommendation notification
+   * if the user hasn't received one in the last 7 days.
+   */
+  async ensureWeeklyRecommendationsNotification(userId: string) {
+    if (!userId) return null;
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // Check if user already got a weekly recommendation this week
+    const existing = await this.prisma.notification.findFirst({
+      where: {
+        userId,
+        title: { contains: 'Weekly' },
+        createdAt: { gte: sevenDaysAgo },
+      },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    // Load user's profile to understand their industry and function
+    const userProfile = await this.prisma.professionalProfile.findUnique({
+      where: { userId },
+      include: { company: true },
+    });
+
+    const userIndustry = userProfile?.industry || 'Technology & Innovation';
+    const userFunction = userProfile?.function
+      ? userProfile.function.split(';')[0].trim()
+      : 'Commercial & Strategy';
+
+    // Find up to 3 verified profiles in the directory (excluding the user)
+    const matches = await this.prisma.professionalProfile.findMany({
+      where: {
+        userId: { not: userId },
+      },
+      include: {
+        company: true,
+      },
+      orderBy: [
+        { completenessScore: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: 3,
+    });
+
+    const matchesCount = matches.length || 3;
+    const names = matches
+      .map((m) => m.displayName)
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(' & ');
+
+    const title = `🎯 Weekly Recommendations: ${matchesCount} Verified Matches`;
+    const body = names
+      ? `We found ${matchesCount} verified leaders including ${names} aligned with your ${userFunction} focus in ${userIndustry}. Explore your weekly matches now.`
+      : `We found ${matchesCount} verified business leaders aligned with your ${userFunction} focus in ${userIndustry}. Tap to view.`;
+
+    return this.createNotification({
+      userId,
+      type: NotificationType.SYSTEM_ALERT,
+      title,
+      body,
+      actionUrl: '/app/search?tab=PROFILES',
+      metadata: {
+        category: 'WEEKLY_RECOMMENDATIONS',
+        matchesCount,
+        industry: userIndustry,
+        function: userFunction,
+      },
+    });
+  }
+
+  /**
    * Get all notifications for current user with unread counter
    */
   async getUserNotifications(userId: string, limit: number = 50) {
+    try {
+      await this.ensureWeeklyRecommendationsNotification(userId);
+    } catch (err) {
+      // Non-blocking background generation
+    }
+
     const [notifications, unreadCount] = await Promise.all([
       this.prisma.notification.findMany({
         where: { userId },

@@ -209,7 +209,7 @@ export const AnimatedVideoModal = ({ open, onClose, videoSrc }: AnimatedVideoMod
                 <div className="text-center space-y-5 max-w-xl animate-fadeIn z-10">
                   <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
                     <Handshake className="w-3.5 h-3.5" />
-                    <span>100% Bilateral Opt-In</span>
+                    <span>Both Sides Agree First</span>
                   </div>
                   <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
                     Zero Cold Spam.<br />Both Sides Consent First.
@@ -239,7 +239,7 @@ export const AnimatedVideoModal = ({ open, onClose, videoSrc }: AnimatedVideoMod
                     <span>Executed Deals</span>
                   </div>
                   <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-                    From Match to Signed Bilateral Deal Room.
+                    From Match to Signed Deals in a Private Room.
                   </h2>
                   <div className="p-4 rounded-2xl bg-slate-900 border border-emerald-500/40 text-left space-y-2.5 shadow-xl">
                     <div className="flex items-center justify-between text-xs font-bold">

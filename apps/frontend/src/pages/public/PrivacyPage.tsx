@@ -96,12 +96,12 @@ export const PrivacyPage = () => {
 
           {/* Section 4 */}
           <section className="p-6 sm:p-8 bg-surface rounded-2xl border border-border space-y-3">
-            <h2 className="text-base font-bold text-navy">4. Contact Privacy by Default & Bilateral Firewalls</h2>
+            <h2 className="text-base font-bold text-navy">4. Contact Privacy by Default & Spam Protection</h2>
             <p className="font-bold text-navy">
               Unlike legacy scraping directories (e.g., ZoomInfo, Apollo, Lusha), MESHVI does NOT operate an open contact marketplace.
             </p>
             <p>
-              Your direct email and phone number are shielded behind a cryptographic bilateral firewall. Prospective partners can view your functional expertise and corporate profile, but cannot initiate unvetted cold email blasts. Contact details are only exchanged when both parties explicitly approve a bilateral connection or sign an NDA inside a confidential Deal Room.
+              Your direct email and phone number are completely protected. Other members can view your expertise and company profile, but cannot send you unvetted cold emails or spam. Contact details are only shared when both people explicitly agree to connect or enter a private Deal Room together.
             </p>
           </section>
 

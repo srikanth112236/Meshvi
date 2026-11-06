@@ -38,7 +38,7 @@ const PRESET_TEMPLATES = [
     title: 'Mutual NDA & Regulatory Scope',
     icon: '⚖️',
     question:
-      'Please confirm if your legal department requires an executed bilateral M-NDA prior to scheduling the initial technical discovery session.',
+      'Please confirm if you require a signed mutual NDA before scheduling our first discussion.',
   },
   {
     title: 'Geographic Rollout & Timeline',

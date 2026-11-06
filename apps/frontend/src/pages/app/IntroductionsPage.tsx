@@ -14,6 +14,8 @@ import {
   Inbox,
   Send,
   AlertCircle,
+  Users,
+  Sparkles,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -203,6 +205,24 @@ export const IntroductionsPage = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
+      {/* Top Network Destinations Tab Bar */}
+      <div className="flex items-center space-x-2 border-b border-border pb-2.5">
+        <Link
+          to="/app/connections"
+          className="px-4 py-2 rounded-xl text-xs font-bold text-text-muted hover:text-navy hover:bg-surface-muted transition-colors flex items-center space-x-2"
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>My Connections</span>
+        </Link>
+        <Link
+          to="/app/introductions"
+          className="px-4 py-2 rounded-xl text-xs font-bold bg-navy text-white shadow-xs flex items-center space-x-2"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+          <span>Warm Introductions ({pendingList.length + activeList.length})</span>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-7 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>

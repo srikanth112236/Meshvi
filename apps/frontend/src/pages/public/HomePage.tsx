@@ -85,8 +85,7 @@ export const HomePage = () => {
 
           <MotionContainer delay={0.2}>
             <p className="mt-5 text-base sm:text-lg text-text-muted max-w-2xl mx-auto leading-relaxed font-normal">
-              Search strategic outcomes in plain English. Discover DNS-verified executives and execute bilateral
-              agreements with zero cold spam.
+              Find verified business leaders by what you actually need. Connect with zero spam, and only when both people agree.
             </p>
           </MotionContainer>
 
@@ -132,7 +131,7 @@ export const HomePage = () => {
               </div>
               <div className="p-2">
                 <div className="text-xl sm:text-2xl font-black text-primary">100%</div>
-                <div className="text-[11px] text-text-muted font-medium">Double-Opt-In</div>
+                <div className="text-[11px] text-text-muted font-medium">Both Sides Agree</div>
               </div>
               <div className="p-2">
                 <div className="text-xl sm:text-2xl font-black text-navy">4 Corridors</div>
@@ -163,7 +162,7 @@ export const HomePage = () => {
             How Deals Move on MESHVI
           </h2>
           <p className="mt-2 text-sm text-text-muted">
-            From conversational requirement to executed bilateral agreement in three clean steps.
+            From describing what you need to closing the deal in three simple steps.
           </p>
         </div>
 
@@ -173,9 +172,9 @@ export const HomePage = () => {
             <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary font-black text-sm flex items-center justify-center">
               01
             </div>
-            <h3 className="text-lg font-bold text-navy">Search with Intent</h3>
+            <h3 className="text-lg font-bold text-navy">Describe What You Need</h3>
             <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-              State what you need in plain English. No rigid keywords or scraping tools—our engine extracts intent and finds matching decision-makers.
+              Type what you are looking for in normal English. No complex keyword guessing—we match you directly with the right verified decision-makers.
             </p>
           </div>
 
@@ -184,9 +183,9 @@ export const HomePage = () => {
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 font-black text-sm flex items-center justify-center border border-emerald-200">
               02
             </div>
-            <h3 className="text-lg font-bold text-navy">Bilateral Opt-In</h3>
+            <h3 className="text-lg font-bold text-navy">Both Sides Agree First</h3>
             <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-              Every request requires mutual consent. Counterparties review your commercial context before direct access is granted.
+              Zero unsolicited spam. Both people must review the reason and agree to connect before any direct contact details are shared.
             </p>
           </div>
 
@@ -197,7 +196,7 @@ export const HomePage = () => {
             </div>
             <h3 className="text-lg font-bold text-navy">Private Deal Room</h3>
             <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-              Execute mutual NDAs, exchange confidential documents, and track milestones in an encrypted bilateral vault.
+              Sign confidential agreements, safely share files, and track project milestones together in a private, secure workspace.
             </p>
           </div>
         </div>
@@ -212,7 +211,7 @@ export const HomePage = () => {
             Why Leaders Choose MESHVI
           </h2>
           <p className="mt-1.5 text-xs sm:text-sm text-text-muted">
-            The difference between noisy social directories and an intent-governed network.
+            The difference between noisy social networks and a spam-free verified business network.
           </p>
         </div>
 

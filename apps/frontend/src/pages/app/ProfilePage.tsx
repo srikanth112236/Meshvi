@@ -30,6 +30,7 @@ import {
   ExternalLink,
   Linkedin,
   Settings,
+  Award,
 } from 'lucide-react';
 import { CompanyDossierModal } from '../../components/ui/CompanyDossierModal';
 
@@ -738,6 +739,18 @@ export const ProfilePage = () => {
                 <span className="text-emerald-700 font-bold">
                   Trust Score: {profile?.completenessScore || 94}%
                 </span>
+                <span>•</span>
+                {localStorage.getItem('meshvi_priority_verified') === 'true' || (profile?.completenessScore && profile.completenessScore >= 80) ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full shadow-2xs">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    <span>Priority Verified</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
+                    <Award className="w-3 h-3 text-amber-600" />
+                    <span>Priority Badge in Progress</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>

@@ -268,7 +268,7 @@ export const OpportunitySetupModal: React.FC<OpportunitySetupModalProps> = ({
             <div>
               <div className="flex items-center space-x-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  Gap 1 &bull; Bilateral Opportunity Setup
+                  Partnership Opportunity Setup
                 </span>
                 <span className="text-xs text-text-muted">Step {step} of 5</span>
               </div>
@@ -456,7 +456,7 @@ export const OpportunitySetupModal: React.FC<OpportunitySetupModalProps> = ({
               <div>
                 <h3 className="text-sm font-bold text-navy flex items-center space-x-1.5">
                   <Gift className="w-4 h-4 text-sky-600" />
-                  <span>What can you offer? (Bilateral Capabilities)</span>
+                  <span>What can you offer? (Your Capabilities & Resources)</span>
                 </h3>
                 <p className="text-xs text-text-muted mt-0.5">
                   What makes you a compelling partner? This creates the symmetrical mutual match.

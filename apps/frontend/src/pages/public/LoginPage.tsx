@@ -1,26 +1,20 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Mail,
-  Lock,
-  ArrowRight,
+  User,
   AlertCircle,
   ShieldAlert,
-  ShieldCheck,
   CheckCircle2,
-  Building2,
-  Handshake,
-  Network,
-  X,
-  Info,
   Eye,
   EyeOff,
+  Globe,
+  ChevronDown,
 } from 'lucide-react';
-import { DoodleMeet } from '../../components/brand/DoodleMeet';
 import { useAuth } from '../../context/AuthContext';
 import { getCanonicalGoogleRedirectUri, getGoogleClientId, saveOAuthHandshakeState } from '../../utils/oauthUtils';
+import { AuthShowcasePanel } from '../../components/auth/AuthShowcasePanel';
 
-export const LoginPage = () => {
+export const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const emailQuery = searchParams.get('email') || '';
   const [email, setEmail] = useState(emailQuery);
@@ -48,7 +42,7 @@ export const LoginPage = () => {
     localStorage.getItem('setu_google_client_id') || ''
   );
 
-  // Google OAuth Initiation Handler (Enterprise Normalized)
+  // Google OAuth Initiation Handler
   const handleGoogleSignIn = async (overrideClientId?: string) => {
     setError('');
     clearViolationAlert();
@@ -66,7 +60,7 @@ export const LoginPage = () => {
         saveOAuthHandshakeState(redirectUri, state);
 
         const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${encodeURIComponent(
-          clientId,
+          clientId
         )}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid%20profile%20email&state=${state}&access_type=offline&prompt=select_account`;
         window.location.href = googleAuthUrl;
         return;
@@ -95,10 +89,10 @@ export const LoginPage = () => {
     setShowGoogleModal(false);
     setLoading(true);
     try {
-      const email = customEmail || 'rajiv.sharma.executive@gmail.com';
+      const emailVal = customEmail || 'rajiv.sharma.executive@gmail.com';
       const displayName = customName || 'Rajiv Sharma';
       const googleProfile = {
-        email,
+        email: emailVal,
         displayName,
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
         googleId: '109847284918239019283',
@@ -170,277 +164,87 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-4rem)]">
-      {/* FORM COLUMN (FIRST ON MOBILE FOR INSTANT ACCESS, RIGHT ON DESKTOP) */}
-      <div className="order-1 lg:order-2 lg:col-span-6 xl:col-span-5 bg-surface p-4 sm:p-6 lg:p-8 xl:p-10 flex flex-col justify-center">
-        <div className="max-w-md w-full mx-auto space-y-4 sm:space-y-4.5">
-          <div>
-            <img
-              src="/meshvi-mark.png"
-              alt="Meshvi"
-              className="w-10 h-10 sm:w-11 sm:h-11 object-contain mb-2 sm:mb-2.5 drop-shadow-xs"
-            />
-            <h2 className="text-xl sm:text-2xl font-black text-navy tracking-tight">Welcome back</h2>
-            <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-              Sign in to access your MESHVI Discovery Hub, active deal rooms, and network bridges.
-            </p>
-          </div>
-
-          {/* Password Reset Success Banner */}
-          {searchParams.get('reset') === 'success' && (
-            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start space-x-2.5 text-xs text-emerald-900 shadow-xs animate-fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-emerald-800">Password Reset Successful!</p>
-                <p className="text-[11px] text-emerald-700 mt-0.5">
-                  Your credentials have been securely updated. Please sign in with your new password to continue.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Clearance Violation Warning */}
-          {isViolation && (
-            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl space-y-1 text-xs text-rose-800">
-              <div className="flex items-center space-x-1.5 font-bold text-rose-700">
-                <ShieldAlert className="w-4 h-4 shrink-0" />
-                <span>Security Clearance Boundary Enforced</span>
-              </div>
-              <p className="text-[11px] leading-relaxed text-rose-600">{violationMsg}</p>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="p-3 bg-danger/10 border border-danger/20 rounded-xl flex items-center space-x-2 text-xs text-danger">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Google OAuth Continue Button */}
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => handleGoogleSignIn()}
-              disabled={loading}
-              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-400 active:translate-y-0 active:scale-[0.98] flex items-center justify-center space-x-2.5 disabled:opacity-50 cursor-pointer"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
-              <span>Continue with Google</span>
-            </button>
-
-            <div className="relative flex items-center justify-center my-3">
-              <div className="border-t border-slate-200 w-full" />
-              <span className="bg-white px-2.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider absolute">
-                or sign in with email
-              </span>
-            </div>
-          </div>
-
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-navy mb-1.5">
-                Work Email
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-text-muted absolute left-3.5 top-3.5" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="executive@company.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl text-xs text-navy focus:ring-2 focus:ring-focus focus:outline-none"
+    <div className="min-h-screen w-full bg-[#edf0f5] flex items-center justify-center p-3 sm:p-6 lg:p-8 selection:bg-blue-100">
+      {/* Main Container Card */}
+      <div className="w-full max-w-[1360px] min-h-[720px] bg-white rounded-[28px] sm:rounded-[36px] shadow-[0_20px_70px_-10px_rgba(15,23,42,0.07),0_1px_3px_rgba(15,23,42,0.04)] border border-slate-200/80 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+        {/* Left Column: Auth Form */}
+        <div className="lg:col-span-6 xl:col-span-6 flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-14 bg-white relative">
+          {/* Header Row */}
+          <div className="flex items-center justify-between">
+            {/* Brand Logo */}
+            <Link to="/" className="flex items-center group">
+              <div className="px-3.5 py-2 rounded-xl bg-[#078BCC] hover:bg-[#0679B2] transition-colors shadow-2xs flex items-center">
+                <img
+                  src="/meshvi-logo-white.png"
+                  alt="Meshvi"
+                  className="h-6 sm:h-7 w-auto object-contain"
                 />
               </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-navy">
-                  Password
-                </label>
-                <Link to="/forgot-password" className="text-xs text-primary hover:underline font-semibold">
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-text-muted absolute left-3.5 top-3.5" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-surface border border-border rounded-xl text-xs text-navy focus:ring-2 focus:ring-focus focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-navy transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center justify-center space-x-1.5 disabled:opacity-50"
-            >
-              <span>{loading ? 'Authenticating...' : 'Sign In to Hub'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-
-          {/* Quick Switch to Register */}
-          <div className="pt-4 border-t border-border text-center text-xs text-text-muted">
-            <span>Don't have an account yet? </span>
-            <Link to="/register" className="font-bold text-primary hover:underline">
-              Create an account &rarr;
             </Link>
-          </div>
 
-          {/* Dedicated Portal Links */}
-          <div className="p-3 bg-surface-muted rounded-xl border border-border text-[11px] text-text-muted space-y-1">
-            <span className="font-bold text-navy block">Dedicated Administrative Logins:</span>
-            <div className="flex items-center space-x-4">
-              <Link to="/company/login" className="text-primary hover:underline font-medium">
-                Company Admin Portal &rarr;
-              </Link>
-              <Link to="/admin/login" className="text-text-muted hover:text-navy hover:underline">
-                Super Admin Terminal &rarr;
+            {/* Top-Right Switch to Register */}
+            <div className="flex items-center space-x-2.5 text-xs">
+              <span className="text-slate-500 hidden sm:inline">Don't have an account?</span>
+              <Link
+                to="/register"
+                className="px-3.5 py-1.5 font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 shadow-2xs transition-all active:scale-[0.98]"
+              >
+                Sign up
               </Link>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* SHOWCASE COLUMN (BOTTOM ON MOBILE, LEFT ON DESKTOP) */}
-      <div className="order-2 lg:order-1 lg:col-span-6 xl:col-span-7 bg-gradient-to-br from-[#0B1528] via-[#102A43] to-[#0A192F] text-white p-5 sm:p-8 lg:p-12 xl:p-16 flex flex-col justify-between relative overflow-hidden">
-        {/* Subtle background glow effect */}
-        <div className="absolute top-0 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 sm:w-96 h-72 sm:h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+          {/* Center Form Area */}
+          <div className="w-full max-w-[360px] mx-auto py-8 sm:py-10">
+            {/* Avatar Pill / Icon Squircle */}
+            <div className="w-12 h-12 rounded-2xl bg-slate-100/90 border border-slate-200/60 flex items-center justify-center mx-auto mb-4 text-slate-500 shadow-2xs">
+              <User className="w-5 h-5" strokeWidth={1.8} />
+            </div>
 
-        <div className="relative z-10 space-y-4 sm:space-y-6">
-          <DoodleMeet className="w-14 h-10" />
-          <Link to="/" className="inline-block">
-            <img
-              src="/meshvi-logo-white.png"
-              alt="Meshvi"
-              className="h-8 sm:h-10 object-contain"
-            />
-          </Link>
-
-          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-sky-300 text-[11px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
-            <ShieldCheck className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-            <span>Verified B2B Intent Infrastructure</span>
-          </div>
-
-          <div className="space-y-2 sm:space-y-3 max-w-xl">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight text-white leading-tight">
-              Where Executive Relationships Are Built on Purpose, <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-teal-300">Not Spam</span>.
+            {/* Title & Subtitle */}
+            <h1 className="text-2xl sm:text-[26px] font-bold text-slate-900 text-center tracking-tight">
+              Welcome back
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              MESHVI replaces transactional cold outreach with cryptographically verified corporate profiles, mutual business intent, and high-trust warm introductions.
+            <p className="text-xs text-slate-500 text-center mt-1.5 mb-6">
+              Sign in to Meshvi in minutes.
             </p>
-          </div>
 
-          {/* Showcase Feature Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2 sm:pt-4 max-w-2xl">
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-1.5 sm:space-y-2 hover:bg-white/10 transition-colors">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4" />
+            {/* Password Reset Notice */}
+            {searchParams.get('reset') === 'success' && (
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-2 text-xs text-emerald-800 animate-fade-in">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span>Password reset successful! Sign in with your new password.</span>
               </div>
-              <h3 className="text-xs sm:text-sm font-bold text-white">Bilateral Intent Protocol</h3>
-              <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
-                Every outreach requires explicit business context and mutual agenda agreement before connecting.
-              </p>
-            </div>
+            )}
 
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-1.5 sm:space-y-2 hover:bg-white/10 transition-colors">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center">
-                <Building2 className="w-4 h-4" />
+            {/* Clearance Violation Notice */}
+            {isViolation && (
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl space-y-1 text-xs text-rose-800">
+                <div className="flex items-center space-x-1.5 font-bold text-rose-700">
+                  <ShieldAlert className="w-4 h-4 shrink-0" />
+                  <span>Clearance Boundary Enforced</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-rose-600">{violationMsg}</p>
               </div>
-              <h3 className="text-xs sm:text-sm font-bold text-white">DNS Domain Cryptography</h3>
-              <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
-                Corporate domains verified via DNS TXT handshake ensuring zero impersonation or shadow accounts.
-              </p>
-            </div>
+            )}
 
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-1.5 sm:space-y-2 hover:bg-white/10 transition-colors">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center">
-                <Network className="w-4 h-4" />
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-2 text-xs text-red-700">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span className="leading-tight">{error}</span>
               </div>
-              <h3 className="text-xs sm:text-sm font-bold text-white">3-Way Warm Bridges</h3>
-              <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
-                Facilitated introductions brokered by mutual peers with attested institutional endorsement badges.
-              </p>
-            </div>
+            )}
 
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-1.5 sm:space-y-2 hover:bg-white/10 transition-colors">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
-                <Handshake className="w-4 h-4" />
-              </div>
-              <h3 className="text-xs sm:text-sm font-bold text-white">Collaborative Deal Rooms</h3>
-              <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
-                Private virtual spaces equipped with milestones, shared objectives, and deal execution tracking.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Metrics Strip */}
-        <div className="relative z-10 pt-6 sm:pt-8 border-t border-white/10 grid grid-cols-3 gap-2 sm:gap-4 max-w-xl mt-6 lg:mt-0">
-          <div>
-            <div className="text-xl sm:text-2xl font-black text-white">99.4%</div>
-            <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Executive Response</div>
-          </div>
-          <div>
-            <div className="text-xl sm:text-2xl font-black text-white">100%</div>
-            <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Verified Domains</div>
-          </div>
-          <div>
-            <div className="text-xl sm:text-2xl font-black text-white">Zero</div>
-            <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Cold InMail Waste</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Google OAuth Configuration & Identity Setup Modal */}
-      {showGoogleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl relative space-y-4 sm:space-y-5 max-h-[92vh] overflow-y-auto">
-            <button
-              onClick={() => setShowGoogleModal(false)}
-              className="absolute top-4 right-4 text-text-muted hover:text-navy p-1 rounded-lg hover:bg-surface-muted transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-xs">
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+            {/* Social Auth Buttons */}
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                onClick={() => handleGoogleSignIn()}
+                disabled={loading}
+                className="w-full h-11 px-4 rounded-xl bg-[#f1f3f6] hover:bg-[#e7eaf0] border border-slate-200/50 text-xs font-semibold text-slate-700 flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer disabled:opacity-50"
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -455,89 +259,148 @@ export const LoginPage = () => {
                   />
                   <path
                     fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
+                <span>Sign in with Google</span>
+              </button>
+            </div>
+
+            {/* Divider */}
+            <div className="relative flex items-center justify-center my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
               </div>
+              <span className="relative px-3 bg-white text-[11px] font-medium text-slate-400">Or</span>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <h3 className="text-base font-bold text-navy">Google OAuth 2.0 Authentication</h3>
-                <p className="text-xs text-text-muted">Direct Google Account SSO & Identity Sync</p>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full h-11 px-4 bg-[#f8f9fa] border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-2xs"
+                />
               </div>
-            </div>
 
-            {/* Instruction Checklist */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs text-slate-700">
-              <div className="flex items-center space-x-1.5 font-bold text-navy">
-                <Info className="w-4 h-4 text-primary" />
-                <span>Google Cloud Console Credentials Required:</span>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full h-11 pl-4 pr-11 bg-[#f8f9fa] border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-2xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
-              <ul className="space-y-1 text-[11px] list-disc list-inside text-slate-600 pl-1 leading-relaxed">
-                <li>Create an OAuth 2.0 Web Client ID in Google Cloud Console.</li>
-                <li>
-                  Authorized JavaScript origin: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-primary font-mono text-[10px]">https://meshvi-1.onrender.com</code>
-                </li>
-                <li>
-                  Authorized redirect URI: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-primary font-mono text-[10px]">https://meshvi-1.onrender.com/auth/google/callback</code>
-                </li>
-                <li>Add Client ID & Secret to <code className="font-mono text-[10px]">apps/frontend/.env</code> and <code className="font-mono text-[10px]">apps/backend/.env</code>.</li>
-              </ul>
-            </div>
 
-            {/* Quick Test Client ID input */}
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-navy">
-                Test with your Google Client ID now:
-              </label>
-              <div className="flex space-x-2">
+              <div className="flex items-center justify-end pt-0.5">
+                <Link
+                  to="/forgot-password"
+                  className="text-[11px] sm:text-xs font-medium text-slate-500 hover:text-blue-600 transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 px-4 bg-[#0a0d12] hover:bg-black text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-150 active:scale-[0.99] flex items-center justify-center gap-2 mt-4 cursor-pointer disabled:opacity-50"
+              >
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <span>Sign in with Email</span>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Footer Row */}
+          <div className="flex items-center justify-between text-xs pt-4 border-t border-slate-100 sm:border-0 sm:pt-0">
+            <span className="text-slate-400 font-medium text-[11px] sm:text-xs">
+              © 2026 Meshvi
+            </span>
+            <div className="flex items-center space-x-1.5 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer text-[11px] sm:text-xs font-medium">
+              <Globe className="w-3.5 h-3.5" />
+              <span>ENG</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Hero Graphic Showcase Panel */}
+        <div className="hidden lg:flex lg:col-span-6 xl:col-span-6 p-2 sm:p-3">
+          <AuthShowcasePanel />
+        </div>
+      </div>
+
+      {/* Google OAuth Sandbox Setup Modal (Development Fallback) */}
+      {showGoogleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              Google Sign-In Configuration
+            </h3>
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+              Google OAuth client ID is not configured on this host. You can provide your Google Client ID or test with a simulated enterprise sandbox session.
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Google Client ID (Optional)
+                </label>
                 <input
                   type="text"
                   value={customGoogleClientId}
                   onChange={(e) => setCustomGoogleClientId(e.target.value)}
-                  placeholder="e.g. 123456789-abcdef.apps.googleusercontent.com"
-                  className="flex-1 px-3 py-2 bg-surface border border-border rounded-xl text-xs text-navy focus:ring-2 focus:ring-focus focus:outline-none font-mono"
+                  placeholder="xxxx.apps.googleusercontent.com"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
                 />
+              </div>
+
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => handleGoogleSignIn(customGoogleClientId)}
-                  disabled={!customGoogleClientId.trim()}
-                  className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  onClick={() => handleGoogleSandboxLogin()}
+                  className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm"
                 >
-                  Launch OAuth
+                  Test Sandbox Login
+                </button>
+                {customGoogleClientId.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => handleGoogleSignIn(customGoogleClientId)}
+                    className="py-2 px-3 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-lg"
+                  >
+                    Use Client ID
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowGoogleModal(false)}
+                  className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg"
+                >
+                  Cancel
                 </button>
               </div>
-            </div>
-
-            <div className="relative flex items-center justify-center">
-              <div className="border-t border-slate-200 w-full" />
-              <span className="bg-surface px-2.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider absolute">
-                or test immediately in sandbox
-              </span>
-            </div>
-
-            {/* Sandbox Quick Sign-In */}
-            <div className="p-3 bg-surface-muted border border-border rounded-xl flex items-center justify-between">
-              <div className="flex items-center space-x-2.5">
-                <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80"
-                  alt="Rajiv Sharma"
-                  className="w-9 h-9 rounded-full object-cover border border-slate-200"
-                />
-                <div>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-xs font-bold text-navy">Rajiv Sharma</span>
-                    <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1 rounded font-semibold border border-emerald-200">Google Verified</span>
-                  </div>
-                  <span className="text-[11px] text-text-muted block">rajiv.sharma.executive@gmail.com</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleGoogleSandboxLogin()}
-                className="py-2 px-3 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
-              >
-                <span>Sign In Directly</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
             </div>
           </div>
         </div>

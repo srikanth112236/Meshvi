@@ -304,7 +304,7 @@ export const SearchGuideModal: React.FC<SearchGuideModalProps> = ({
                   <span>What are Market Corridors?</span>
                 </span>
                 <p className="text-[11.5px] text-amber-950 leading-relaxed">
-                  Bilateral trade routes that connect certified exporters and manufacturers with verified overseas distributors, customs agents, and retail buyers.
+                  Cross-border trade routes that connect certified exporters and manufacturers with verified overseas distributors, customs agents, and retail buyers.
                 </p>
               </div>
 
@@ -339,7 +339,7 @@ export const SearchGuideModal: React.FC<SearchGuideModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
                   <div className="p-2 bg-surface rounded border border-border text-[10.5px]">
                     <strong className="block text-navy">Annual Trade Flow</strong>
-                    <span className="text-text-muted">Estimated bilateral commercial volume</span>
+                    <span className="text-text-muted">Estimated total trade volume</span>
                   </div>
                   <div className="p-2 bg-surface rounded border border-border text-[10.5px]">
                     <strong className="block text-navy">Customs Clearance</strong>

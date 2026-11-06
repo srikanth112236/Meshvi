@@ -29,9 +29,6 @@ import {
   AlertCircle,
   Play,
   ZoomIn,
-  Sparkles,
-  Wifi,
-  WifiOff,
   Pencil,
   Trash2,
   Flag,
@@ -1191,62 +1188,9 @@ export const MessagesPage = () => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Top Banner: Enterprise Security Status */}
-      <div className="bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] text-white rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-800">
-        <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-400 shrink-0">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
-                Enterprise Encrypted Channel
-              </span>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
-                AES-256-GCM
-              </span>
-              {isChatLocked && (
-                <span className="text-[10px] bg-red-500/20 text-red-300 border border-red-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> Locked
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Strict 1-on-1 permissioned communications protocol. Audit-proof, verified digital identities, zero spam.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2 self-end sm:self-auto">
-          {/* Online/Offline Simulator Toggle */}
-          <button
-            type="button"
-            onClick={() => setPartnerOnlineStatus(partnerOnlineStatus === 'ONLINE' ? 'OFFLINE' : 'ONLINE')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-colors flex items-center space-x-1.5 ${
-              partnerOnlineStatus === 'ONLINE'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                : 'bg-slate-800 text-slate-400 border-slate-700'
-            }`}
-            title="Toggle simulated connection presence"
-          >
-            {partnerOnlineStatus === 'ONLINE' ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-            <span>{partnerOnlineStatus === 'ONLINE' ? 'Presence: Online' : 'Presence: Offline'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowSecurityModal(true)}
-            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-colors flex items-center space-x-1.5"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Audit Proof</span>
-          </button>
-        </div>
-      </div>
-
+    <div className="space-y-3">
       {/* Main Grid: Left Inbox (4 cols), Right Active Chat (8 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 bg-surface border border-border rounded-2xl shadow-xs min-h-[640px] overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 bg-surface border border-border rounded-2xl shadow-xs h-[calc(100vh-8.5rem)] min-h-[620px] overflow-hidden">
         
         {/* Column 1: Conversations List (4 cols) */}
         <div className={`${activeConv ? 'hidden lg:flex' : 'flex'} lg:col-span-4 border-r border-border flex-col bg-slate-50/50 w-full`}>
@@ -1255,10 +1199,21 @@ export const MessagesPage = () => {
               <MessageSquare className="w-3.5 h-3.5 text-primary" />
               <span>Direct Channels ({conversations.length})</span>
             </h3>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live
-            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setPartnerOnlineStatus(partnerOnlineStatus === 'ONLINE' ? 'OFFLINE' : 'ONLINE')}
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 transition-colors ${
+                  partnerOnlineStatus === 'ONLINE'
+                    ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                    : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
+                }`}
+                title="Toggle simulated connection presence"
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${partnerOnlineStatus === 'ONLINE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                {partnerOnlineStatus === 'ONLINE' ? 'Live' : 'Offline'}
+              </button>
+            </div>
           </div>
 
           {/* Search Connections to Message */}
@@ -1448,6 +1403,17 @@ export const MessagesPage = () => {
                 </div>
 
                 <div className="flex items-center space-x-1.5">
+                  {/* Subtle Encryption / Audit Proof Indicator */}
+                  <button
+                    type="button"
+                    onClick={() => setShowSecurityModal(true)}
+                    className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer"
+                    title="Enterprise Encrypted • AES-256-GCM (Click to view audit proof)"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Audit Proof</span>
+                  </button>
+
                   {/* Schedule Meeting */}
                   <button
                     type="button"
@@ -1546,7 +1512,7 @@ export const MessagesPage = () => {
               )}
 
               {/* Messages Feed */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/40 max-h-[460px]">
+              <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/40 min-h-0">
                 {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
                     <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-100 shadow-xs">
