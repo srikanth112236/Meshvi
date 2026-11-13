@@ -882,10 +882,10 @@ export const ConnectionsPage = () => {
                         type="button"
                         onClick={() => setDelegateModalTarget(req)}
                         className="px-3.5 py-2 bg-surface hover:bg-surface-muted text-navy border border-border rounded-xl text-xs font-bold transition-colors flex items-center space-x-1.5"
-                        title="Forward to a colleague or team member"
+                        title="Accept and pass on to a teammate or colleague"
                       >
                         <Forward className="w-3.5 h-3.5 text-primary" />
-                        <span>Forward to Colleague</span>
+                        <span>Accept & Pass On</span>
                       </button>
 
                       <button

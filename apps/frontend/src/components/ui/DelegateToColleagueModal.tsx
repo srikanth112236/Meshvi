@@ -127,7 +127,7 @@ export const DelegateToColleagueModal: React.FC<DelegateToColleagueModalProps> =
             </div>
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200">
-                Forward to Colleague
+                Accept & Pass On
               </span>
               <h2 className="text-base font-extrabold text-navy mt-1">
                 Pass to Teammate
