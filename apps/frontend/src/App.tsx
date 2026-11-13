@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { SearchHistoryProvider } from './context/SearchHistoryContext';
 import { NotificationDrawer } from './components/ui/NotificationDrawer';
+import { PwaInstallPromptModal } from './components/ui/PwaInstallPromptModal';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { AppLayout } from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -86,6 +87,7 @@ export default function App() {
         <BrowserRouter>
           <SearchHistoryProvider>
           <NotificationDrawer />
+          <PwaInstallPromptModal />
           <Routes>
           {/* Public Website Routes */}
           <Route element={<PublicLayout />}>

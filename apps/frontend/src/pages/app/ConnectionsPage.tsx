@@ -409,89 +409,89 @@ export const ConnectionsPage = () => {
       </div>
 
       {/* 3 Status KPI Metric Cards: Compact & Tight-Spaced */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <button
           type="button"
           onClick={() => setActiveTab('CONNECTIONS')}
-          className={`p-3 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-2xs ${
+          className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-2xs ${
             activeTab === 'CONNECTIONS'
               ? 'bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-400/30'
               : 'bg-surface border-border hover:border-emerald-200'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-emerald-900 flex items-center space-x-1.5">
-              <Users className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Active Connections</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-emerald-900 flex items-center space-x-1 sm:space-x-1.5 truncate">
+              <Users className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span className="truncate">Active</span>
             </span>
-            <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-emerald-100 text-emerald-800">
+            <span className="hidden sm:inline-block px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
               Verified
             </span>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-navy mt-1">{connections.length}</div>
-          <p className="text-[10.5px] text-text-muted mt-0.5 truncate">
-            Direct 1st-degree business relationships
+          <div className="text-lg sm:text-2xl font-black text-navy mt-1">{connections.length}</div>
+          <p className="hidden sm:block text-[10.5px] text-text-muted mt-0.5 truncate">
+            Direct 1st-degree relationships
           </p>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('INCOMING')}
-          className={`p-3 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-2xs ${
+          className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-2xs ${
             activeTab === 'INCOMING'
               ? 'bg-amber-50/70 border-amber-300 ring-2 ring-amber-400/30'
               : 'bg-surface border-border hover:border-amber-200'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-amber-900 flex items-center space-x-1.5">
-              <Inbox className="w-3.5 h-3.5 text-amber-600" />
-              <span>Pending Inbound</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-amber-900 flex items-center space-x-1 sm:space-x-1.5 truncate">
+              <Inbox className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span className="truncate">Inbound</span>
             </span>
             {incomingRequests.length > 0 ? (
-              <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-amber-500 text-white animate-pulse">
+              <span className="hidden sm:inline-block px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-amber-500 text-white animate-pulse shrink-0">
                 Action Required
               </span>
             ) : (
-              <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-medium bg-amber-100 text-amber-800">
+              <span className="hidden sm:inline-block px-1.5 py-0.5 rounded-md text-[9.5px] font-medium bg-amber-100 text-amber-800 shrink-0">
                 Inbound
               </span>
             )}
           </div>
-          <div className="text-xl sm:text-2xl font-black text-navy mt-1">{incomingRequests.length}</div>
-          <p className="text-[10.5px] text-text-muted mt-0.5 truncate">
-            Connection proposals awaiting response
+          <div className="text-lg sm:text-2xl font-black text-navy mt-1">{incomingRequests.length}</div>
+          <p className="hidden sm:block text-[10.5px] text-text-muted mt-0.5 truncate">
+            Proposals awaiting response
           </p>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('OUTGOING')}
-          className={`p-3 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-2xs ${
+          className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer shadow-2xs ${
             activeTab === 'OUTGOING'
               ? 'bg-sky-50/70 border-sky-300 ring-2 ring-sky-400/30'
               : 'bg-surface border-border hover:border-sky-200'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-sky-900 flex items-center space-x-1.5">
-              <Send className="w-3.5 h-3.5 text-sky-600" />
-              <span>Sent Proposals</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-sky-900 flex items-center space-x-1 sm:space-x-1.5 truncate">
+              <Send className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+              <span className="truncate">Sent</span>
             </span>
-            <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-sky-100 text-sky-800">
+            <span className="hidden sm:inline-block px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-sky-100 text-sky-800 shrink-0">
               Outgoing
             </span>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-navy mt-1">{outgoingRequests.length}</div>
-          <p className="text-[10.5px] text-text-muted mt-0.5 truncate">
-            Connection requests you sent to partners
+          <div className="text-lg sm:text-2xl font-black text-navy mt-1">{outgoingRequests.length}</div>
+          <p className="hidden sm:block text-[10.5px] text-text-muted mt-0.5 truncate">
+            Requests you sent to partners
           </p>
         </button>
       </div>
 
       {/* Primary Tab Switcher */}
       <div className="flex items-center justify-between border-b border-border pb-3 flex-wrap gap-2.5">
-        <div className="flex items-center space-x-1 sm:space-x-2 bg-surface p-1 rounded-xl border border-border overflow-x-auto max-w-full">
+        <div className="flex items-center space-x-1 sm:space-x-2 bg-surface p-1 rounded-xl border border-border overflow-x-auto no-scrollbar max-w-full touch-pan-x">
           <button
             type="button"
             onClick={() => setActiveTab('CONNECTIONS')}

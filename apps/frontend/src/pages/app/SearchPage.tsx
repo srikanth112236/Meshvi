@@ -456,6 +456,7 @@ export const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
   const urlSession = searchParams.get('session') || '';
+  const urlMode = searchParams.get('mode');
 
   const [hasSearched, setHasSearched] = useState<boolean>(() => {
     return Boolean(
@@ -476,10 +477,13 @@ export const SearchPage = () => {
     }
   }, [urlSession, activeSessionId, setActiveSessionId]);
 
-  // Search Mode: DECISION_MAKERS vs ENTERPRISES vs OPPORTUNITY_GRAPH vs MARKET_CORRIDOR (Differentiator #3)
+  // Search Mode: DECISION_MAKERS (People) vs ENTERPRISES (Companies) vs OPPORTUNITY_GRAPH vs MARKET_CORRIDOR
   const [searchMode, setSearchMode] = useState<
     'DECISION_MAKERS' | 'ENTERPRISES' | 'OPPORTUNITY_GRAPH' | 'MARKET_CORRIDOR'
-  >('DECISION_MAKERS');
+  >(() => {
+    if (urlMode === 'companies' || urlMode === 'ENTERPRISES') return 'ENTERPRISES';
+    return 'DECISION_MAKERS';
+  });
   const [candidateViewMode, setCandidateViewMode] = useState<'LIST' | 'GRID'>('GRID');
   const [opportunityGraphData, setOpportunityGraphData] = useState<any | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
@@ -1018,7 +1022,10 @@ export const SearchPage = () => {
     }
     const mode = targetMode || searchMode;
     const effectiveSessionId = urlSession || activeSessionId || startNewSearchSession();
-    const newParams: Record<string, string> = { session: effectiveSessionId };
+    const newParams: Record<string, string> = {
+      session: effectiveSessionId,
+      mode: mode === 'ENTERPRISES' ? 'companies' : 'people',
+    };
     if (q.trim()) newParams.q = q.trim();
     setSearchParams(newParams, { replace: true });
     setShowSuggestions(false);
@@ -1045,6 +1052,65 @@ export const SearchPage = () => {
       searchPriority,
     });
   };
+
+  const handleModeSwitch = (newMode: SearchMode) => {
+    if (newMode === searchMode) return;
+    setSearchMode(newMode);
+    setCurrentPage(1);
+    const effectiveSessionId = urlSession || activeSessionId || startNewSearchSession();
+    const newParams: Record<string, string> = {
+      session: effectiveSessionId,
+      mode: newMode === 'ENTERPRISES' ? 'companies' : 'people',
+    };
+    if (query.trim()) newParams.q = query.trim();
+    setSearchParams(newParams, { replace: true });
+
+    if (query.trim() || hasSearched) {
+      handleSearch(query, newMode, 1, pageSize);
+    }
+  };
+
+  const PEOPLE_SUGGESTION_CARDS = [
+    {
+      icon: Clock,
+      title: 'Procurement & Sourcing Leaders',
+      subtitle: 'Find heads of procurement, sourcing managers, and purchasing directors.',
+      q: 'Procurement Head & Sourcing Director',
+    },
+    {
+      icon: Lightbulb,
+      title: 'Strategic Partnerships',
+      subtitle: 'Find business leaders open to partnerships, joint ventures, and new deals.',
+      q: 'Partnerships & Business Development Director',
+    },
+    {
+      icon: ShieldCheck,
+      title: 'Senior Executives & CXOs',
+      subtitle: 'Connect directly with verified CEOs, CTOs, VPs, and company executives.',
+      q: 'Chief Executive Officer & VP',
+    },
+  ];
+
+  const COMPANY_SUGGESTION_CARDS = [
+    {
+      icon: Building2,
+      title: 'Enterprise Software & Cloud Brands',
+      subtitle: 'Explore verified enterprise SaaS, AI systems, and cloud infrastructure companies.',
+      q: 'Enterprise Software & Cloud',
+    },
+    {
+      icon: Globe,
+      title: 'Global Supply Chain & Freight Logistics',
+      subtitle: 'Discover licensed freight carriers, forwarders, and cold chain distribution firms.',
+      q: 'Logistics & Supply Chain',
+    },
+    {
+      icon: ShieldCheck,
+      title: 'FMCG & Consumer Goods Networks',
+      subtitle: 'Explore established consumer brands, food packaging, and commercial retail chains.',
+      q: 'FMCG & Consumer Goods',
+    },
+  ];
 
   const handleOpenTwoSidedFit = async (profile: any) => {
     setTwoSidedTarget(profile);
@@ -1228,6 +1294,20 @@ export const SearchPage = () => {
     if (qFromUrl !== query) {
       setQuery(qFromUrl);
     }
+    const modeFromUrl = searchParams.get('mode');
+    let effectiveMode = searchMode;
+    if (modeFromUrl === 'companies' || modeFromUrl === 'ENTERPRISES') {
+      if (searchMode !== 'ENTERPRISES') {
+        setSearchMode('ENTERPRISES');
+        effectiveMode = 'ENTERPRISES';
+      }
+    } else if (modeFromUrl === 'people' || modeFromUrl === 'DECISION_MAKERS') {
+      if (searchMode !== 'DECISION_MAKERS') {
+        setSearchMode('DECISION_MAKERS');
+        effectiveMode = 'DECISION_MAKERS';
+      }
+    }
+
     const hasFilterParams = Boolean(
       searchParams.get('industry') ||
       searchParams.get('company') ||
@@ -1238,7 +1318,7 @@ export const SearchPage = () => {
     );
     if (qFromUrl.trim() || hasFilterParams) {
       setHasSearched(true);
-      handleSearch(qFromUrl);
+      handleSearch(qFromUrl, effectiveMode);
     } else {
       setHasSearched(false);
       setResultsData(null);
@@ -1249,7 +1329,7 @@ export const SearchPage = () => {
     }
     fetchSavedSearches();
     fetchFacets();
-  }, [token, searchMode, searchParams]);
+  }, [token, searchParams]);
 
   // Autocomplete fetcher (after 2 chars)
   useEffect(() => {
@@ -1377,12 +1457,47 @@ export const SearchPage = () => {
     <div className="space-y-3">
       {/* Premium Modern Executive AI Search Canvas */}
       <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-xs space-y-2.5">
-        {/* Top Canvas Bar (Mirrors Reference) */}
+        {/* Top Canvas Bar with Segregated Interactive Mode Switcher */}
         <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
-          {/* Active Directory: Decision Makers */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs font-bold text-[#142B45] shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-gradient-to-r from-[#078BCC] to-[#36C4E8] animate-pulse" />
-            <span>Decision Makers</span>
+          {/* Segregated Interactive Switcher: People vs Companies */}
+          <div className="inline-flex items-center p-1 bg-slate-100/90 border border-slate-200/90 rounded-xl shadow-2xs">
+            <button
+              type="button"
+              onClick={() => handleModeSwitch('DECISION_MAKERS')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                searchMode === 'DECISION_MAKERS'
+                  ? 'bg-white text-[#142B45] shadow-xs border border-slate-200/80 font-black'
+                  : 'text-slate-500 hover:text-[#142B45] hover:bg-slate-200/50'
+              }`}
+              title="Search verified decision-makers & people"
+            >
+              <Users className="w-3.5 h-3.5 text-[#078BCC]" />
+              <span>People</span>
+              {hasSearched && candidateResults.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9.5px] font-black bg-blue-100 text-blue-800">
+                  {candidateResults.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleModeSwitch('ENTERPRISES')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                searchMode === 'ENTERPRISES'
+                  ? 'bg-white text-[#142B45] shadow-xs border border-slate-200/80 font-black'
+                  : 'text-slate-500 hover:text-[#142B45] hover:bg-slate-200/50'
+              }`}
+              title="Search verified corporate entities & businesses"
+            >
+              <Building2 className="w-3.5 h-3.5 text-amber-600" />
+              <span>Companies</span>
+              {hasSearched && companyResults.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9.5px] font-black bg-amber-100 text-amber-800">
+                  {companyResults.length}
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Right Action Tools */}
@@ -1433,7 +1548,7 @@ export const SearchPage = () => {
               </button>
             )}
 
-            <div className="inline-flex items-center gap-1.5 text-[10.5px] sm:text-xs font-bold text-white bg-[#142B45] px-2.5 sm:px-3 py-1.5 rounded-xl shadow-xs">
+            <div className="hidden sm:inline-flex items-center gap-1.5 text-[10.5px] sm:text-xs font-bold text-white bg-[#142B45] px-2.5 sm:px-3 py-1.5 rounded-xl shadow-xs">
               <ShieldCheck className="w-3.5 h-3.5 text-[#36C4E8]" />
               <span>Directory Live</span>
             </div>
@@ -1483,7 +1598,11 @@ export const SearchPage = () => {
                 }
               }}
               onFocus={() => setShowSuggestions(true)}
-              placeholder='Search by job title, name, company, or skills (e.g. "Procurement Head at Nestle")...'
+              placeholder={
+                searchMode === 'ENTERPRISES'
+                  ? 'Search verified companies by business name, domain, industry, or mandate...'
+                  : 'Search by job title, name, company, or skills (e.g. "Procurement Head at Nestle")...'
+              }
               className="flex-1 bg-transparent border-none text-xs sm:text-sm text-navy placeholder:text-slate-400 font-medium focus:outline-none min-w-0"
             />
             {query && (
@@ -1743,93 +1862,118 @@ export const SearchPage = () => {
             />
           </div>
 
-          {/* 5. Designation Filter */}
-          <div className="shrink-0">
-            <SearchableDropdownFilter
-              label="Designation"
-              allLabel="All Designations"
-              selectedValue={designationFilter}
-              options={DESIGNATION_FILTER_OPTIONS}
-              onSelect={(val) => applyFilter('designation', val)}
-              icon={<Briefcase className="w-3.5 h-3.5 shrink-0" />}
-            />
-          </div>
-
-          {/* 6. Company Filter */}
-          <div className="shrink-0">
-            <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all bg-white text-slate-700 border-slate-200/90 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
-              <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <input
-                type="text"
-                placeholder="Company..."
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    applyFilter('company', companyFilter);
-                  }
-                }}
-                className="w-20 sm:w-24 text-xs bg-transparent text-navy placeholder:text-slate-400 focus:outline-none"
-              />
-              {companyFilter ? (
-                <button
-                  type="button"
-                  onClick={() => applyFilter('company', '')}
-                  className="p-0.5 hover:bg-slate-100 rounded-full cursor-pointer"
-                  title="Clear company filter"
-                >
-                  <X className="w-3 h-3 text-slate-400" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => applyFilter('company', companyFilter)}
-                  className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
-                  title="Apply company filter"
-                >
-                  ↵
-                </button>
-              )}
+          {/* DNS Verified Only Filter for Enterprises */}
+          {searchMode === 'ENTERPRISES' && (
+            <div className="shrink-0">
+              <button
+                type="button"
+                onClick={() => applyFilter('verifiedOnly', !verifiedOnly)}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  verifiedOnly
+                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+                title="Filter only DNS authenticated companies"
+              >
+                <ShieldCheck className={`w-3.5 h-3.5 ${verifiedOnly ? 'text-white' : 'text-emerald-600'}`} />
+                <span>DNS Verified Only</span>
+              </button>
             </div>
-          </div>
+          )}
 
-          {/* 7. Requirement Segmented Switch */}
-          <div className="shrink-0 inline-flex p-0.5 bg-slate-100/90 border border-slate-200/80 rounded-lg">
-            <button
-              type="button"
-              onClick={() => applyFilter('businessRequirement', 'ALL')}
-              className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
-                businessRequirementFilter === 'ALL'
-                  ? 'bg-white text-navy font-bold shadow-2xs'
-                  : 'text-slate-500 hover:text-navy'
-              }`}
-            >
-              All Needs
-            </button>
-            <button
-              type="button"
-              onClick={() => applyFilter('businessRequirement', 'LOOKING_FOR')}
-              className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                businessRequirementFilter === 'LOOKING_FOR'
-                  ? 'bg-emerald-600 text-white font-bold shadow-2xs'
-                  : 'text-slate-500 hover:text-emerald-700'
-              }`}
-            >
-              <span>🔍 Seeking</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => applyFilter('businessRequirement', 'OFFERING')}
-              className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                businessRequirementFilter === 'OFFERING'
-                  ? 'bg-blue-600 text-white font-bold shadow-2xs'
-                  : 'text-slate-500 hover:text-blue-700'
-              }`}
-            >
-              <span>📦 Offering</span>
-            </button>
-          </div>
+          {/* 5. Designation Filter (People Mode Only) */}
+          {searchMode === 'DECISION_MAKERS' && (
+            <div className="shrink-0">
+              <SearchableDropdownFilter
+                label="Designation"
+                allLabel="All Designations"
+                selectedValue={designationFilter}
+                options={DESIGNATION_FILTER_OPTIONS}
+                onSelect={(val) => applyFilter('designation', val)}
+                icon={<Briefcase className="w-3.5 h-3.5 shrink-0" />}
+              />
+            </div>
+          )}
+
+          {/* 6. Company Filter (People Mode Only) */}
+          {searchMode === 'DECISION_MAKERS' && (
+            <div className="shrink-0">
+              <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all bg-white text-slate-700 border-slate-200/90 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
+                <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Company..."
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyFilter('company', companyFilter);
+                    }
+                  }}
+                  className="w-20 sm:w-24 text-xs bg-transparent text-navy placeholder:text-slate-400 focus:outline-none"
+                />
+                {companyFilter ? (
+                  <button
+                    type="button"
+                    onClick={() => applyFilter('company', '')}
+                    className="p-0.5 hover:bg-slate-100 rounded-full cursor-pointer"
+                    title="Clear company filter"
+                  >
+                    <X className="w-3 h-3 text-slate-400" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => applyFilter('company', companyFilter)}
+                    className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
+                    title="Apply company filter"
+                  >
+                    ↵
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 7. Requirement Segmented Switch (People Mode Only) */}
+          {searchMode === 'DECISION_MAKERS' && (
+            <div className="shrink-0 inline-flex p-0.5 bg-slate-100/90 border border-slate-200/80 rounded-lg">
+              <button
+                type="button"
+                onClick={() => applyFilter('businessRequirement', 'ALL')}
+                className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
+                  businessRequirementFilter === 'ALL'
+                    ? 'bg-white text-navy font-bold shadow-2xs'
+                    : 'text-slate-500 hover:text-navy'
+                }`}
+              >
+                All Needs
+              </button>
+              <button
+                type="button"
+                onClick={() => applyFilter('businessRequirement', 'LOOKING_FOR')}
+                className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                  businessRequirementFilter === 'LOOKING_FOR'
+                    ? 'bg-emerald-600 text-white font-bold shadow-2xs'
+                    : 'text-slate-500 hover:text-emerald-700'
+                }`}
+              >
+                <span>🔍 Seeking</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => applyFilter('businessRequirement', 'OFFERING')}
+                className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                  businessRequirementFilter === 'OFFERING'
+                    ? 'bg-blue-600 text-white font-bold shadow-2xs'
+                    : 'text-slate-500 hover:text-blue-700'
+                }`}
+              >
+                <span>📦 Offering</span>
+              </button>
+            </div>
+          )}
 
           {/* Reset All Filters Button */}
           {activeFiltersCount > 0 && (
@@ -2080,9 +2224,73 @@ export const SearchPage = () => {
             <p className="text-xs sm:text-[13px] font-semibold text-slate-400 mb-0.5 tracking-tight text-center">
               Hello, {firstName}
             </p>
-            <h1 className="text-lg sm:text-2xl font-black text-[#142B45] tracking-tight mb-4 text-center leading-snug">
-              How can I help you find business leaders today?
+            <h1 className="text-lg sm:text-2xl font-black text-[#142B45] tracking-tight mb-3 text-center leading-snug">
+              {searchMode === 'ENTERPRISES'
+                ? 'How can I help you find verified companies today?'
+                : 'How can I help you find business leaders today?'}
             </h1>
+
+            {/* Interactive "What are you looking for?" Selector (Matching User Reference Image) */}
+            <div className="w-full max-w-sm sm:max-w-md mx-auto mb-4">
+              <p className="text-xs sm:text-[13px] font-bold text-slate-700 mb-2.5 text-center">
+                What are you looking for?
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {/* 1. People Card */}
+                <button
+                  type="button"
+                  onClick={() => handleModeSwitch('DECISION_MAKERS')}
+                  className={`p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center space-y-2 ${
+                    searchMode === 'DECISION_MAKERS'
+                      ? 'bg-sky-50/90 border-[#078BCC] ring-2 ring-[#078BCC]/25 shadow-xs'
+                      : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60 shadow-2xs'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform ${
+                    searchMode === 'DECISION_MAKERS'
+                      ? 'bg-[#078BCC] text-white shadow-2xs scale-105'
+                      : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="block text-xs sm:text-sm font-extrabold text-[#142B45]">
+                      People
+                    </span>
+                    <span className="block text-[10.5px] text-slate-400 font-medium">
+                      Find decision-makers
+                    </span>
+                  </div>
+                </button>
+
+                {/* 2. Companies Card */}
+                <button
+                  type="button"
+                  onClick={() => handleModeSwitch('ENTERPRISES')}
+                  className={`p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center space-y-2 ${
+                    searchMode === 'ENTERPRISES'
+                      ? 'bg-amber-50/90 border-amber-500 ring-2 ring-amber-500/25 shadow-xs'
+                      : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60 shadow-2xs'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform ${
+                    searchMode === 'ENTERPRISES'
+                      ? 'bg-amber-600 text-white shadow-2xs scale-105'
+                      : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="block text-xs sm:text-sm font-extrabold text-[#142B45]">
+                      Companies
+                    </span>
+                    <span className="block text-[10.5px] text-slate-400 font-medium">
+                      Find businesses
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </div>
 
             {/* Central Interactive Search Box (Mirrors Reference) */}
             <div className="w-full bg-[#F8FAFC] hover:bg-white border border-slate-200/90 hover:border-slate-300 focus-within:border-[#078BCC] focus-within:ring-2 focus-within:ring-[#078BCC]/10 focus-within:bg-white rounded-2xl p-3 sm:p-3.5 shadow-2xs transition-all relative mb-3">
@@ -2101,7 +2309,11 @@ export const SearchPage = () => {
                     setShowSuggestions(true);
                   }}
                   onFocus={() => setShowSuggestions(true)}
-                  placeholder="Ask anything or search by job title, company, name, or skills..."
+                  placeholder={
+                    searchMode === 'ENTERPRISES'
+                      ? 'Search 1,000+ companies by business name, domain, industry, or corporate mandate...'
+                      : 'Ask anything or search by job title, company, name, or skills...'
+                  }
                   className="w-full bg-transparent border-none text-xs sm:text-sm text-[#142B45] placeholder:text-slate-400 font-medium focus:outline-none mb-2 py-0.5"
                 />
 
@@ -2109,8 +2321,17 @@ export const SearchPage = () => {
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                   <div className="flex items-center gap-1.5">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100 text-[#078BCC] text-[11px] font-bold border border-slate-200 shadow-2xs">
-                      <Sparkles className="w-3 h-3" />
-                      <span>Decision Makers</span>
+                      {searchMode === 'ENTERPRISES' ? (
+                        <>
+                          <Building2 className="w-3 h-3 text-amber-600" />
+                          <span className="text-amber-800">Companies Directory</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3" />
+                          <span>Decision Makers</span>
+                        </>
+                      )}
                     </span>
                     <button
                       type="button"
@@ -2216,28 +2437,9 @@ export const SearchPage = () => {
               </div>
             </div>
 
-            {/* 3 Executive Suggestion Cards (Simple, intuitive, human English) */}
+            {/* 3 Suggestion Cards Adapted to People vs Companies */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full mb-3.5">
-              {[
-                {
-                  icon: Clock,
-                  title: 'Procurement & Sourcing Leaders',
-                  subtitle: 'Find heads of procurement, sourcing managers, and purchasing directors.',
-                  q: 'Procurement Head & Sourcing Director',
-                },
-                {
-                  icon: Lightbulb,
-                  title: 'Strategic Partnerships',
-                  subtitle: 'Find business leaders open to partnerships, joint ventures, and new deals.',
-                  q: 'Partnerships & Business Development Director',
-                },
-                {
-                  icon: ShieldCheck,
-                  title: 'Senior Executives & CXOs',
-                  subtitle: 'Connect directly with verified CEOs, CTOs, VPs, and company executives.',
-                  q: 'Chief Executive Officer & VP',
-                },
-              ].map((card, idx) => (
+              {(searchMode === 'ENTERPRISES' ? COMPANY_SUGGESTION_CARDS : PEOPLE_SUGGESTION_CARDS).map((card, idx) => (
                 <button
                   key={idx}
                   type="button"

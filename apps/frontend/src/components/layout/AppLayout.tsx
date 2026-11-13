@@ -567,10 +567,40 @@ export const AppLayout = () => {
         </header>
 
         {/* Routed Workspace View */}
-        <main className="flex-1 p-2.5 sm:p-4 lg:p-5 max-w-[1440px] w-full mx-auto">
+        <main className="flex-1 p-2.5 sm:p-4 lg:p-5 max-w-[1440px] w-full mx-auto pb-20 md:pb-6">
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar (Standard PWA & Mobile UX) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E8EDF3] py-1 px-2 flex items-center justify-around shadow-lg safe-area-bottom">
+        {[
+          { label: 'Home', path: '/app/home', icon: LayoutDashboard },
+          { label: 'Search', path: '/app/search', icon: Search },
+          { label: 'Network', path: '/app/connections', icon: Users },
+          { label: 'Messages', path: '/app/messages', icon: MessageSquare },
+          { label: 'Profile', path: '/app/profile', icon: User },
+        ].map((tab) => {
+          const isActive = location.pathname === tab.path || (tab.path !== '/app/home' && location.pathname.startsWith(tab.path));
+          const TabIcon = tab.icon;
+          return (
+            <Link
+              key={tab.path}
+              to={tab.path}
+              className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
+                isActive
+                  ? 'text-[#078BCC] font-bold'
+                  : 'text-slate-400 hover:text-slate-700'
+              }`}
+            >
+              <TabIcon className={`w-4 h-4 transition-transform ${isActive ? 'scale-110 stroke-[2.5]' : ''}`} />
+              <span className={`text-[9.5px] mt-0.5 tracking-tight ${isActive ? 'font-black' : 'font-medium'}`}>
+                {tab.label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
 
       {/* Shared Modals */}
       <UniversalCommandBar

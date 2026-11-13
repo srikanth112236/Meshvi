@@ -199,6 +199,14 @@ export const ConnectOpportunityModal: React.FC<ConnectOpportunityModalProps> = (
         type: 'success',
       });
 
+      // Increment local sent requests count for onboarding checklist milestone tracking
+      try {
+        const cur = Number(localStorage.getItem('meshvi_sent_requests_count') || 0);
+        localStorage.setItem('meshvi_sent_requests_count', String(cur + 1));
+      } catch {
+        // Safe fail
+      }
+
       onSuccess?.();
       onClose();
     } catch (err: any) {

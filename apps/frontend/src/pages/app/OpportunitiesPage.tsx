@@ -232,7 +232,7 @@ export const OpportunitiesPage: React.FC = () => {
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="flex items-center space-x-1 border-b border-border overflow-x-auto pb-px">
+      <div className="flex items-center space-x-1 border-b border-border overflow-x-auto no-scrollbar pb-px touch-pan-x">
         <button
           type="button"
           onClick={() => handleTabChange('matches')}
@@ -339,9 +339,9 @@ export const OpportunitiesPage: React.FC = () => {
         <div className="space-y-4">
           {/* Subheader & Level Filter */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface p-3.5 rounded-xl border border-border">
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold text-navy">Filter Overlap Level:</span>
-              <div className="flex items-center space-x-1 bg-bg p-1 rounded-lg border border-border">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-navy shrink-0">Filter Overlap Level:</span>
+              <div className="flex flex-wrap items-center gap-1 bg-bg p-1 rounded-lg border border-border">
                 <button
                   type="button"
                   onClick={() => setMatchLevelFilter('ALL')}

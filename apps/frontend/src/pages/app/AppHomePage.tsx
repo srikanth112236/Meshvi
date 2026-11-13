@@ -22,6 +22,7 @@ import { OnboardingChecklistWidget } from '../../components/ui/OnboardingCheckli
 interface StatsState {
   connectionsCount: number;
   inboundRequestsCount: number;
+  sentRequestsCount: number;
   introductionsCount: number;
   dealRoomsCount: number;
   quotaUsed: number;
@@ -105,6 +106,7 @@ export const AppHomePage = () => {
   const [stats, setStats] = useState<StatsState>({
     connectionsCount: 0,
     inboundRequestsCount: 0,
+    sentRequestsCount: 0,
     introductionsCount: 0,
     dealRoomsCount: 2,
     quotaUsed: 0,
@@ -130,9 +132,14 @@ export const AppHomePage = () => {
       fetch('/api/v1/introductions', { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({})),
       fetch('/api/v1/connections/quota', { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({})),
     ]).then(([connData, reqData, introData, quotaData]) => {
+      const rawSent = reqData?.data?.outgoing?.length || 0;
+      const localSent = Number(localStorage.getItem('meshvi_sent_requests_count') || 0);
+      const totalSent = Math.max(rawSent, localSent);
+
       setStats({
         connectionsCount: connData?.data?.length || 0,
         inboundRequestsCount: reqData?.data?.incoming?.length || 0,
+        sentRequestsCount: totalSent,
         introductionsCount: introData?.data?.length || 0,
         dealRoomsCount: 2,
         quotaUsed: quotaData?.data?.used || 0,
@@ -193,7 +200,7 @@ export const AppHomePage = () => {
           </div>
 
           <div className="min-w-0">
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               <h1 className="text-sm sm:text-base font-bold text-[#142B45] tracking-tight">
                 {greeting}, {firstName}
               </h1>
@@ -234,8 +241,8 @@ export const AppHomePage = () => {
             </span>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-[#142B45] tracking-tight">{stats.connectionsCount}</span>
-            <span className="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+            <span className="text-lg sm:text-2xl font-black text-[#142B45] tracking-tight">{stats.connectionsCount}</span>
+            <span className="text-[9px] sm:text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
               Verified Peers
             </span>
           </div>
@@ -252,8 +259,8 @@ export const AppHomePage = () => {
             </span>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-[#142B45] tracking-tight">{stats.inboundRequestsCount}</span>
-            <span className="text-[9.5px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
+            <span className="text-lg sm:text-2xl font-black text-[#142B45] tracking-tight">{stats.inboundRequestsCount}</span>
+            <span className="text-[9px] sm:text-[9.5px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
               Inbound
             </span>
           </div>
@@ -270,8 +277,8 @@ export const AppHomePage = () => {
             </span>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-[#142B45] tracking-tight">{stats.introductionsCount}</span>
-            <span className="text-[9.5px] font-bold text-[#078BCC] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+            <span className="text-lg sm:text-2xl font-black text-[#142B45] tracking-tight">{stats.introductionsCount}</span>
+            <span className="text-[9px] sm:text-[9.5px] font-bold text-[#078BCC] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
               Mutual Consent
             </span>
           </div>
@@ -288,10 +295,10 @@ export const AppHomePage = () => {
             </span>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between">
-            <span className="text-xl sm:text-2xl font-black text-[#142B45] tracking-tight">
+            <span className="text-lg sm:text-2xl font-black text-[#142B45] tracking-tight">
               {stats.quotaLimit - stats.quotaUsed > 0 ? stats.quotaLimit - stats.quotaUsed : 24}
             </span>
-            <span className="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+            <span className="text-[9px] sm:text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
               Quota Ready
             </span>
           </div>
@@ -330,7 +337,7 @@ export const AppHomePage = () => {
           </button>
         </form>
 
-        <div className="flex items-center space-x-1.5 overflow-x-auto text-[11px] pt-0.5">
+        <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar text-[11px] pt-0.5 py-1 -mx-1 px-1 touch-pan-x">
           <span className="text-slate-400 shrink-0 font-medium">Popular mandates:</span>
           {[
             'Airport Retail Concessions',
@@ -356,6 +363,7 @@ export const AppHomePage = () => {
         <div className="relative">
           <OnboardingChecklistWidget
             connectionsCount={stats.connectionsCount}
+            sentRequestsCount={stats.sentRequestsCount}
             onOpenCreatePost={() => setIsPartnershipModalOpen(true)}
           />
         </div>

@@ -47,6 +47,20 @@ window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
   return nativeFetch(input, init);
 };
 
+// Register PWA Service Worker for offline capabilities & installability
+if ('serviceWorker' in navigator && typeof window !== 'undefined' && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => {
+        console.debug('ServiceWorker registered:', reg.scope);
+      })
+      .catch((err) => {
+        console.debug('ServiceWorker registration skipped:', err);
+      });
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
