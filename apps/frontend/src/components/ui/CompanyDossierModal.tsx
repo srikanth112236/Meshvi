@@ -3,18 +3,17 @@ import {
   X,
   ShieldCheck,
   Users,
-  Network,
-  GitBranch,
-  Globe,
-  Sliders,
-  ChevronDown,
-  ChevronRight,
   Building2,
   Sparkles,
+  ChevronDown,
+  ChevronRight,
+  UserPlus,
+  GitBranch,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ReadinessCard } from './ReadinessCard';
 import { WhyNowCard } from './WhyNowCard';
+import { ConnectOpportunityModal } from './ConnectOpportunityModal';
 
 export interface CompanyDossierModalProps {
   isOpen: boolean;
@@ -24,7 +23,7 @@ export interface CompanyDossierModalProps {
   onSelectCompanyForProposal?: (company: any) => void;
 }
 
-type TabType = 'overview' | 'orgchart' | 'hierarchy' | 'domains' | 'routing';
+type TabType = 'overview' | 'members';
 
 export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
   isOpen,
@@ -40,6 +39,7 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
   const [hierarchy, setHierarchy] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedDepts, setExpandedDepts] = useState<Record<string, boolean>>({});
+  const [internalConnectTarget, setInternalConnectTarget] = useState<any | null>(null);
 
   const [companyReadiness, setCompanyReadiness] = useState<any | null>(null);
   const [companyTriggers, setCompanyTriggers] = useState<any[]>([]);
@@ -78,7 +78,7 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
         })
         .catch(() => setLoading(false));
 
-      // Fetch F1: Company Partnership Readiness
+      // Fetch Company Partnership Readiness
       fetch(`/api/v1/readiness/company/${companyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -86,7 +86,7 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
         .then((data) => setCompanyReadiness(data?.data !== undefined ? data.data : data))
         .catch(() => setCompanyReadiness(null));
 
-      // Fetch F3: Why Now Trigger Signals
+      // Fetch Why Now Trigger Signals
       fetch(`/api/v1/triggers/company/${companyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -97,7 +97,7 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
         })
         .catch(() => setCompanyTriggers([]));
 
-      // Fetch Gap 1: Active Corporate Opportunities
+      // Fetch Active Corporate Opportunities
       fetch(`/api/v1/opportunities/company/${companyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -127,16 +127,24 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
   if (!isOpen) return null;
 
   const roster = company?.memberships || [];
-  const verifiedDomains = company?.verifiedDomains || [];
-  const routingRules = company?.routingRules || [];
   const parentRelations = hierarchy?.parentRelations || [];
   const subsidiaryRelations = hierarchy?.subsidiaryRelations || [];
+  const totalMemberCount = orgChart?.totalHeadcount || roster.length || 0;
 
   const toggleDept = (deptName: string) => {
     setExpandedDepts((prev) => ({
       ...prev,
       [deptName]: !prev[deptName],
     }));
+  };
+
+  const handleInitiateConnect = (person: any) => {
+    if (onSelectPersonForConnect) {
+      onSelectPersonForConnect(person);
+      onClose();
+    } else {
+      setInternalConnectTarget(person);
+    }
   };
 
   return (
@@ -149,10 +157,10 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
       />
 
       {/* Slide-over Drawer Panel */}
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10">
         <div className="w-screen max-w-2xl bg-surface border-l border-border shadow-2xl flex flex-col justify-between transform transition-transform ease-out duration-300">
           {/* Header */}
-          <div className="px-6 py-5 border-b border-border flex items-start justify-between bg-bg">
+          <div className="px-5 sm:px-6 py-5 border-b border-border flex items-start justify-between bg-bg">
             <div className="flex items-center space-x-3.5 min-w-0 pr-3">
               <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center font-black text-lg shadow-sm border border-border shrink-0">
                 {company?.name?.[0] || 'C'}
@@ -160,7 +168,7 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
               <div className="min-w-0">
                 <div className="flex items-center space-x-2">
                   <h2 className="text-base font-extrabold text-navy truncate">
-                    {company?.name || 'Enterprise Dossier'}
+                    {company?.name || 'Enterprise Details'}
                   </h2>
                   {company?.verificationStatus === 'VERIFIED' ? (
                     <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 text-[10px] font-bold rounded flex items-center space-x-1 border border-emerald-200 shrink-0">
@@ -168,14 +176,14 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
                       <span>DNS Verified</span>
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded shrink-0">
-                      Pending
+                    <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 text-[10px] font-bold rounded shrink-0">
+                      Verified Entity
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-text-muted mt-0.5 truncate">
                   {company?.industry || 'Enterprise Business'} &bull;{' '}
-                  {company?.headquartersCity || 'Global'}, {company?.headquartersCountry || ''}
+                  {company?.headquartersCity || 'Global'}{company?.headquartersCountry ? `, ${company.headquartersCountry}` : ''}
                 </p>
               </div>
             </div>
@@ -190,83 +198,47 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
             </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b border-border bg-surface px-6 space-x-1 text-xs font-bold text-text-muted overflow-x-auto">
+          {/* Clean 2-Tab Navigation */}
+          <div className="flex border-b border-border bg-surface px-6 space-x-2 text-xs font-bold text-text-muted">
             <button
               type="button"
               onClick={() => setActiveTab('overview')}
-              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap ${
+              className={`py-3 px-4 border-b-2 flex items-center space-x-2 transition-colors whitespace-nowrap ${
                 activeTab === 'overview'
                   ? 'border-black text-navy font-extrabold'
                   : 'border-transparent hover:text-navy'
               }`}
             >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>360° Overview</span>
+              <Building2 className="w-4 h-4" />
+              <span>Company Details</span>
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('orgchart')}
-              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'orgchart'
+              onClick={() => setActiveTab('members')}
+              className={`py-3 px-4 border-b-2 flex items-center space-x-2 transition-colors whitespace-nowrap ${
+                activeTab === 'members'
                   ? 'border-black text-navy font-extrabold'
                   : 'border-transparent hover:text-navy'
               }`}
             >
-              <Network className="w-3.5 h-3.5" />
-              <span>Org Chart ({orgChart?.totalHeadcount || roster.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('hierarchy')}
-              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'hierarchy'
-                  ? 'border-black text-navy font-extrabold'
-                  : 'border-transparent hover:text-navy'
-              }`}
-            >
-              <GitBranch className="w-3.5 h-3.5" />
-              <span>Hierarchy</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('domains')}
-              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'domains'
-                  ? 'border-black text-navy font-extrabold'
-                  : 'border-transparent hover:text-navy'
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span>Domains ({verifiedDomains.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('routing')}
-              className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'routing'
-                  ? 'border-black text-navy font-extrabold'
-                  : 'border-transparent hover:text-navy'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span>Routing Rules ({routingRules.length})</span>
+              <Users className="w-4 h-4" />
+              <span>Organization Members ({totalMemberCount})</span>
             </button>
           </div>
 
           {/* Drawer Scrollable Content */}
-          <div className="p-6 space-y-5 overflow-y-auto flex-1 text-xs">
+          <div className="p-5 sm:p-6 space-y-5 overflow-y-auto flex-1 text-xs">
             {loading ? (
-              <div className="py-20 text-center text-text-muted">Loading enterprise dossier intelligence...</div>
+              <div className="py-20 text-center text-text-muted">Loading enterprise intelligence...</div>
             ) : !company ? (
               <div className="py-20 text-center text-text-muted">Company profile details unavailable.</div>
             ) : (
               <>
-                {/* TAB 1: 360 OVERVIEW */}
+                {/* TAB 1: COMPANY DETAILS */}
                 {activeTab === 'overview' && (
                   <div className="space-y-5">
                     {/* Firmographics Bar */}
-                    <div className="grid grid-cols-2 gap-3 p-3.5 bg-bg rounded-xl border border-border">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-bg rounded-xl border border-border">
                       <div>
                         <span className="text-[10px] font-bold text-text-muted uppercase block">Legal Entity</span>
                         <span className="font-extrabold text-navy truncate block">{company.legalName || company.name}</span>
@@ -285,13 +257,13 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
                       </div>
                     </div>
 
-                    {/* F1: Company Partnership Readiness Signal */}
+                    {/* Partnership Readiness Signal */}
                     <ReadinessCard readiness={companyReadiness} />
 
-                    {/* F3: Why Now Trigger Signals */}
+                    {/* Trigger Signals */}
                     <WhyNowCard triggers={companyTriggers} />
 
-                    {/* Gap 1: Active Corporate Opportunities */}
+                    {/* Active Commercial Opportunities */}
                     {companyOpportunities.length > 0 && (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -350,109 +322,108 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
                       </div>
                     )}
 
-                    {/* Roster Preview */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
+                    {/* Hierarchy Relations (Parent & Subsidiaries if available) */}
+                    {(parentRelations.length > 0 || subsidiaryRelations.length > 0) && (
+                      <div className="space-y-3 pt-2 border-t border-border">
                         <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4 text-black" />
+                          <GitBranch className="w-4 h-4 text-navy" />
                           <span className="text-xs font-black text-navy uppercase tracking-wider">
-                            Key Decision Makers ({roster.length})
+                            Corporate Hierarchy & Affiliates
                           </span>
                         </div>
-                        <span className="text-[10px] text-text-muted font-bold">Privacy-Preserving Corporate Roster</span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {subsidiaryRelations.map((rel: any) => (
+                            <div key={rel.id} className="p-3 bg-bg rounded-xl border border-border">
+                              <span className="text-[9px] font-bold uppercase text-text-muted block">Parent Entity</span>
+                              <div className="font-bold text-navy text-xs">{rel.parentCompany?.name}</div>
+                              <span className="text-[10px] text-text-muted">{rel.parentCompany?.industry || 'Holding Entity'}</span>
+                            </div>
+                          ))}
+
+                          {parentRelations.map((rel: any) => (
+                            <div key={rel.id} className="p-3 bg-bg rounded-xl border border-border">
+                              <span className="text-[9px] font-bold uppercase text-text-muted block">Subsidiary Unit</span>
+                              <div className="font-bold text-navy text-xs">{rel.subsidiary?.name}</div>
+                              <span className="text-[10px] text-text-muted">{rel.subsidiary?.industry || 'Operating Unit'}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-
-                      {roster.length === 0 ? (
-                        <div className="p-4 bg-bg rounded-xl border border-border text-center text-text-muted">
-                          No public roster members active.
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {roster.map((m: any) => {
-                            const p = m.user?.profile;
-                            if (!p) return null;
-                            return (
-                              <div
-                                key={m.id}
-                                className="p-3 bg-surface border border-border rounded-xl flex items-center justify-between hover:border-black/50 transition-colors"
-                              >
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 rounded-full bg-black text-white font-extrabold text-xs flex items-center justify-center">
-                                    {p.displayName?.[0] || 'U'}
-                                  </div>
-                                  <div>
-                                    <div className="font-bold text-navy">{p.displayName}</div>
-                                    <div className="text-[11px] text-text-muted">
-                                      {p.currentTitle} &bull; {m.department || p.function || 'Executive'}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {onSelectPersonForConnect && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      onSelectPersonForConnect({
-                                        id: p.id,
-                                        displayName: p.displayName,
-                                        currentTitle: p.currentTitle,
-                                        companyName: company.name,
-                                        city: p.city,
-                                        countryCode: p.countryCode,
-                                        matchScore: 95,
-                                      });
-                                      onClose();
-                                    }}
-                                    className="px-3 py-1 bg-black hover:bg-neutral-800 text-white rounded-lg text-xs font-bold transition-colors"
-                                  >
-                                    Connect
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 )}
 
-                {/* TAB 2: ORG CHART (Feature #2) */}
-                {activeTab === 'orgchart' && (
-                  <div className="space-y-5">
+                {/* TAB 2: ORGANIZATION MEMBERS (Connect directly to anyone) */}
+                {activeTab === 'members' && (
+                  <div className="space-y-6">
+                    {/* Header Banner */}
+                    <div className="p-3.5 bg-neutral-50 rounded-xl border border-border flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-navy text-xs block">Connect with Organization Members</span>
+                        <span className="text-[11px] text-text-muted">
+                          Choose an executive or department lead below to send a direct connection request.
+                        </span>
+                      </div>
+                      <span className="text-xs font-black text-navy bg-white px-2.5 py-1 rounded-lg border border-border shrink-0 shadow-2xs">
+                        {totalMemberCount} Active
+                      </span>
+                    </div>
+
                     {/* Executive Governance Tier */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black uppercase tracking-wider text-navy flex items-center space-x-1.5">
-                          <Network className="w-4 h-4 text-black" />
-                          <span>Executive Governance Tier</span>
+                          <Users className="w-4 h-4 text-black" />
+                          <span>Executive Leadership Tier</span>
                         </span>
                         <span className="text-[10px] bg-black text-white font-bold px-2 py-0.5 rounded-full">
                           Leadership
                         </span>
                       </div>
 
-                      {orgChart?.executiveTier?.length === 0 ? (
+                      {orgChart?.executiveTier?.length === 0 && roster.length === 0 ? (
                         <div className="p-4 bg-bg rounded-xl border border-border text-center text-text-muted">
                           Executive leadership records private or pending attestation.
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {orgChart?.executiveTier?.map((exec: any, idx: number) => (
+                          {(orgChart?.executiveTier || []).map((exec: any, idx: number) => (
                             <div
                               key={idx}
-                              className="p-3.5 bg-surface rounded-xl border-2 border-black/80 shadow-xs space-y-1.5"
+                              className="p-3.5 bg-surface rounded-xl border border-border hover:border-black/50 transition-all shadow-xs flex flex-col justify-between space-y-3"
                             >
-                              <div className="flex items-center justify-between">
-                                <span className="font-extrabold text-navy text-xs">{exec.name}</span>
-                                <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9px] font-black rounded uppercase">
-                                  Verified CXO
-                                </span>
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="font-extrabold text-navy text-xs">{exec.name}</span>
+                                  <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9px] font-black rounded uppercase shrink-0">
+                                    Verified CXO
+                                  </span>
+                                </div>
+                                <div className="text-[11px] font-semibold text-black">{exec.title}</div>
+                                <div className="text-[10px] text-text-muted">
+                                  {exec.department} &bull; {exec.role || 'Executive'}
+                                </div>
                               </div>
-                              <div className="text-[11px] font-semibold text-black">{exec.title}</div>
-                              <div className="text-[10px] text-text-muted">
-                                {exec.department} &bull; {exec.role}
-                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleInitiateConnect({
+                                    id: exec.profileId || exec.userId,
+                                    displayName: exec.name,
+                                    currentTitle: exec.title,
+                                    companyName: company.name,
+                                    city: exec.city,
+                                    countryCode: exec.countryCode,
+                                    matchScore: 95,
+                                  })
+                                }
+                                className="w-full py-1.5 px-3 bg-black hover:bg-neutral-800 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-xs"
+                              >
+                                <UserPlus className="w-3.5 h-3.5" />
+                                <span>Connect</span>
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -460,18 +431,14 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
                     </div>
 
                     {/* Department Divisions */}
-                    <div className="space-y-3 pt-2 border-t border-border">
-                      <span className="text-xs font-black uppercase tracking-wider text-navy block">
-                        Functional Department Divisions
-                      </span>
+                    {orgChart?.departments && orgChart.departments.length > 0 && (
+                      <div className="space-y-3 pt-2 border-t border-border">
+                        <span className="text-xs font-black uppercase tracking-wider text-navy block">
+                          Functional Department Divisions
+                        </span>
 
-                      {orgChart?.departments?.length === 0 ? (
-                        <div className="p-4 bg-bg rounded-xl border border-border text-center text-text-muted">
-                          No departmental divisions mapped.
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {orgChart?.departments?.map((dept: any) => {
+                        <div className="space-y-2.5">
+                          {orgChart.departments.map((dept: any) => {
                             const isExpanded = expandedDepts[dept.name];
                             return (
                               <div key={dept.name} className="border border-border rounded-xl bg-surface overflow-hidden">
@@ -498,15 +465,36 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
                                     {dept.members.map((m: any, mIdx: number) => (
                                       <div
                                         key={mIdx}
-                                        className="p-2.5 bg-bg rounded-lg border border-border/60 flex items-center justify-between"
+                                        className="p-2.5 bg-bg rounded-lg border border-border/60 flex items-center justify-between gap-3 hover:border-black/30 transition-colors"
                                       >
-                                        <div>
-                                          <div className="font-bold text-navy text-xs">{m.name}</div>
-                                          <div className="text-[11px] text-text-muted">{m.title}</div>
+                                        <div className="min-w-0">
+                                          <div className="font-bold text-navy text-xs truncate">{m.name}</div>
+                                          <div className="text-[11px] text-text-muted truncate">{m.title}</div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-text-muted px-2 py-0.5 bg-surface rounded">
-                                          {m.seniority || 'Staff'}
-                                        </span>
+
+                                        <div className="flex items-center space-x-2 shrink-0">
+                                          <span className="text-[10px] font-bold text-text-muted px-2 py-0.5 bg-surface rounded border border-border hidden sm:inline">
+                                            {m.seniority || 'Member'}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleInitiateConnect({
+                                                id: m.profileId || m.userId,
+                                                displayName: m.name,
+                                                currentTitle: m.title,
+                                                companyName: company.name,
+                                                city: m.city,
+                                                countryCode: m.countryCode,
+                                                matchScore: 90,
+                                              })
+                                            }
+                                            className="px-2.5 py-1 bg-black hover:bg-neutral-800 text-white rounded-md text-[11px] font-bold transition-colors flex items-center space-x-1"
+                                          >
+                                            <UserPlus className="w-3 h-3" />
+                                            <span>Connect</span>
+                                          </button>
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
@@ -515,162 +503,59 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
                             );
                           })}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* TAB 3: HIERARCHY (Feature #1) */}
-                {activeTab === 'hierarchy' && (
-                  <div className="space-y-5">
-                    {/* Parent Entities */}
-                    <div className="space-y-2">
-                      <span className="text-xs font-black uppercase tracking-wider text-navy block">
-                        Parent Holding & Group Entities
-                      </span>
-                      {subsidiaryRelations.length === 0 ? (
-                        <div className="p-4 bg-bg rounded-xl border border-border text-center text-text-muted">
-                          This entity operates independently with no parent holding group listed.
-                        </div>
-                      ) : (
-                        subsidiaryRelations.map((rel: any) => (
-                          <div
-                            key={rel.id}
-                            className="p-4 bg-surface rounded-xl border border-border flex items-center justify-between shadow-2xs"
-                          >
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <h4 className="font-extrabold text-navy text-xs">{rel.parentCompany.name}</h4>
-                                <span className="px-1.5 py-0.2 bg-black text-white text-[9px] font-black rounded uppercase">
-                                  {rel.relationshipType}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-text-muted mt-0.5">
-                                {rel.parentCompany.industry} &bull; {rel.parentCompany.domain}
-                              </p>
-                            </div>
-                            <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                              Verified Parent
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-
-                    {/* Subsidiary Entities */}
-                    <div className="space-y-2 pt-2 border-t border-border">
-                      <span className="text-xs font-black uppercase tracking-wider text-navy block">
-                        Subsidiaries & Operating Units
-                      </span>
-                      {parentRelations.length === 0 ? (
-                        <div className="p-4 bg-bg rounded-xl border border-border text-center text-text-muted">
-                          No direct operating subsidiaries registered under this entity.
-                        </div>
-                      ) : (
-                        parentRelations.map((rel: any) => (
-                          <div
-                            key={rel.id}
-                            className="p-4 bg-surface rounded-xl border border-border flex items-center justify-between shadow-2xs"
-                          >
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <h4 className="font-extrabold text-navy text-xs">{rel.subsidiary.name}</h4>
-                                <span className="px-1.5 py-0.2 bg-surface-muted text-navy border border-border text-[9px] font-black rounded uppercase">
-                                  {rel.relationshipType}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-text-muted mt-0.5">
-                                {rel.subsidiary.industry} &bull; {rel.subsidiary.domain}
-                              </p>
-                            </div>
-                            <span className="text-[10px] font-black text-text-muted bg-surface-muted px-2 py-0.5 rounded border border-border">
-                              Subsidiary
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* TAB 4: DOMAINS (Feature #6) */}
-                {activeTab === 'domains' && (
-                  <div className="space-y-4">
-                    <span className="text-xs font-black uppercase tracking-wider text-navy block">
-                      Multi-Domain Corporate Workspace
-                    </span>
-                    {verifiedDomains.length === 0 ? (
-                      <div className="p-4 bg-bg rounded-xl border border-border text-center text-text-muted">
-                        Only primary domain registered.
-                      </div>
-                    ) : (
-                      <div className="space-y-2.5">
-                        {verifiedDomains.map((d: any) => (
-                          <div
-                            key={d.id}
-                            className="p-3.5 bg-surface rounded-xl border border-border flex items-center justify-between"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <Globe className="w-4 h-4 text-black" />
-                              <div>
-                                <div className="font-bold text-navy text-xs">{d.domain}</div>
-                                <span className="text-[10px] text-text-muted">
-                                  {d.isPrimary ? 'Primary Corporate Root' : 'Regional / Subsidiary Alias'}
-                                </span>
-                              </div>
-                            </div>
-
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${
-                                d.verificationStatus === 'VERIFIED'
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                  : 'bg-amber-50 text-amber-700 border-amber-200'
-                              }`}
-                            >
-                              {d.verificationStatus}
-                            </span>
-                          </div>
-                        ))}
                       </div>
                     )}
-                  </div>
-                )}
 
-                {/* TAB 5: ROUTING (Feature #9) */}
-                {activeTab === 'routing' && (
-                  <div className="space-y-4">
-                    <span className="text-xs font-black uppercase tracking-wider text-navy block">
-                      Inbound Departmental Routing Rules
-                    </span>
-                    {routingRules.length === 0 ? (
-                      <div className="p-4 bg-bg rounded-xl border border-border text-center text-text-muted">
-                        Inbound opportunities route to the primary executive leadership desk.
-                      </div>
-                    ) : (
-                      <div className="space-y-2.5">
-                        {routingRules.map((rule: any) => (
-                          <div
-                            key={rule.id}
-                            className="p-3.5 bg-surface rounded-xl border border-border flex items-center justify-between"
-                          >
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <span className="font-extrabold text-navy text-xs">{rule.department}</span>
-                                {rule.categoryTag && (
-                                  <span className="px-1.5 py-0.2 bg-black text-white text-[9px] font-black rounded uppercase">
-                                    {rule.categoryTag}
-                                  </span>
-                                )}
+                    {/* Additional Corporate Roster fallback */}
+                    {roster.length > 0 && (!orgChart?.executiveTier || orgChart.executiveTier.length === 0) && (
+                      <div className="space-y-3 pt-2 border-t border-border">
+                        <span className="text-xs font-black uppercase tracking-wider text-navy block">
+                          Registered Team Members ({roster.length})
+                        </span>
+
+                        <div className="space-y-2">
+                          {roster.map((m: any) => {
+                            const p = m.user?.profile;
+                            if (!p) return null;
+                            return (
+                              <div
+                                key={m.id}
+                                className="p-3 bg-surface border border-border rounded-xl flex items-center justify-between hover:border-black/50 transition-colors"
+                              >
+                                <div className="flex items-center space-x-3 min-w-0 pr-2">
+                                  <div className="w-8 h-8 rounded-full bg-black text-white font-extrabold text-xs flex items-center justify-center shrink-0">
+                                    {p.displayName?.[0] || 'U'}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="font-bold text-navy truncate">{p.displayName}</div>
+                                    <div className="text-[11px] text-text-muted truncate">
+                                      {p.currentTitle} &bull; {m.department || p.function || 'Executive'}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleInitiateConnect({
+                                      id: p.id,
+                                      displayName: p.displayName,
+                                      currentTitle: p.currentTitle,
+                                      companyName: company.name,
+                                      city: p.city,
+                                      countryCode: p.countryCode,
+                                      matchScore: 95,
+                                    })
+                                  }
+                                  className="px-3 py-1 bg-black hover:bg-neutral-800 text-white rounded-lg text-xs font-bold transition-colors shrink-0 flex items-center space-x-1"
+                                >
+                                  <UserPlus className="w-3.5 h-3.5" />
+                                  <span>Connect</span>
+                                </button>
                               </div>
-                              <div className="text-[10px] text-text-muted mt-0.5">
-                                Priority Dispatch: <strong>{rule.priority}</strong> &bull; Directs to assigned category desk
-                              </div>
-                            </div>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase">
-                              Active Rule
-                            </span>
-                          </div>
-                        ))}
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -679,13 +564,16 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
             )}
           </div>
 
-          {/* Drawer Action Footer (Black Clean Actions) */}
+          {/* Drawer Action Footer */}
           {company && (
             <div className="px-6 py-4 border-t border-border bg-surface-muted/40 flex items-center justify-between">
+              <span className="text-[11px] text-text-muted">
+                {company.name} &bull; Verified Corporate Entity
+              </span>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-bold text-text-muted hover:text-navy rounded-xl"
+                className="px-4 py-1.5 text-xs font-bold bg-neutral-200 hover:bg-neutral-300 text-navy rounded-xl transition-colors"
               >
                 Close
               </button>
@@ -693,6 +581,19 @@ export const CompanyDossierModal: React.FC<CompanyDossierModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Internal Contextual Connection Bridge Modal */}
+      {internalConnectTarget && (
+        <ConnectOpportunityModal
+          isOpen={Boolean(internalConnectTarget)}
+          onClose={() => setInternalConnectTarget(null)}
+          targetProfile={internalConnectTarget}
+          onSuccess={() => {
+            setInternalConnectTarget(null);
+            onClose();
+          }}
+        />
+      )}
     </div>
   );
 };

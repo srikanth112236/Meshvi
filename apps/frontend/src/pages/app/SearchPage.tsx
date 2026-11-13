@@ -41,6 +41,7 @@ import {
   Lightbulb,
   MoreVertical,
   Plus,
+  UserPlus,
 } from 'lucide-react';
 import { formatSearchTime } from '../../utils/formatSearchTime';
 import { ConnectOpportunityModal } from '../../components/ui/ConnectOpportunityModal';
@@ -615,6 +616,49 @@ export const SearchPage = () => {
   const [proposalModalTarget, setProposalModalTarget] = useState<any | null>(null);
   const [dossierCompanyId, setDossierCompanyId] = useState<string | null>(null);
   const [personDossierProfileId, setPersonDossierProfileId] = useState<string | null>(null);
+
+  const handleConnectCompany = async (company: any) => {
+    // 1. If company search record already contains decision maker profiles
+    if (company.profiles && company.profiles.length > 0) {
+      const exec = company.profiles[0];
+      setConnectModalTarget({
+        id: exec.id,
+        displayName: exec.displayName || `${company.name} Executive`,
+        currentTitle: exec.currentTitle || 'Corporate Decision Maker',
+        companyName: company.name,
+        city: company.headquartersCity || exec.city || 'Global',
+        countryCode: company.headquartersCountry || exec.countryCode || 'IN',
+        matchScore: company.matchScore || 92,
+      });
+      return;
+    }
+
+    // 2. Fetch company org-chart / leadership tier to target authorized executive
+    try {
+      const res = await fetch(`/api/v1/companies/${company.id}/org-chart`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      const exec = data?.data?.executiveTier?.[0] || data?.data?.departments?.[0]?.members?.[0];
+      if (exec && (exec.profileId || exec.userId)) {
+        setConnectModalTarget({
+          id: exec.profileId || exec.userId,
+          displayName: exec.name || `${company.name} Executive`,
+          currentTitle: exec.title || 'Corporate Decision Maker',
+          companyName: company.name,
+          city: company.headquartersCity || exec.city || 'Global',
+          countryCode: company.headquartersCountry || exec.countryCode || 'IN',
+          matchScore: company.matchScore || 90,
+        });
+        return;
+      }
+    } catch {
+      // Fallback to opening company dossier
+    }
+
+    // 3. Fallback: Open Company Dossier so user can inspect team & members
+    setDossierCompanyId(company.id);
+  };
   const [showQualificationModal, setShowQualificationModal] = useState(false);
   const [activePassportData, setActivePassportData] = useState<any | null>(null);
   const [whyThisMatchTarget, setWhyThisMatchTarget] = useState<any | null>(null);
@@ -3165,16 +3209,22 @@ export const SearchPage = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            setProposalModalTarget({
+                            const primaryMember = org.committeeMembers?.[0];
+                            setConnectModalTarget({
+                              id: primaryMember?.id || org.companyId,
+                              displayName: primaryMember?.displayName || `${org.companyName} Executive Desk`,
+                              currentTitle: primaryMember?.title || 'Decision Maker',
                               companyName: org.companyName,
-                              recipientProfileId: org.companyId,
-                              executiveName: `${org.companyName} Corporate Inbound`,
-                              executiveTitle: 'Executive Leadership Desk',
+                              city: org.headquartersCity,
+                              countryCode: org.headquartersCountry,
+                              matchScore: 92,
                             });
                           }}
-                          className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
+                          className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center space-x-1.5"
+                          title={`Connect with ${org.companyName}`}
                         >
-                          Submit RFP
+                          <UserPlus className="w-3.5 h-3.5 text-white" />
+                          <span>Let's Connect</span>
                         </button>
                       </div>
                     </div>
@@ -4603,19 +4653,12 @@ export const SearchPage = () => {
 
                         <button
                           type="button"
-                          onClick={() => {
-                            setProposalModalTarget({
-                              companyName: c.name,
-                              recipientProfileId: c.id,
-                              executiveName: `${c.name} Corporate Inbound`,
-                              executiveTitle: 'Executive Leadership Desk',
-                            });
-                          }}
-                          className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center space-x-1.5"
-                          title="Submit Commercial Proposal / RFP"
+                          onClick={() => handleConnectCompany(c)}
+                          className="px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center space-x-1.5"
+                          title={`Connect with ${c.name}`}
                         >
-                          <Building2 className="w-3.5 h-3.5 text-white" />
-                          <span>Submit RFP</span>
+                          <UserPlus className="w-3.5 h-3.5 text-white" />
+                          <span>Let's Connect</span>
                         </button>
                       </div>
                     </div>
