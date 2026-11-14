@@ -73,7 +73,7 @@ export class ConnectionsService {
         user.profile?.isLinkedInVerified,
     );
 
-    let limit = isVerified ? 100 : 50;
+    let limit = isVerified ? 10 : 3;
 
     if (user.memberships && user.memberships.length > 0) {
       const highestMemberLimit = Math.max(...user.memberships.map((m) => m.maxOpenBridges || 15));
@@ -92,14 +92,13 @@ export class ConnectionsService {
       },
     });
 
-    // Free exploration mode: Weekly capacity does not restrict early user onboarding & discovery
     const remaining = Math.max(0, limit - used);
 
     return {
       limit,
       used,
       remaining,
-      canConnect: true, // Non-restrictive during initial user growth & search discovery
+      canConnect: remaining > 0,
       isVerified,
       resetsInDays: 7,
       windowDays: 7,
@@ -109,6 +108,12 @@ export class ConnectionsService {
   /**
    * Send a direct connection request
    */
+  private sanitizeUser<T extends Record<string, any> | null | undefined>(user: T): T {
+    if (!user) return user;
+    const { passwordHash, workEmail, ...safe } = user as any;
+    return safe as T;
+  }
+
   async requestConnection(userId: string, dto: CreateConnectionDto) {
     // 0. Anti-Spam Quota Enforcement
     const quota = await this.getConnectionQuota(userId);
@@ -121,11 +126,47 @@ export class ConnectionsService {
     // 1. Verify recipient profile exists and get owner user ID
     const recipientProfile = await this.prisma.professionalProfile.findUnique({
       where: { id: dto.recipientProfileId },
-      include: { user: true, intents: true, company: true },
+      include: {
+        user: {
+          include: {
+            roles: true,
+            memberships: { where: { membershipStatus: 'ACTIVE' } },
+          },
+        },
+        intents: true,
+        company: true,
+      },
     });
 
     if (!recipientProfile) {
       throw new NotFoundException('Target professional profile not found');
+    }
+
+    if (!recipientProfile.userId || !recipientProfile.user) {
+      throw new BadRequestException(
+        'This profile is not linked to an active member account and cannot receive connection requests.',
+      );
+    }
+
+    if (recipientProfile.user.accountStatus !== 'ACTIVE') {
+      throw new ForbiddenException('This member is not currently accepting connection requests.');
+    }
+
+    if ((recipientProfile as any).isActive === false) {
+      throw new BadRequestException('This member is not currently accepting new connection requests.');
+    }
+
+    const existingBlock = await this.prisma.userBlock.findFirst({
+      where: {
+        OR: [
+          { blockerUserId: userId, blockedUserId: recipientProfile.userId },
+          { blockerUserId: recipientProfile.userId, blockedUserId: userId },
+        ],
+      },
+    });
+
+    if (existingBlock) {
+      throw new ForbiddenException('Unable to send a connection request to this member.');
     }
 
     if (recipientProfile.userId === userId) {
@@ -220,13 +261,26 @@ export class ConnectionsService {
           status: ConnectionStatus.PENDING,
           businessReason: effectiveReason,
           respondedAt: null,
+          declineReasonCode: null,
+          declineNote: null,
+          delegatedToProfileId: null,
+          delegatedFromUserId: null,
+          delegationNote: null,
+          // A re-request starts a fresh 7-day quota window and 14-day response clock.
+          createdAt: new Date(),
         },
         include: {
           recipientProfile: {
             include: { company: true },
           },
           requester: {
-            include: { profile: true },
+            select: {
+              id: true,
+              email: true,
+              phoneNumber: true,
+              avatarUrl: true,
+              profile: true,
+            },
           },
         },
       });
@@ -234,6 +288,59 @@ export class ConnectionsService {
       await this.logAudit(userId, 'CONNECTION_RE_REQUESTED', 'Connection', updated.id, {
         recipientProfileId: dto.recipientProfileId,
       });
+
+      // Re-requests must notify the recipient again; otherwise the request sits silently.
+      if (recipientProfile.user?.id) {
+        const requesterName =
+          updated.requester.profile?.displayName || updated.requester.email;
+        const recipientIsCompanyAdmin =
+          (recipientProfile.user as any).roles?.some(
+            (r: any) => r.role === 'COMPANY_ADMIN' || r.role === 'SUPER_ADMIN',
+          ) ||
+          (recipientProfile.user as any).memberships?.some(
+            (m: any) =>
+              m.membershipStatus === 'ACTIVE' &&
+              (m.companyRole === 'OWNER' || m.companyRole === 'ADMIN'),
+          );
+        const actionUrl = recipientIsCompanyAdmin
+          ? '/company/pipeline'
+          : '/app/requests';
+
+        try {
+          await this.notificationsService.createNotification({
+            userId: recipientProfile.user.id,
+            actorId: userId,
+            actorName: requesterName,
+            type: NotificationType.CONNECTION_REQUEST,
+            title: `New Business Opportunity Bridge`,
+            body: `${requesterName} wants to connect: "${dto.businessReason.slice(0, 100)}..."`,
+            actionUrl,
+            metadata: {
+              connectionId: updated.id,
+              requesterId: userId,
+              businessReason: dto.businessReason,
+              reRequest: true,
+            },
+          });
+        } catch (e) {
+          this.logger.warn(`Failed to dispatch re-request notification: ${e}`);
+        }
+
+        if (recipientProfile.user.email) {
+          try {
+            await this.prisma.emailOutbox.create({
+              data: {
+                toAddress: recipientProfile.user.email,
+                templateKey: 'CONNECTION_REQUEST_RECEIVED',
+                subject: 'New Connection Request on Project Setu',
+                htmlBody: `<p>${requesterName} wants to connect: "${dto.businessReason}"</p>`,
+              },
+            });
+          } catch (e) {
+            this.logger.warn(`Failed to queue re-request email: ${e}`);
+          }
+        }
+      }
 
       return updated;
     }
@@ -255,7 +362,13 @@ export class ConnectionsService {
           include: { company: true },
         },
         requester: {
-          include: { profile: true },
+          select: {
+            id: true,
+            email: true,
+            phoneNumber: true,
+            avatarUrl: true,
+            profile: true,
+          },
         },
       },
     });
@@ -269,7 +382,20 @@ export class ConnectionsService {
     // 5. Stage in-app real-time notification + email_outbox if recipient has user account
     if (recipientProfile.user?.id) {
       const requesterName = connection.requester.profile?.displayName || connection.requester.email;
-      
+
+      // Deep-link to the portal the *recipient* can actually access. Company admins get the
+      // pipeline view; consumer members get the personal request inbox.
+      const recipientIsCompanyAdmin =
+        (recipientProfile.user as any).roles?.some(
+          (r: any) => r.role === 'COMPANY_ADMIN' || r.role === 'SUPER_ADMIN',
+        ) ||
+        (recipientProfile.user as any).memberships?.some(
+          (m: any) =>
+            m.membershipStatus === 'ACTIVE' &&
+            (m.companyRole === 'OWNER' || m.companyRole === 'ADMIN'),
+        );
+      const actionUrl = recipientIsCompanyAdmin ? '/company/pipeline' : '/app/requests';
+
       // Real-time In-app Notification (emits via SSE)
       try {
         await this.notificationsService.createNotification({
@@ -279,7 +405,7 @@ export class ConnectionsService {
           type: NotificationType.CONNECTION_REQUEST,
           title: `New Business Opportunity Bridge`,
           body: `${requesterName} wants to connect: "${dto.businessReason.slice(0, 100)}..."`,
-          actionUrl: (recipientProfile.company || (recipientProfile as any).currentCompanyId) ? '/company/pipeline' : '/app/requests',
+          actionUrl,
           metadata: {
             connectionId: connection.id,
             requesterId: userId,
@@ -445,8 +571,10 @@ export class ConnectionsService {
       }
     }
 
-    // Always ensure at least 4 trusted facilitators are available
-    if (connectorsMap.size < 4) {
+    // Non-production demo convenience: fill the connector picker with verified profiles.
+    // Production only surfaces genuine 1st-degree connections.
+    const allowDemoConnectorFill = process.env.NODE_ENV !== 'production';
+    if (allowDemoConnectorFill && connectorsMap.size < 4) {
       const platformConnectors = await this.prisma.professionalProfile.findMany({
         where: {
           userId: { not: null, notIn: [userId, ...Array.from(connectorsMap.keys())] },
@@ -482,20 +610,28 @@ export class ConnectionsService {
       where: { userId },
     });
 
-    // 14-day Auto-Decay for Stale Pending Requests (Feature Gap 155)
+    // 14-day Auto-Decay for Stale Pending Requests (Feature Gap 155).
+    // Scoped strictly to the current user's own requests so reading one inbox can never
+    // cancel another user's platform-wide pending requests.
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
-    try {
-      await this.prisma.connection.updateMany({
-        where: {
-          status: ConnectionStatus.PENDING,
-          createdAt: { lt: fourteenDaysAgo },
-        },
-        data: {
-          status: ConnectionStatus.CANCELLED,
-          respondedAt: new Date(),
-        },
-      });
-    } catch {}
+    if (userProfile) {
+      try {
+        await this.prisma.connection.updateMany({
+          where: {
+            status: ConnectionStatus.PENDING,
+            createdAt: { lt: fourteenDaysAgo },
+            OR: [
+              { requesterUserId: userId },
+              { recipientProfileId: userProfile.id },
+            ],
+          },
+          data: {
+            status: ConnectionStatus.CANCELLED,
+            respondedAt: new Date(),
+          },
+        });
+      } catch {}
+    }
 
     const outgoing = await this.prisma.connection.findMany({
       where: { requesterUserId: userId },
@@ -562,7 +698,7 @@ export class ConnectionsService {
         partnerPhone: isOutgoing ? recipientPhone : requesterPhone,
         requester: conn.requester
           ? {
-              ...conn.requester,
+              ...this.sanitizeUser(conn.requester),
               phoneNumber: requesterPhone,
               profile: conn.requester.profile
                 ? {
@@ -649,7 +785,16 @@ export class ConnectionsService {
   ) {
     const connection = await this.prisma.connection.findUnique({
       where: { id: connectionId },
-      include: { recipientProfile: true, requester: { include: { profile: true } } },
+      include: {
+        recipientProfile: true,
+        requester: {
+          include: {
+            profile: true,
+            roles: true,
+            memberships: { where: { membershipStatus: 'ACTIVE' } },
+          },
+        },
+      },
     });
 
     if (!connection) {
@@ -663,6 +808,17 @@ export class ConnectionsService {
 
     if (connection.status !== ConnectionStatus.PENDING) {
       throw new BadRequestException(`Cannot respond to connection in status ${connection.status}`);
+    }
+
+    // Requests expire after the 14-day response window.
+    if (Date.now() - new Date(connection.createdAt).getTime() > 14 * 24 * 60 * 60 * 1000) {
+      await this.prisma.connection.update({
+        where: { id: connectionId },
+        data: { status: ConnectionStatus.CANCELLED, respondedAt: new Date() },
+      });
+      throw new BadRequestException(
+        'This connection request has expired. The sender must initiate a new request.',
+      );
     }
 
     const nextStatus =
@@ -680,7 +836,15 @@ export class ConnectionsService {
       },
       include: {
         recipientProfile: { include: { company: true } },
-        requester: { include: { profile: true } },
+        requester: {
+          select: {
+            id: true,
+            email: true,
+            phoneNumber: true,
+            avatarUrl: true,
+            profile: true,
+          },
+        },
       },
     });
 
@@ -692,6 +856,43 @@ export class ConnectionsService {
 
     // Notify requester in-app and email
     if (action === ConnectionResponseAction.ACCEPT) {
+      const requesterIsCompanyAdmin =
+        (connection.requester as any).roles?.some(
+          (r: any) => r.role === 'COMPANY_ADMIN' || r.role === 'SUPER_ADMIN',
+        ) ||
+        (connection.requester as any).memberships?.some(
+          (m: any) =>
+            m.membershipStatus === 'ACTIVE' &&
+            (m.companyRole === 'OWNER' || m.companyRole === 'ADMIN'),
+        );
+
+      const recipientUser = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          roles: true,
+          memberships: { where: { membershipStatus: 'ACTIVE' } },
+        },
+      });
+      const recipientIsCompanyAdmin =
+        recipientUser?.roles?.some(
+          (r: any) => r.role === 'COMPANY_ADMIN' || r.role === 'SUPER_ADMIN',
+        ) ||
+        recipientUser?.memberships?.some(
+          (m: any) =>
+            m.membershipStatus === 'ACTIVE' &&
+            (m.companyRole === 'OWNER' || m.companyRole === 'ADMIN'),
+        );
+
+      const requesterMessagesUrl = requesterIsCompanyAdmin
+        ? '/company/messages'
+        : '/app/messages';
+      const requesterDealRoomsUrl = requesterIsCompanyAdmin
+        ? '/company/deal-rooms'
+        : '/app/deal-rooms';
+      const recipientDealRoomsUrl = recipientIsCompanyAdmin
+        ? '/company/deal-rooms'
+        : '/app/deal-rooms';
+
       try {
         await this.notificationsService.createNotification({
           userId: connection.requesterUserId,
@@ -700,7 +901,7 @@ export class ConnectionsService {
           type: NotificationType.CONNECTION_ACCEPTED,
           title: 'Opportunity Bridge Accepted',
           body: `${connection.recipientProfile.displayName} accepted your connection opportunity! You can now start direct messaging.`,
-          actionUrl: '/app/messages',
+          actionUrl: requesterMessagesUrl,
           metadata: { connectionId },
         });
       } catch (e) {
@@ -727,7 +928,7 @@ export class ConnectionsService {
                 type: 'DEAL_ROOM_CREATED',
                 title: '🏗️ Deal Room Created',
                 body: 'Your connection was accepted! A structured Deal Room is ready — set goals, track milestones, and close the deal.',
-                actionUrl: `/app/deal-rooms/${room.id}`,
+                actionUrl: `${requesterDealRoomsUrl}/${room.id}`,
                 actorId: userId,
                 actorName: connection.recipientProfile.displayName,
               },
@@ -736,7 +937,7 @@ export class ConnectionsService {
                 type: 'DEAL_ROOM_CREATED',
                 title: '🏗️ Deal Room Created',
                 body: 'A Deal Room has been created for your new connection. Start collaborating!',
-                actionUrl: `/app/deal-rooms/${room.id}`,
+                actionUrl: `${recipientDealRoomsUrl}/${room.id}`,
                 actorId: connection.requesterUserId,
               },
             ],
@@ -794,6 +995,10 @@ export class ConnectionsService {
       throw new ForbiddenException('Only the recipient of this connection request can ignore it');
     }
 
+    if (connection.status !== ConnectionStatus.PENDING) {
+      throw new BadRequestException(`Cannot ignore request in status ${connection.status}`);
+    }
+
     const updated = await this.prisma.connection.update({
       where: { id: connectionId },
       data: {
@@ -835,12 +1040,39 @@ export class ConnectionsService {
       throw new ForbiddenException('Only the current recipient can delegate this opportunity');
     }
 
+    if (connection.status !== ConnectionStatus.PENDING) {
+      throw new BadRequestException(`Cannot delegate a connection in status ${connection.status}`);
+    }
+
+    if (targetProfileId === connection.recipientProfileId) {
+      throw new BadRequestException('Choose a different colleague to delegate to.');
+    }
+
+    if (connection.requester.profile?.id === targetProfileId) {
+      throw new BadRequestException('You cannot delegate this opportunity back to the requester.');
+    }
+
     const colleagueProfile = await this.prisma.professionalProfile.findUnique({
       where: { id: targetProfileId },
       include: { user: true, company: true },
     });
 
     if (!colleagueProfile) throw new NotFoundException('Colleague profile not found');
+
+    if (!colleagueProfile.userId || colleagueProfile.user?.accountStatus !== 'ACTIVE') {
+      throw new BadRequestException('The selected colleague is not an active member.');
+    }
+
+    const recipientCompanyId = (connection.recipientProfile as any).currentCompanyId;
+    if (
+      !recipientCompanyId ||
+      !colleagueProfile.currentCompanyId ||
+      colleagueProfile.currentCompanyId !== recipientCompanyId
+    ) {
+      throw new ForbiddenException(
+        'Delegation is limited to active colleagues in the same organization.',
+      );
+    }
 
     const shouldAccept = Boolean(acceptAndConnect);
 

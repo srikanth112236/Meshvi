@@ -92,6 +92,7 @@ model User {
   onboardingCompleted Boolean       @default(false) @map("onboarding_completed")
   linkedinVerified   Boolean        @default(false) @map("linkedin_verified")
   workEmailVerified  Boolean        @default(false) @map("work_email_verified")
+  workEmail          String?        @map("work_email")
   phoneNumber        String?        @map("phone_number")
   phoneVerified      Boolean        @default(false) @map("phone_verified")
   lastLoginAt        DateTime?      @map("last_login_at")
@@ -118,6 +119,8 @@ model User {
   receivedOpportunityRequests OpportunityRequest[] @relation("RecipientUser")
   opportunityEvents OpportunityEvent[]
   companyOnboardingDraft CompanyOnboardingDraft?
+  userBlocksInitiated UserBlock[] @relation("UserBlocksInitiated")
+  userBlocksReceived  UserBlock[] @relation("UserBlocksReceived")
 
   @@map("users")
 }
@@ -628,11 +631,26 @@ model Message {
   createdAt           DateTime     @default(now()) @map("created_at")
   editedAt            DateTime?    @map("edited_at")
   deletedAt           DateTime?    @map("deleted_at")
+  deletedForUserIds   String[]     @default([]) @map("deleted_for_user_ids")
 
   conversation        Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender              User         @relation("SentMessages", fields: [senderUserId], references: [id], onDelete: Cascade)
 
   @@map("messages")
+}
+
+model UserBlock {
+  id            String   @id @default(uuid())
+  blockerUserId String   @map("blocker_user_id")
+  blockedUserId String   @map("blocked_user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  blocker User @relation("UserBlocksInitiated", fields: [blockerUserId], references: [id], onDelete: Cascade)
+  blocked User @relation("UserBlocksReceived", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerUserId, blockedUserId])
+  @@index([blockedUserId])
+  @@map("user_blocks")
 }
 
 // 8. Audit Logs & Email Outbox

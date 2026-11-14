@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { NotificationType } from '@prisma/client';
-import { Subject, Observable, merge, interval } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { Subject, Observable, merge, interval, timer, defer } from 'rxjs';
+import { filter, map, mergeMap } from 'rxjs/operators';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 export interface CreateNotificationDto {
@@ -55,10 +55,33 @@ export class NotificationsService {
       filter((notification) => notification.userId === userId),
       map((notification) => ({ data: notification })),
     );
+
+    // Some modules write notifications directly via Prisma. Poll the table so those
+    // events also reach the stream even when they bypassed createNotification().
+    // Clients deduplicate by notification id, so overlap with the in-memory subject is safe.
+    const dbFallback$ = defer(() => {
+      let lastSeen = new Date();
+      return timer(0, 5000).pipe(
+        mergeMap(async () => {
+          const rows = await this.prisma.notification.findMany({
+            where: { userId, createdAt: { gt: lastSeen } },
+            orderBy: { createdAt: 'asc' },
+            take: 20,
+          });
+          if (rows.length > 0) {
+            lastSeen = rows[rows.length - 1].createdAt;
+          }
+          return rows;
+        }),
+        mergeMap((rows) => rows),
+        map((notification) => ({ data: notification })),
+      );
+    });
+
     const heartbeat$ = interval(20000).pipe(
       map(() => ({ data: { type: 'HEARTBEAT', timestamp: new Date().toISOString() } })),
     );
-    return merge(notifs$, heartbeat$);
+    return merge(notifs$, dbFallback$, heartbeat$);
   }
 
   /**

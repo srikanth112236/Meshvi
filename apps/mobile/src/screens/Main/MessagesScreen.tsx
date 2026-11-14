@@ -101,182 +101,7 @@ export interface ConversationItem {
   activeDeal?: ActiveDealSync;
 }
 
-const INITIAL_CONVERSATIONS: ConversationItem[] = [
-  {
-    id: 'conv-elena',
-    partnerId: 'usr-elena-01',
-    partnerName: 'Elena Rostova',
-    partnerRole: 'Chief Commercial Officer',
-    partnerCompany: 'Aura Logistics APAC',
-    partnerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-    lastMessage: 'I have uploaded the mutual NDA countersignature to the Deal Room.',
-    lastMessageTime: '12m ago',
-    unreadCount: 1,
-    online: true,
-    onlineStatus: 'ONLINE',
-    ndaStatus: 'SIGNED',
-    activeDeal: {
-      id: 'deal-elena-01',
-      title: 'Cross-Border Bonded Warehouse Distribution Agreement',
-      status: 'TERMS_ALIGNMENT',
-      dealValue: '$450,000 / Year',
-      corridor: 'ASEAN - Singapore - Dubai Hub',
-      currentMilestone: 'Milestone 2: Technical API Integration & Sourcing Audit',
-      progressPercent: 65,
-      milestones: [
-        { title: 'Mutual NDA & Compliance Attestation Executed', completed: true },
-        { title: 'Technical HACCP & Quality Specifications Verified', completed: true },
-        { title: 'Commercial Pricing Bands & Delivery Terms Alignment', completed: false },
-        { title: 'Master Service Agreement (MSA) Escrow Execution', completed: false },
-      ],
-    },
-  },
-  {
-    id: 'conv-vikram',
-    partnerId: 'usr-vikram-02',
-    partnerName: 'Vikram Sethi',
-    partnerRole: 'VP Corporate Strategy & M&A',
-    partnerCompany: 'Vertex Nexus Global',
-    partnerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
-    lastMessage: 'Looking forward to reviewing the secondary liquidity term sheet tomorrow.',
-    lastMessageTime: '2h ago',
-    unreadCount: 0,
-    online: true,
-    onlineStatus: 'IN_MEETING',
-    ndaStatus: 'MUTUAL_REVIEW',
-    activeDeal: {
-      id: 'deal-vikram-02',
-      title: 'Institutional Trade Liquidity Accord',
-      status: 'LEGAL_REVIEW',
-      dealValue: '$50,000,000 Facility',
-      corridor: 'Direct Institutional Corridor',
-      currentMilestone: 'Milestone 1: Escrow Protocol & Legal Review',
-      progressPercent: 35,
-      milestones: [
-        { title: 'Mutual NDA & Corporate Lineage Verification', completed: true },
-        { title: 'Escrow Protocol & Legal Review', completed: false },
-        { title: 'Liquidity Facility Allocation Agreement', completed: false },
-      ],
-    },
-  },
-  {
-    id: 'conv-sarah',
-    partnerId: 'usr-sarah-03',
-    partnerName: 'Sarah Jenkins',
-    partnerRole: 'Director of Strategic Sourcing',
-    partnerCompany: 'Novus Retail Group',
-    partnerAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
-    lastMessage: 'Our procurement team approved the bilateral exploratory agenda.',
-    lastMessageTime: '1d ago',
-    unreadCount: 0,
-    online: false,
-    onlineStatus: 'OFFLINE',
-    ndaStatus: 'SIGNED',
-    activeDeal: {
-      id: 'deal-sarah-03',
-      title: 'Retail Channel Vendor Qualification Fast-Track',
-      status: 'PROCUREMENT_ACTIVE',
-      dealValue: '$1,200,000 Pipeline',
-      corridor: 'ASEAN Modern Trade Corridor',
-      currentMilestone: 'Milestone 3: Modern Trade Shelf Placement',
-      progressPercent: 80,
-      milestones: [
-        { title: 'Vendor Prequalification Audit', completed: true },
-        { title: 'Logistics SLA & Price Band Alignment', completed: true },
-        { title: 'Modern Trade Shelf Placement', completed: false },
-      ],
-    },
-  },
-];
-
-const INITIAL_MESSAGES_MAP: Record<string, MessageItem[]> = {
-  'conv-elena': [
-    {
-      id: 'm1',
-      body: 'Hello Rajiv, our commercial alliances committee has reviewed your cross-border supply chain orchestration mandate.',
-      senderUserId: 'usr-elena-01',
-      senderName: 'Elena Rostova',
-      createdAt: '10:14 AM',
-      isMine: false,
-      status: 'READ',
-      sentAt: '10:14:02 AM',
-      deliveredAt: '10:14:05 AM',
-      readAt: '10:14:22 AM',
-    },
-    {
-      id: 'm2',
-      body: 'Excellent Elena. We have 450+ verified enterprise buyer accounts ready to route through your 8 APAC bonded warehouse hubs.',
-      senderUserId: 'me',
-      senderName: 'Rajiv Menon',
-      createdAt: '10:18 AM',
-      isMine: true,
-      status: 'READ',
-      sentAt: '10:18:10 AM',
-      deliveredAt: '10:18:12 AM',
-      readAt: '10:18:30 AM',
-    },
-    {
-      id: 'm3',
-      body: 'Here is our mutual bilateral NDA and data attestation agreement with cryptographic hash verification.',
-      senderUserId: 'usr-elena-01',
-      senderName: 'Elena Rostova',
-      createdAt: '10:22 AM',
-      isMine: false,
-      status: 'READ',
-      sentAt: '10:22:04 AM',
-      deliveredAt: '10:22:06 AM',
-      readAt: '10:22:15 AM',
-      attachment: {
-        name: 'Aura_Meshvi_Bilateral_NDA_Executed.pdf',
-        size: '1.4 MB',
-        type: 'pdf',
-      },
-    },
-    {
-      id: 'm4',
-      body: 'I have uploaded the mutual NDA countersignature to the Deal Room.',
-      senderUserId: 'usr-elena-01',
-      senderName: 'Elena Rostova',
-      createdAt: '10:25 AM',
-      isMine: false,
-      status: 'READ',
-      sentAt: '10:25:00 AM',
-      deliveredAt: '10:25:02 AM',
-      readAt: '10:25:18 AM',
-    },
-  ],
-  'conv-vikram': [
-    {
-      id: 'mv1',
-      body: 'Hi Rajiv, following up on our discussion regarding the $50M liquidity deployment facility for corporate JV distribution infrastructure.',
-      senderUserId: 'usr-vikram-02',
-      senderName: 'Vikram Sethi',
-      createdAt: 'Yesterday',
-      isMine: false,
-      status: 'READ',
-    },
-    {
-      id: 'mv2',
-      body: 'Looking forward to reviewing the secondary liquidity term sheet tomorrow.',
-      senderUserId: 'usr-vikram-02',
-      senderName: 'Vikram Sethi',
-      createdAt: '08:45 AM',
-      isMine: false,
-      status: 'READ',
-    },
-  ],
-  'conv-sarah': [
-    {
-      id: 'ms1',
-      body: 'Our procurement team approved the bilateral exploratory agenda.',
-      senderUserId: 'usr-sarah-03',
-      senderName: 'Sarah Jenkins',
-      createdAt: 'Oct 24',
-      isMine: false,
-      status: 'READ',
-    },
-  ],
-};
+// Conversations and messages are loaded exclusively from the backend.
 
 const QUICK_REPLIES = [
   'Approved bilateral agenda ✓',
@@ -317,9 +142,9 @@ export const MessagesScreen: React.FC<MessagesScreenProps> = ({
   const { user, token } = useAuth();
   const { showSuccess, showConfirm, showInfo } = useModal();
 
-  const [conversations, setConversations] = useState<ConversationItem[]>(INITIAL_CONVERSATIONS);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
-  const [messagesMap, setMessagesMap] = useState<Record<string, MessageItem[]>>(INITIAL_MESSAGES_MAP);
+  const [messagesMap, setMessagesMap] = useState<Record<string, MessageItem[]>>({});
   const [inputDraft, setInputDraft] = useState('');
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -348,66 +173,127 @@ export const MessagesScreen: React.FC<MessagesScreenProps> = ({
 
   const scrollViewRef = useRef<any>(null);
 
-  // Dynamic targeting from Search or Connections
-  useEffect(() => {
-    if (targetPartner) {
-      const existing = conversations.find(
-        (c) =>
-          c.partnerName.toLowerCase() === targetPartner.name.toLowerCase() ||
-          (targetPartner.id && c.partnerId === targetPartner.id)
-      );
-
-      if (existing) {
-        setActiveConvId(existing.id);
-      } else {
-        const newId = `conv-${Date.now()}`;
-        const newConv: ConversationItem = {
-          id: newId,
-          partnerId: targetPartner.id || `usr-${Date.now()}`,
-          partnerName: targetPartner.name,
-          partnerRole: targetPartner.role || 'Executive Decision Maker',
-          partnerCompany: targetPartner.company,
-          partnerAvatar:
-            targetPartner.avatar ||
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-          lastMessage: 'Bilateral communication corridor initialized.',
-          lastMessageTime: 'Just now',
-          unreadCount: 0,
-          online: true,
-          onlineStatus: 'ONLINE',
-          ndaStatus: 'MUTUAL_REVIEW',
-          activeDeal: {
-            id: `deal-${Date.now()}`,
-            title: `Bilateral Sourcing Accord with ${targetPartner.company}`,
-            status: 'SCOPE_ALIGNMENT',
-            dealValue: '$350,000 Initial Pipeline',
-            corridor: 'Direct Verified Corridor',
-            currentMilestone: 'Milestone 1: Commercial Scope Alignment',
-            progressPercent: 25,
-            milestones: [
-              { title: 'Commercial Scope Alignment', completed: false },
-              { title: 'Volume Banding & Logistics SLA', completed: false },
-            ],
-          },
-        };
-        setConversations((prev) => [newConv, ...prev]);
-        setMessagesMap((prev) => ({
-          ...prev,
-          [newId]: [
-            {
-              id: `msg-${Date.now()}`,
-              body: `Hello ${user?.profile?.displayName || 'Rajiv'}, I received your bilateral introductory mandate regarding our enterprise distribution scope.`,
-              senderUserId: targetPartner.id || 'target-partner',
-              senderName: targetPartner.name,
-              createdAt: 'Just now',
-              isMine: false,
-              status: 'READ',
-            },
-          ],
+  // Load the real conversation list from the backend. No demo fallback is used.
+  const fetchConversations = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await apiRequest<any[]>('/conversations', { method: 'GET', token });
+      if (res.success && Array.isArray(res.data)) {
+        const mapped: ConversationItem[] = res.data.map((c: any) => ({
+          id: c.id,
+          partnerId: c.partner?.userId || '',
+          partnerName: c.partner?.displayName || 'MESHVI Member',
+          partnerRole: c.partner?.headline || '',
+          partnerCompany: c.partner?.companyName || '',
+          partnerAvatar: c.partner?.avatarUrl || undefined,
+          lastMessage: c.lastMessage?.body || '',
+          lastMessageTime: c.lastMessage?.createdAt
+            ? new Date(c.lastMessage.createdAt).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '',
+          unreadCount: c.unreadCount || 0,
+          online: false,
+          onlineStatus: 'OFFLINE',
         }));
-        setActiveConvId(newId);
+
+        setConversations(mapped);
+        setActiveConvId((current) =>
+          current && mapped.some((c) => c.id === current)
+            ? current
+            : mapped[0]?.id || null,
+        );
       }
+    } catch {
+      // Keep the current list on transient failures.
     }
+  }, [token]);
+
+  useEffect(() => {
+    fetchConversations();
+    if (!token) return;
+    const interval = setInterval(fetchConversations, 15000);
+    return () => clearInterval(interval);
+  }, [fetchConversations, token]);
+
+  // Dynamic targeting from Search or Connections: only open real backend conversations.
+  useEffect(() => {
+    if (!targetPartner) return;
+
+    const existing = conversations.find(
+      (c) =>
+        c.partnerName.toLowerCase() === targetPartner.name.toLowerCase() ||
+        (targetPartner.id && c.partnerId === targetPartner.id),
+    );
+
+    if (existing) {
+      setActiveConvId(existing.id);
+      onClearTargetPartner?.();
+      return;
+    }
+
+    if (!targetPartner.id || !token) {
+      showInfo(
+        'Connection Required',
+        'Messaging is available after an accepted business connection.',
+      );
+      onClearTargetPartner?.();
+      return;
+    }
+
+    const partnerUserId = targetPartner.id;
+    const authToken = token;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await apiRequest<{ conversationId?: string }>('/conversations', {
+          method: 'POST',
+          token: authToken,
+          body: { recipientUserId: partnerUserId },
+        });
+
+        if (cancelled) return;
+
+        if (res.success && res.data?.conversationId) {
+          const newConv: ConversationItem = {
+            id: res.data.conversationId,
+            partnerId: partnerUserId,
+            partnerName: targetPartner.name,
+            partnerRole: targetPartner.role || '',
+            partnerCompany: targetPartner.company || '',
+            partnerAvatar: targetPartner.avatar,
+            lastMessage: '',
+            lastMessageTime: '',
+            unreadCount: 0,
+            online: false,
+            onlineStatus: 'OFFLINE',
+          };
+          setConversations((prev) =>
+            prev.some((c) => c.id === newConv.id) ? prev : [newConv, ...prev],
+          );
+          setActiveConvId(newConv.id);
+        } else {
+          showInfo(
+            'Connection Required',
+            res.error || 'Messaging requires an accepted business connection.',
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          showInfo('Unable to Open Conversation', 'Please try again.');
+        }
+      } finally {
+        if (!cancelled) onClearTargetPartner?.();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetPartner]);
 
   // Scroll to bottom on message change
@@ -473,7 +359,7 @@ export const MessagesScreen: React.FC<MessagesScreenProps> = ({
                 ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 : 'Just now',
               isMine,
-              status: isMine ? (m.status || 'READ') : undefined,
+              status: isMine ? (m.status || 'SENT') : undefined,
               meeting,
               attachment,
             };
@@ -499,6 +385,35 @@ export const MessagesScreen: React.FC<MessagesScreenProps> = ({
       return () => clearInterval(interval);
     }
   }, [activeConvId, fetchBackendMessages]);
+
+  // Keep the backend read cursor in sync while this conversation is open.
+  useEffect(() => {
+    if (!activeConvId || !token) return;
+    let cancelled = false;
+
+    const markRead = async () => {
+      try {
+        await apiRequest(`/conversations/${activeConvId}/read`, {
+          method: 'POST',
+          token,
+        });
+        if (!cancelled) {
+          setConversations((prev) =>
+            prev.map((c) => (c.id === activeConvId ? { ...c, unreadCount: 0 } : c)),
+          );
+        }
+      } catch {
+        // Non-fatal
+      }
+    };
+
+    markRead();
+    const interval = setInterval(markRead, 7000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [activeConvId, token]);
 
   const currentMessages = activeConvId ? messagesMap[activeConvId] || [] : [];
 
@@ -548,24 +463,7 @@ export const MessagesScreen: React.FC<MessagesScreenProps> = ({
       )
     );
 
-    // Progressive delivery simulation: SENT -> DELIVERED -> READ
-    setTimeout(() => {
-      setMessagesMap((prev) => ({
-        ...prev,
-        [activeConvId]: (prev[activeConvId] || []).map((m) =>
-          m.id === newMsgId ? { ...m, status: 'DELIVERED', deliveredAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } : m
-        ),
-      }));
-    }, 600);
-
-    setTimeout(() => {
-      setMessagesMap((prev) => ({
-        ...prev,
-        [activeConvId]: (prev[activeConvId] || []).map((m) =>
-          m.id === newMsgId ? { ...m, status: 'READ', readAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } : m
-        ),
-      }));
-    }, 1300);
+    // Read receipts come from the backend (recipient's lastReadAt); never simulate them.
 
     // Call API if connected
     if (token) {
@@ -581,6 +479,11 @@ export const MessagesScreen: React.FC<MessagesScreenProps> = ({
         },
       })
         .then(() => {
+          // The server now owns the message; drop the optimistic copy to avoid duplicates.
+          setMessagesMap((prev) => ({
+            ...prev,
+            [activeConvId]: (prev[activeConvId] || []).filter((m) => m.id !== newMsgId),
+          }));
           fetchBackendMessages(activeConvId);
         })
         .catch(() => {});

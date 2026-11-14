@@ -244,47 +244,14 @@ export async function apiRequest<T = any>(
     const json = await res.json().catch(() => null);
 
     if (!res.ok) {
-      // Automatic transparent 401 JWT refresh or silent Google re-auth recovery
+      // Automatic transparent 401 JWT refresh
       if (res.status === 401 && !options._isRetry) {
         const freshToken = await refreshAccessToken();
         if (freshToken) {
           return apiRequest<T>(path, { ...options, token: freshToken, _isRetry: true });
         }
 
-        // Seamless dev/cross-environment recovery: if active backend rejected token signature,
-        // recover immediately using remembered Google account
-        try {
-          const savedStr = await SafeStorage.getItem('@meshvi_last_google_account');
-          if (savedStr) {
-            const savedAcc = JSON.parse(savedStr);
-            if (savedAcc?.email) {
-              const recoverController = new AbortController();
-              const recTimeout = setTimeout(() => recoverController.abort(), 4000);
-              const recRes = await fetch(`${baseUrl}/auth/google`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  email: savedAcc.email,
-                  displayName: savedAcc.displayName,
-                  avatarUrl: savedAcc.avatarUrl,
-                }),
-                signal: recoverController.signal,
-              });
-              clearTimeout(recTimeout);
-              const recJson = await recRes.json().catch(() => null);
-              const newToken = recJson?.data?.token || recJson?.data?.accessToken;
-              if (recRes.ok && newToken) {
-                await SafeStorage.setItem('@meshvi_token', newToken);
-                if (recJson.data?.refreshToken) {
-                  await SafeStorage.setItem('@meshvi_refresh_token', recJson.data.refreshToken);
-                }
-                return apiRequest<T>(path, { ...options, token: newToken, _isRetry: true });
-              }
-            }
-          }
-        } catch {}
-
-        // Only trigger session expired if all recovery strategies failed and user is non-auth endpoint
+        // Only trigger session expired if refresh failed and this is not an auth endpoint
         if (!path.includes('/auth/')) {
           notifySessionExpired();
         }

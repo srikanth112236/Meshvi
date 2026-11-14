@@ -34,7 +34,7 @@ describe('HealthController', () => {
   it('should return health check data with port 3500 and database connected', async () => {
     const result = await controller.check();
     expect(result.status).toBe('READY');
-    expect(result.service).toBe('Project Setu Backend API');
+    expect(result.service).toBe('MESHVI Backend API');
     expect(result.database.status).toBe('connected');
     expect(result.database.schema).toBe('project_setu');
   });

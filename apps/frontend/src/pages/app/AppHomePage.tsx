@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSearchHistory } from '../../context/SearchHistoryContext';
@@ -39,78 +39,36 @@ export const AppHomePage = () => {
   const latestQuery = recent && recent.length > 0 ? recent[0].query : '';
   void latestQuery;
 
-  const recommendedProfiles = useMemo(() => {
-    return [
-      {
-        id: 'rec-1',
-        name: 'Rajiv Sharma',
-        title: 'SVP Global Procurement & Amenities',
-        company: 'Taj Luxury Hotels & Resorts',
-        location: 'Mumbai, India',
-        matchScore: 94,
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-      },
-      {
-        id: 'rec-2',
-        name: 'Priya Sundaram',
-        title: 'Head of Airport Concessions',
-        company: 'Changi Airport Group',
-        location: 'Singapore',
-        matchScore: 89,
-        avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
-      },
-      {
-        id: 'rec-3',
-        name: 'Elena Rostova',
-        title: 'Director of Food & Beverage Sourcing',
-        company: 'Boreal Food Retail Group',
-        location: 'Berlin, Germany',
-        matchScore: 86,
-        avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
-      },
-    ];
-  }, []);
+  const [recommendedOpportunities, setRecommendedOpportunities] = useState<
+    Array<{
+      id: string;
+      title: string;
+      requirement: string;
+      company: string;
+      region: string;
+      category: string;
+      matchPct: number | null;
+    }>
+  >([]);
 
-  const recommendedOpportunities = useMemo(() => {
-    return [
-      {
-        id: 'opp-1',
-        title: 'Airport Retail & Transit Concessions Partnership',
-        requirement: 'Seeking premium specialty FMCG suppliers for 12 international terminal lounges across SE Asia.',
-        company: 'AeroGroup Retail',
-        region: 'Singapore & Malaysia',
-        category: 'Commercial Distribution',
-        matchPct: 96,
-      },
-      {
-        id: 'opp-2',
-        title: 'Enterprise AI Logistics Platform Integration',
-        requirement: 'Looking for verified supply chain data orchestration API partners with ISO-27001 compliance.',
-        company: 'Vanguard Freight Global',
-        region: 'Global / Remote',
-        category: 'Technology & AI',
-        matchPct: 91,
-      },
-      {
-        id: 'opp-3',
-        title: 'Cold Brew Beverage Channel Distribution Agreement',
-        requirement: 'Exclusive territorial co-packing and enterprise distribution channels for APAC markets.',
-        company: 'Pacific Roast Works',
-        region: 'Tokyo & Seoul',
-        category: 'Strategic Sourcing',
-        matchPct: 88,
-      },
-    ];
-  }, []);
+  const [suggestedLeaders, setSuggestedLeaders] = useState<
+    Array<{
+      id: string;
+      name: string;
+      title: string;
+      company: string;
+      avatarUrl?: string | null;
+    }>
+  >([]);
 
   const [stats, setStats] = useState<StatsState>({
     connectionsCount: 0,
     inboundRequestsCount: 0,
     sentRequestsCount: 0,
     introductionsCount: 0,
-    dealRoomsCount: 2,
+    dealRoomsCount: 0,
     quotaUsed: 0,
-    quotaLimit: 50,
+    quotaLimit: 10,
   });
 
   const [searchIntent, setSearchIntent] = useState('');
@@ -131,7 +89,8 @@ export const AppHomePage = () => {
       fetch('/api/v1/connections/requests', { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({})),
       fetch('/api/v1/introductions', { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({})),
       fetch('/api/v1/connections/quota', { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({})),
-    ]).then(([connData, reqData, introData, quotaData]) => {
+      fetch('/api/v1/deal-rooms', { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({})),
+    ]).then(([connData, reqData, introData, quotaData, dealRoomData]) => {
       const rawSent = reqData?.data?.outgoing?.length || 0;
       const localSent = Number(localStorage.getItem('meshvi_sent_requests_count') || 0);
       const totalSent = Math.max(rawSent, localSent);
@@ -141,16 +100,82 @@ export const AppHomePage = () => {
         inboundRequestsCount: reqData?.data?.incoming?.length || 0,
         sentRequestsCount: totalSent,
         introductionsCount: introData?.data?.length || 0,
-        dealRoomsCount: 2,
+        dealRoomsCount: dealRoomData?.data?.length || 0,
         quotaUsed: quotaData?.data?.used || 0,
-        quotaLimit: quotaData?.data?.limit || 50,
+        quotaLimit: quotaData?.data?.limit || 10,
       });
     });
   }, [token]);
 
   useEffect(() => {
     refreshStats();
+
+    // Keep dashboard counters in sync when another device changes connection state.
+    const sync = () => {
+      if (document.visibilityState === 'visible') refreshStats();
+    };
+    const interval = setInterval(sync, 30000);
+    document.addEventListener('visibilitychange', sync);
+    window.addEventListener('focus', sync);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', sync);
+      window.removeEventListener('focus', sync);
+    };
   }, [refreshStats]);
+
+  // Load real recommendations. No demo profiles or mandates are ever substituted.
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+
+    Promise.all([
+      fetch('/api/v1/opportunities/discover', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .catch(() => null),
+      fetch('/api/v1/connections/connectors', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .catch(() => null),
+    ]).then(([oppRes, connectorRes]) => {
+      if (cancelled) return;
+
+      const oppList = Array.isArray(oppRes?.data) ? oppRes.data : [];
+      setRecommendedOpportunities(
+        oppList.slice(0, 3).map((o: any) => ({
+          id: o.id,
+          title: o.title || 'Untitled opportunity',
+          requirement:
+            o.summary ||
+            o.requirements?.[0]?.description ||
+            'No requirement summary provided.',
+          company: o.company?.name || o.profile?.displayName || 'Independent Member',
+          region: o.geography || o.company?.headquartersCountry || 'Global',
+          category: o.industry || 'Commercial',
+          matchPct: null,
+        })),
+      );
+
+      const connectorList = Array.isArray(connectorRes?.data) ? connectorRes.data : [];
+      setSuggestedLeaders(
+        connectorList.slice(0, 3).map((c: any) => ({
+          id: c.profileId || c.userId,
+          name: c.displayName || 'MESHVI Member',
+          title: c.currentTitle || 'Executive',
+          company: c.companyName || 'Not provided',
+          avatarUrl: null,
+        })),
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -296,7 +321,7 @@ export const AppHomePage = () => {
           </div>
           <div className="mt-1.5 flex items-baseline justify-between">
             <span className="text-lg sm:text-2xl font-black text-[#142B45] tracking-tight">
-              {stats.quotaLimit - stats.quotaUsed > 0 ? stats.quotaLimit - stats.quotaUsed : 24}
+              {Math.max(0, stats.quotaLimit - stats.quotaUsed)}
             </span>
             <span className="text-[9px] sm:text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
               Quota Ready
@@ -394,6 +419,12 @@ export const AppHomePage = () => {
             </div>
 
             <div className="space-y-3">
+              {recommendedOpportunities.length === 0 && (
+                <p className="text-xs text-slate-500">
+                  No active public mandates yet. Explore Partnerships to publish or discover
+                  one.
+                </p>
+              )}
               {recommendedOpportunities.map((opp) => (
                 <div
                   key={opp.id}
@@ -405,9 +436,11 @@ export const AppHomePage = () => {
                         <span className="text-[10px] font-bold text-[#078BCC] bg-blue-50 px-2 py-0.5 rounded">
                           {opp.category}
                         </span>
-                        <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
-                          {opp.matchPct}% Match
-                        </span>
+                        {opp.matchPct !== null && (
+                          <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                            {opp.matchPct}% Match
+                          </span>
+                        )}
                       </div>
                       <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-[#078BCC] transition-colors">
                         {opp.title}
@@ -462,17 +495,28 @@ export const AppHomePage = () => {
             </div>
 
             <div className="space-y-3">
-              {recommendedProfiles.map((p) => (
+              {suggestedLeaders.length === 0 && (
+                <p className="text-xs text-slate-500">
+                  No suggested leaders yet. Explore Search to find executives in your corridor.
+                </p>
+              )}
+              {suggestedLeaders.map((p) => (
                 <div
                   key={p.id}
                   className="p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all flex items-center justify-between gap-2.5"
                 >
                   <div className="flex items-center space-x-2.5 min-w-0">
-                    <img
-                      src={p.avatarUrl}
-                      alt={p.name}
-                      className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
-                    />
+                    {p.avatarUrl ? (
+                      <img
+                        src={p.avatarUrl}
+                        alt={p.name}
+                        className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold shrink-0">
+                        {p.name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-slate-900 truncate">{p.name}</p>
                       <p className="text-[11px] text-slate-500 truncate">{p.title}</p>

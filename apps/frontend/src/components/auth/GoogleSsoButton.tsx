@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
+import { saveOAuthHandshakeState } from '../../utils/oauthUtils';
 
 interface GoogleSsoButtonProps {
   label?: string;
@@ -12,63 +11,37 @@ export const GoogleSsoButton: React.FC<GoogleSsoButtonProps> = ({
   label = 'Sign in with Google',
   portalHint = 'MEMBER',
 }) => {
-  const { login } = useAuth();
   const { showToast } = useNotifications();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
-      // In a real environment, google.accounts.id.prompt() triggers popup.
-      // Here we simulate Google OAuth token verification handshake with high-fidelity identity exchange:
-      const simulatedGoogleEmail = portalHint === 'COMPANY'
-        ? 'marcus.chen.sso@apexpacific.com'
-        : portalHint === 'ADMIN'
-        ? 'admin.sso@vedasynk.local'
-        : 'alex.sso@projectsetu.com';
+      const redirectUri = `${window.location.origin}/auth/google/callback`;
+      const state = `${portalHint.toLowerCase()}_${Math.random().toString(36).substring(2, 15)}`;
 
-      const res = await fetch('/api/v1/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: simulatedGoogleEmail,
-          googleId: `google_oauth2_${Math.random().toString(36).substring(2, 10)}`,
-          displayName: simulatedGoogleEmail.split('.')[0].toUpperCase() + ' (Google SSO)',
-        }),
-      });
+      const res = await fetch(
+        `/api/v1/auth/google/url?state=${encodeURIComponent(state)}&redirectUri=${encodeURIComponent(redirectUri)}`,
+      );
+      const data = await res.json().catch(() => null);
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Google SSO authorization failed.');
+      const authUrl = data?.data?.url || data?.url;
+      if (!res.ok || !authUrl) {
+        throw new Error(
+          data?.error?.message ||
+            data?.message ||
+            'Google Sign-In is not configured on this server.',
+        );
       }
 
-      login(data.data.token, data.data.user);
-
-      showToast({
-        title: 'Google SSO Verified',
-        message: `Authenticated securely as ${data.data.user.email}`,
-        type: 'success',
-      });
-
-      // Role-aware isolation routing
-      const userRoles: string[] = data.data.user?.roles || [];
-      if (userRoles.includes('SUPER_ADMIN')) {
-        navigate('/admin/dashboard');
-      } else if (userRoles.includes('COMPANY_ADMIN')) {
-        navigate('/company');
-      } else if (!data.data.user?.profile?.currentTitle) {
-        navigate('/app/onboarding');
-      } else {
-        navigate('/app/search');
-      }
+      saveOAuthHandshakeState(data?.data?.redirectUri || redirectUri, data?.data?.state || state);
+      window.location.href = authUrl;
     } catch (err: any) {
       showToast({
-        title: 'SSO Error',
-        message: err.message || 'Google authentication rejected.',
+        title: 'Google Sign-In Unavailable',
+        message: err.message || 'Google authentication could not be started.',
         type: 'warning',
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -98,7 +71,7 @@ export const GoogleSsoButton: React.FC<GoogleSsoButtonProps> = ({
           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
         />
       </svg>
-      <span>{loading ? 'Authenticating with Google...' : label}</span>
+      <span>{loading ? 'Redirecting to Google...' : label}</span>
     </button>
   );
 };

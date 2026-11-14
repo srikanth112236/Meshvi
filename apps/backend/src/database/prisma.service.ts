@@ -17,25 +17,30 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         this.logger.log('Connecting to database...');
       }
 
-      // Automatically push schema if running on production (Render / Azure) to ensure tables exist
+      // Automatically push schema only outside production. Production deployments must
+      // run migrations explicitly so a startup can never mutate a live database unexpectedly.
+      const shouldPushSchema =
+        process.env.NODE_ENV !== 'production' || process.env.RUN_DB_PUSH === 'true';
       try {
-        const { execSync } = await import('child_process');
-        const fs = await import('fs');
-        const { join } = await import('path');
+        if (shouldPushSchema) {
+          const { execSync } = await import('child_process');
+          const fs = await import('fs');
+          const { join } = await import('path');
 
-        let schemaArg = '';
-        if (fs.existsSync(join(process.cwd(), 'apps/backend/prisma/schema.prisma'))) {
-          schemaArg = `--schema="${join(process.cwd(), 'apps/backend/prisma/schema.prisma')}"`;
-        } else if (fs.existsSync(join(process.cwd(), 'prisma/schema.prisma'))) {
-          schemaArg = `--schema="${join(process.cwd(), 'prisma/schema.prisma')}"`;
+          let schemaArg = '';
+          if (fs.existsSync(join(process.cwd(), 'apps/backend/prisma/schema.prisma'))) {
+            schemaArg = `--schema="${join(process.cwd(), 'apps/backend/prisma/schema.prisma')}"`;
+          } else if (fs.existsSync(join(process.cwd(), 'prisma/schema.prisma'))) {
+            schemaArg = `--schema="${join(process.cwd(), 'prisma/schema.prisma')}"`;
+          }
+
+          this.logger.log(`Verifying PostgreSQL tables and schema status non-destructively (${schemaArg || 'default'})...`);
+          execSync(`npx prisma db push --skip-generate ${schemaArg}`.trim(), {
+            stdio: 'inherit',
+            env: process.env,
+          });
+          this.logger.log('✔ PostgreSQL tables and schema verified successfully (zero data loss).');
         }
-
-        this.logger.log(`Verifying PostgreSQL tables and schema status non-destructively (${schemaArg || 'default'})...`);
-        execSync(`npx prisma db push --skip-generate ${schemaArg}`.trim(), {
-          stdio: 'inherit',
-          env: process.env,
-        });
-        this.logger.log('✔ PostgreSQL tables and schema verified successfully (zero data loss).');
       } catch (pushErr: any) {
         this.logger.warn(`Prisma db push check completed: ${pushErr.message}`);
       }
@@ -53,15 +58,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   private async ensureSeedData() {
     try {
+      // Demo identities must never be injected into a production database.
+      if (process.env.NODE_ENV === 'production' || process.env.AUTO_SEED_DEMO_DATA === 'false') {
+        this.logger.log('Demo data auto-seeding is disabled in this environment.');
+        return;
+      }
+
       const adminEmail = 'admin@vedasynk.local';
       const existingUser = await (this as any).user.findFirst({
         where: { email: adminEmail },
       });
 
       if (!existingUser) {
-        this.logger.log(`Initializing Platform Super Admin (${adminEmail})...`);
+        this.logger.log(`Initializing local development Super Admin (${adminEmail})...`);
         const bcrypt = await import('bcryptjs');
-        const passwordHash = await bcrypt.hash('Password123!', 10);
+        const seedPassword = process.env.SEED_DEFAULT_PASSWORD || 'Password123!';
+        const passwordHash = await bcrypt.hash(seedPassword, 10);
         const { randomUUID } = await import('crypto');
 
         const superAdminId = randomUUID();
@@ -110,7 +122,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           },
         });
 
-        this.logger.log(`✔ Super Admin created: ${adminEmail} (Password: Password123!)`);
+        this.logger.log(`✔ Local Super Admin created: ${adminEmail}`);
       }
 
       // Check if 500 diverse global members are seeded for live search

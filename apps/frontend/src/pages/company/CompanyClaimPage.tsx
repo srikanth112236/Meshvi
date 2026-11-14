@@ -50,15 +50,18 @@ export const CompanyClaimPage: React.FC = () => {
 
   // Verification Desk State
   type VerifyTab = 'instant' | 'email' | 'metatag' | 'document' | 'dns';
-  const [verifyTab, setVerifyTab] = useState<VerifyTab>('instant');
+  const canUseInstantBypass = Boolean((import.meta as any).env?.DEV);
+  const [verifyTab, setVerifyTab] = useState<VerifyTab>(
+    canUseInstantBypass ? 'instant' : 'email',
+  );
   const [verifying, setVerifying] = useState(false);
   const [verifiedSuccess, setVerifiedSuccess] = useState(false);
+  const [pendingReview, setPendingReview] = useState(false);
 
   // Email OTP state
   const [workEmail, setWorkEmail] = useState(user?.email || '');
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const [generatedOtpHint, setGeneratedOtpHint] = useState<string | null>(null);
   const [sendingOtp, setSendingOtp] = useState(false);
 
   // Document Registry state
@@ -156,7 +159,7 @@ export const CompanyClaimPage: React.FC = () => {
     setVerifiedSuccess(comp.verificationStatus === 'VERIFIED');
     setOtpSent(false);
     setOtpCode('');
-    setGeneratedOtpHint(null);
+    setPendingReview(false);
 
     const cleanDomain = (comp.domain || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
     if (user?.email && user.email.includes('@')) {
@@ -213,10 +216,9 @@ export const CompanyClaimPage: React.FC = () => {
         throw new Error(data.message || data.error || 'Failed to generate verification OTP.');
       }
       setOtpSent(true);
-      setGeneratedOtpHint(data.otp);
       showToast({
         title: 'Verification Code Dispatched',
-        message: `Corporate verification code sent to ${cleanInputEmail} (Code: ${data.otp})`,
+        message: `A corporate verification code was sent to ${cleanInputEmail}. Check your inbox and enter the 6-digit code.`,
         type: 'success',
       });
     } catch (err: any) {
@@ -285,14 +287,31 @@ export const CompanyClaimPage: React.FC = () => {
         throw new Error(data.message || data.error || 'Enterprise verification failed.');
       }
 
+      const result = data.data;
+
+      // Documentation submissions require manual platform review.
+      if (result?.pendingReview) {
+        setPendingReview(true);
+        setVerifiedSuccess(false);
+        setSelectedCompany((prev: any) => ({ ...prev, verificationStatus: 'PENDING' }));
+        await fetchMyCompanies();
+        showToast({
+          title: 'Submitted for Review',
+          message: result.message || 'Your ownership documentation was submitted for manual review.',
+          type: 'success',
+        });
+        return;
+      }
+
       // If backend auto-issued fresh authenticated session, hand it off to AuthContext
-      if (data.auth?.accessToken && data.auth?.user) {
-        login(data.auth.accessToken, data.auth.user, data.auth.refreshToken, 'COMPANY_ADMIN');
+      if (result?.auth?.accessToken && result?.auth?.user) {
+        login(result.auth.accessToken, result.auth.user, result.auth.refreshToken, 'COMPANY_ADMIN');
       } else {
         await refreshUser();
       }
 
       setVerifiedSuccess(true);
+      setPendingReview(false);
       setSelectedCompany((prev: any) => ({ ...prev, verificationStatus: 'VERIFIED' }));
       await fetchMyCompanies();
       showToast({
@@ -734,6 +753,19 @@ export const CompanyClaimPage: React.FC = () => {
                 </div>
               </div>
 
+              {pendingReview && (
+                <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
+                  <h4 className="text-sm font-extrabold text-amber-950">
+                    Ownership Documentation Under Review
+                  </h4>
+                  <p className="text-xs text-amber-900 leading-relaxed">
+                    Your corporate documentation for <strong>{selectedCompany.name}</strong> has been
+                    submitted. An administrator will review the claim before ownership is granted.
+                    You will be notified once the review is complete.
+                  </p>
+                </div>
+              )}
+
               {/* Already Verified Celebratory Box */}
               {verifiedSuccess ? (
                 <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-4 text-center">
@@ -780,20 +812,22 @@ export const CompanyClaimPage: React.FC = () => {
                   </div>
 
                   {/* Tab Selector Buttons */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setVerifyTab('instant')}
-                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                        verifyTab === 'instant'
-                          ? 'bg-navy text-white border-navy shadow-sm'
-                          : 'bg-surface border-border text-navy hover:bg-slate-50'
-                      }`}
-                    >
-                      <Zap className={`w-4 h-4 mb-1.5 ${verifyTab === 'instant' ? 'text-amber-300' : 'text-amber-500'}`} />
-                      <strong className="block text-xs font-bold leading-tight">Instant Bypass</strong>
-                      <span className="text-[10px] opacity-75 mt-0.5 block">Zero DNS wait</span>
-                    </button>
+                  <div className={`grid grid-cols-2 ${canUseInstantBypass ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-2`}>
+                    {canUseInstantBypass && (
+                      <button
+                        type="button"
+                        onClick={() => setVerifyTab('instant')}
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                          verifyTab === 'instant'
+                            ? 'bg-navy text-white border-navy shadow-sm'
+                            : 'bg-surface border-border text-navy hover:bg-slate-50'
+                        }`}
+                      >
+                        <Zap className={`w-4 h-4 mb-1.5 ${verifyTab === 'instant' ? 'text-amber-300' : 'text-amber-500'}`} />
+                        <strong className="block text-xs font-bold leading-tight">Instant Bypass</strong>
+                        <span className="text-[10px] opacity-75 mt-0.5 block">Development only</span>
+                      </button>
+                    )}
 
                     <button
                       type="button"
@@ -855,7 +889,7 @@ export const CompanyClaimPage: React.FC = () => {
                   {/* ========================================================================= */}
                   {/* TAB 1: INSTANT FAST-TRACK (BYPASS TXT) */}
                   {/* ========================================================================= */}
-                  {verifyTab === 'instant' && (
+                  {canUseInstantBypass && verifyTab === 'instant' && (
                     <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
                       <div className="flex items-start space-x-3">
                         <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
@@ -1013,20 +1047,6 @@ export const CompanyClaimPage: React.FC = () => {
                                     <Mail className="w-4 h-4 text-blue-600 shrink-0" />
                                     <span>Enter the 6-digit verification code sent to your email:</span>
                                   </div>
-                                  {generatedOtpHint && (
-                                    <div className="flex items-center space-x-2">
-                                      <span className="font-mono font-bold bg-white px-2 py-0.5 rounded border border-blue-300 text-blue-950">
-                                        OTP: {generatedOtpHint}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() => setOtpCode(generatedOtpHint)}
-                                        className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded cursor-pointer transition-all"
-                                      >
-                                        Auto-Fill
-                                      </button>
-                                    </div>
-                                  )}
                                 </div>
 
                                 <div className="flex gap-2">
@@ -1245,22 +1265,27 @@ export const CompanyClaimPage: React.FC = () => {
                             TXT Value
                           </span>
                           <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-border font-mono text-[11px] text-slate-800">
-                            <span className="truncate">
-                              {`Meshvi-verify-${selectedCompany.dnsTxtToken || selectedCompany.id.slice(0, 8)}`}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                copyToClipboard(
-                                  `Meshvi-verify-${selectedCompany.dnsTxtToken || selectedCompany.id.slice(0, 8)}`,
-                                  'token'
-                                )
-                              }
-                              className="ml-2 px-2.5 py-1 bg-white hover:bg-slate-100 border border-border rounded text-[10px] font-bold shrink-0 cursor-pointer flex items-center space-x-1"
-                            >
-                              {copiedToken ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                              <span>{copiedToken ? 'Copied!' : 'Copy'}</span>
-                            </button>
+                            {selectedCompany.dnsTxtToken ? (
+                              <>
+                                <span className="truncate">{selectedCompany.dnsTxtToken}</span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    copyToClipboard(selectedCompany.dnsTxtToken, 'token')
+                                  }
+                                  className="ml-2 px-2.5 py-1 bg-white hover:bg-slate-100 border border-border rounded text-[10px] font-bold shrink-0 cursor-pointer flex items-center space-x-1"
+                                >
+                                  {copiedToken ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                                  <span>{copiedToken ? 'Copied!' : 'Copy'}</span>
+                                </button>
+                              </>
+                            ) : (
+                              <span className="font-sans text-[11px] text-amber-900 leading-relaxed">
+                                No DNS challenge token has been generated for this company yet.
+                                Ask a company administrator to generate one, or use the Work Email
+                                OTP method above.
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -60,9 +60,8 @@ export const DeclineReasonModal: React.FC<DeclineReasonModalProps> = ({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          action: 'DECLINE',
-          reasonCode,
-          note: declineNote,
+          declineReasonCode: reasonCode,
+          declineNote,
         }),
       });
 

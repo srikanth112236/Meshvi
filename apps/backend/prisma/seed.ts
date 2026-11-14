@@ -403,8 +403,14 @@ async function main() {
   }
 
   // Pre-calculate standard password hash ONCE
-  console.log('\n🔒 [2/6] Generating default password hash (Password123!)...');
-  const defaultPassword = 'Password123!';
+  console.log('\n🔒 [2/6] Generating default password hash...');
+  if (process.env.NODE_ENV === 'production' && !process.env.SEED_DEFAULT_PASSWORD) {
+    throw new Error(
+      'Refusing to seed production with the well-known default credentials. ' +
+        'Set SEED_DEFAULT_PASSWORD to a strong value before running the seed in production.',
+    );
+  }
+  const defaultPassword = process.env.SEED_DEFAULT_PASSWORD || 'Password123!';
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(defaultPassword, salt);
   console.log('   ✔ Password hash generated successfully.');

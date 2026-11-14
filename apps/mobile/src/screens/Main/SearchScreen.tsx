@@ -1293,24 +1293,40 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
   };
 
   const handleRequestIntro = async (dm: DecisionMakerItem) => {
-    setRequestedIntros((prev) => [...prev, dm.id]);
-    showSuccess(
-      'Bilateral Mandate Dispatched',
-      `Official introductory mandate successfully registered and dispatched to ${dm.displayName} at ${dm.companyName}. An encrypted Deal Room corridor will activate upon mutual sign-off.`,
-      'Acknowledge'
-    );
+    if (!token) {
+      showError('Sign In Required', 'Please sign in to send a connection request.');
+      return;
+    }
 
-    if (token && dm.userId) {
-      try {
-        await apiRequest('/connections/requests', {
-          method: 'POST',
-          token,
-          body: {
-            targetUserId: dm.userId,
-            initialNote: `Bilateral commercial partnership interest regarding ${dm.seekingSummary}`,
-          },
-        });
-      } catch {}
+    try {
+      const reason = `Bilateral commercial partnership interest regarding ${
+        dm.seekingSummary || dm.companyName || 'your current mandate'
+      }.`.slice(0, 1000);
+
+      const res = await apiRequest('/connections', {
+        method: 'POST',
+        token,
+        body: {
+          recipientProfileId: dm.id,
+          businessReason: reason,
+        },
+      });
+
+      if (!res.success) {
+        throw new Error(res.error || 'Unable to send the connection request.');
+      }
+
+      setRequestedIntros((prev) => (prev.includes(dm.id) ? prev : [...prev, dm.id]));
+      setDecisionMakers((prev) =>
+        prev.map((d) => (d.id === dm.id ? { ...d, connectionStatus: 'PENDING' } : d)),
+      );
+      showSuccess(
+        'Bilateral Mandate Dispatched',
+        `Official introductory mandate successfully registered and dispatched to ${dm.displayName} at ${dm.companyName}. An encrypted Deal Room corridor will activate upon mutual sign-off.`,
+        'Acknowledge',
+      );
+    } catch (err: any) {
+      showError('Request Failed', err?.message || 'Could not send the connection request.');
     }
   };
 
@@ -1340,17 +1356,24 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '', o
     if (!sayHiModalTarget) return;
     setIsSubmittingSayHi(true);
     try {
-      if (token && sayHiModalTarget.userId) {
-        await apiRequest('/connections/requests', {
-          method: 'POST',
-          token,
-          body: {
-            targetUserId: sayHiModalTarget.userId,
-            initialNote: sayHiGreetingText.trim(),
-          },
-        });
+      if (!token) {
+        throw new Error('Please sign in to send an introduction request.');
       }
-      setRequestedIntros((prev) => [...prev, sayHiModalTarget.id]);
+
+      const res = await apiRequest('/connections', {
+        method: 'POST',
+        token,
+        body: {
+          recipientProfileId: sayHiModalTarget.id,
+          businessReason: sayHiGreetingText.trim(),
+        },
+      });
+
+      if (!res.success) {
+        throw new Error(res.error || 'Could not send the introduction request.');
+      }
+
+      setRequestedIntros((prev) => (prev.includes(sayHiModalTarget.id) ? prev : [...prev, sayHiModalTarget.id]));
       setDecisionMakers((prev) =>
         prev.map((d) => (d.id === sayHiModalTarget.id ? { ...d, connectionStatus: 'PENDING' } : d))
       );

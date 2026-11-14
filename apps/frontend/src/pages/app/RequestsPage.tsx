@@ -108,8 +108,8 @@ export const RequestsPage = () => {
   const [followUpNote, setFollowUpNote] = useState('Reviewing procurement budget and alignment with department team.');
   const [savingFollowUp, setSavingFollowUp] = useState(false);
 
-  const fetchRequests = async () => {
-    setLoading(true);
+  const fetchRequests = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch('/api/v1/connections/requests', {
         headers: { Authorization: `Bearer ${token}` },
@@ -122,7 +122,7 @@ export const RequestsPage = () => {
     } catch {
       // Handled silently
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -131,6 +131,20 @@ export const RequestsPage = () => {
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 3);
     setFollowUpDateStr(defaultDate.toISOString().split('T')[0]);
+
+    // Cross-device sync: poll while visible and refresh immediately on focus.
+    const sync = () => {
+      if (document.visibilityState === 'visible') fetchRequests(true);
+    };
+    const interval = setInterval(sync, 20000);
+    document.addEventListener('visibilitychange', sync);
+    window.addEventListener('focus', sync);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', sync);
+      window.removeEventListener('focus', sync);
+    };
   }, [token]);
 
   const handleAction = async (id: string, action: 'accept' | 'decline' | 'cancel') => {
@@ -147,6 +161,16 @@ export const RequestsPage = () => {
           type: 'success',
         });
         await fetchRequests();
+      } else {
+        const data = await res.json().catch(() => null);
+        showToast({
+          title: action === 'accept' ? 'Accept Failed' : 'Request Update Failed',
+          message:
+            data?.error?.message ||
+            data?.message ||
+            'The connection request could not be updated.',
+          type: 'error',
+        });
       }
     } catch {
       // Handled

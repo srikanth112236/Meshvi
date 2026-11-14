@@ -115,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
   const [sessionExpiredModal, setSessionExpiredModal] = useState<boolean>(false);
   const isExpiringRef = useRef(false);
+  const refreshInFlightRef = useRef<Promise<boolean> | null>(null);
 
   // Trigger 2-second logout modal on session expiry
   const triggerSessionExpiredLogout = useCallback(() => {
@@ -142,41 +143,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const refreshSession = useCallback(async (): Promise<boolean> => {
-    const currentRefresh = localStorage.getItem('setu_refresh_token');
-    if (!currentRefresh) return false;
+    // Deduplicate concurrent refreshes so background polls cannot trigger a refresh storm.
+    if (refreshInFlightRef.current) {
+      return refreshInFlightRef.current;
+    }
 
-    try {
-      const res = await fetch('/api/v1/auth/refresh-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          refreshToken: currentRefresh,
-          targetPortal: localStorage.getItem('setu_portal_scope') || undefined,
-        }),
-      });
+    const attempt = (async () => {
+      const currentRefresh = localStorage.getItem('setu_refresh_token');
+      if (!currentRefresh) return false;
 
-      const data = await res.json().catch(() => null);
-      if (res.ok && data?.success && (data.data?.accessToken || data.data?.token)) {
-        const newAccess = data.data.accessToken || data.data.token;
-        localStorage.setItem('setu_auth_token', newAccess);
-        setToken(newAccess);
+      try {
+        const res = await fetch('/api/v1/auth/refresh-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            refreshToken: currentRefresh,
+            targetPortal: localStorage.getItem('setu_portal_scope') || undefined,
+          }),
+        });
 
-        if (data.data.refreshToken) {
-          localStorage.setItem('setu_refresh_token', data.data.refreshToken);
-          setRefreshToken(data.data.refreshToken);
+        const data = await res.json().catch(() => null);
+        if (res.ok && data?.success && (data.data?.accessToken || data.data?.token)) {
+          const newAccess = data.data.accessToken || data.data.token;
+          localStorage.setItem('setu_auth_token', newAccess);
+          setToken(newAccess);
+
+          if (data.data.refreshToken) {
+            localStorage.setItem('setu_refresh_token', data.data.refreshToken);
+            setRefreshToken(data.data.refreshToken);
+          }
+          if (data.data.portalScope) {
+            localStorage.setItem('setu_portal_scope', data.data.portalScope);
+            setPortalScope(data.data.portalScope);
+          }
+          if (data.data.user) {
+            setUser(data.data.user);
+          }
+          return true;
         }
-        if (data.data.portalScope) {
-          localStorage.setItem('setu_portal_scope', data.data.portalScope);
-          setPortalScope(data.data.portalScope);
-        }
-        if (data.data.user) {
-          setUser(data.data.user);
-        }
-        return true;
+        return false;
+      } catch {
+        return false;
       }
-      return false;
-    } catch {
-      return false;
+    })();
+
+    refreshInFlightRef.current = attempt;
+    try {
+      return await attempt;
+    } finally {
+      refreshInFlightRef.current = null;
     }
   }, []);
 
@@ -292,6 +307,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.fetch = originalFetch;
     };
   }, [refreshSession, triggerSessionExpiredLogout]);
+
+  // Keep authentication state synchronized across browser tabs.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === 'setu_auth_token') {
+        if (!event.newValue) {
+          setToken(null);
+          setRefreshToken(null);
+          setPortalScope(null);
+          setUser(null);
+        } else {
+          setToken(event.newValue);
+          fetchCurrentUser(event.newValue);
+        }
+      } else if (event.key === 'setu_refresh_token') {
+        setRefreshToken(event.newValue);
+      } else if (event.key === 'setu_portal_scope') {
+        setPortalScope(event.newValue as any);
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [fetchCurrentUser]);
 
   const login = (
     authToken: string,

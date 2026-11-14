@@ -59,8 +59,8 @@ export class MailSenderService {
     const isReset = type === 'PASSWORD_RESET';
     const expiryMinutes = isReset ? 10 : 15;
     const subject = isReset
-      ? `MESHVI — Password Reset Code: ${otp} (Expires in 10 mins)`
-      : `MESHVI — Verify your account: ${otp} (Expires in 15 mins)`;
+      ? 'MESHVI — Reset your password (expires in 10 mins)'
+      : 'MESHVI — Verify your account (expires in 15 mins)';
 
     const actionTitle = isReset ? 'Reset Your Password' : 'Verify Your Email Address';
     const actionDesc = isReset
@@ -145,13 +145,129 @@ export class MailSenderService {
       }
     }
 
-    // 3. Fallback dev console notification
+    // 3. Fallback notification (never log the code itself in production logs)
     this.logger.log(`========================================================================`);
     this.logger.log(`[REAL-TIME EMAIL DISPATCH] To: ${to}`);
-    this.logger.log(`  Subject: ${subject}`);
-    this.logger.log(`  OTP Code: >>> [ ${otp} ] <<< (Expires in ${expiryMinutes} minutes)`);
+    this.logger.log(`  Template: ${isReset ? 'PASSWORD_RESET_OTP' : 'REGISTRATION_OTP'}`);
+    this.logger.log(
+      `  Delivery: queued in transactional outbox (no SMTP transport configured). Code expires in ${expiryMinutes} minutes.`,
+    );
     this.logger.log(`========================================================================`);
 
     return { delivered: true, mode: 'OUTBOX_CONSOLE' };
+  }
+
+  /**
+   * Dispatches a company/domain ownership verification code without ever logging the code.
+   */
+  async sendVerificationCodeEmail(
+    to: string,
+    recipientName: string,
+    code: string,
+    context: { companyName?: string; expiryMinutes?: number; purposeLabel?: string },
+  ): Promise<{ delivered: boolean; mode: string }> {
+    const expiryMinutes = context.expiryMinutes ?? 15;
+    const companyLabel = context.companyName ? ` for ${context.companyName}` : '';
+    const subject = `MESHVI — Confirm company ownership${companyLabel} (expires in ${expiryMinutes} mins)`;
+
+    let rawFrom = process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'no-reply@meshvi.org';
+    rawFrom = rawFrom.trim().replace(/^["']|["']$/g, '');
+    const fromAddress = rawFrom.includes('<') ? rawFrom : `"MESHVI Connect" <${rawFrom}>`;
+
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #0f172a;">
+  <div style="max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden;">
+    <div style="background: #0f172a; padding: 24px 32px;">
+      <span style="display: inline-block; background: #0284c7; color: #ffffff; font-weight: 900; font-size: 16px; padding: 6px 14px; border-radius: 10px;">MESHVI</span>
+    </div>
+    <div style="padding: 32px;">
+      <h1 style="font-size: 20px; font-weight: 800; margin: 0 0 12px;">Confirm Company Ownership</h1>
+      <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 16px;">Hello ${recipientName || 'Executive'},</p>
+      <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 16px;">
+        Use the 6-digit security code below to confirm your corporate email address${companyLabel}. This code expires in <strong>${expiryMinutes} minutes</strong>.
+      </p>
+      <div style="background: #f1f5f9; border: 2px dashed #0284c7; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
+        <div style="font-family: monospace, Courier; font-size: 32px; font-weight: 900; color: #0284c7; letter-spacing: 6px;">${code}</div>
+      </div>
+      <p style="font-size: 12px; color: #64748b;">If you did not request this verification, you can safely ignore this email.</p>
+    </div>
+    <div style="padding: 20px 32px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center;">
+      &copy; ${new Date().getFullYear()} MESHVI Technologies Inc. &bull; Enterprise Commercial Intent Network
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+    try {
+      await this.prisma.emailOutbox.create({
+        data: {
+          toAddress: to.trim(),
+          subject,
+          htmlBody,
+          templateKey: 'COMPANY_VERIFICATION_OTP',
+          status: 'PENDING',
+        },
+      });
+    } catch (e: any) {
+      this.logger.warn(`Could not save company verification email to outbox: ${e.message}`);
+    }
+
+    if (this.transporter) {
+      try {
+        const info = await this.transporter.sendMail({
+          from: fromAddress,
+          to: to.trim(),
+          subject,
+          html: htmlBody,
+        });
+        this.logger.log(`[SMTP-DISPATCH-SUCCESS] Company verification email sent to ${to} (MessageId: ${info.messageId})`);
+        return { delivered: true, mode: 'SMTP' };
+      } catch (err: any) {
+        this.logger.error(`[SMTP-DISPATCH-ERROR] Failed to send company verification email to ${to}: ${err.message}`);
+      }
+    }
+
+    this.logger.log(
+      `[COMPANY-VERIFICATION] Queued verification code for ${to} in the transactional outbox (expires in ${expiryMinutes} minutes).`,
+    );
+    return { delivered: true, mode: 'OUTBOX_CONSOLE' };
+  }
+
+  /**
+   * Delivers an email that is already persisted in the outbox.
+   * Returns delivered=false when SMTP is not configured, so callers never mark an
+   * unsent message as SENT.
+   */
+  async sendRawEmail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<{ delivered: boolean; mode: string }> {
+    if (!this.transporter) {
+      return { delivered: false, mode: 'NO_SMTP_TRANSPORT' };
+    }
+
+    let rawFrom = process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'no-reply@meshvi.org';
+    rawFrom = rawFrom.trim().replace(/^["']|["']$/g, '');
+    const fromAddress = rawFrom.includes('<') ? rawFrom : `"MESHVI Connect" <${rawFrom}>`;
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: fromAddress,
+        to: to.trim(),
+        subject,
+        html,
+      });
+      this.logger.log(
+        `[SMTP-DISPATCH-SUCCESS] Outbox email sent to ${to} (MessageId: ${info.messageId})`,
+      );
+      return { delivered: true, mode: 'SMTP' };
+    } catch (err: any) {
+      throw new Error(`SMTP delivery failed: ${err.message}`);
+    }
   }
 }

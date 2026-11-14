@@ -33,11 +33,65 @@ async function bootstrap() {
   // Global API Prefix
   app.setGlobalPrefix('api/v1');
 
-  // Flexible CORS configuration for Web, Local Network Mobile Devices & Expo
+  // Explicit CORS allow-list for Web, Local Network Mobile Devices & Expo.
+  // Wildcard credentials are never permitted.
+  const configuredOrigins = [
+    process.env.CORS_ORIGIN,
+    process.env.FRONTEND_URL,
+    process.env.MOBILE_APP_ORIGIN,
+  ]
+    .filter(Boolean)
+    .flatMap((value) => String(value).split(','))
+    .map((value) => value.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+
+  const allowAllOrigins = process.env.CORS_ALLOW_ALL === 'true';
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const localOriginPattern =
+    /^https?:\/\/(localhost|127\.0\.0\.1|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/;
+
+  const hostnameOf = (value: string): string => {
+    try {
+      return new URL(value).hostname.toLowerCase();
+    } catch {
+      return '';
+    }
+  };
+
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow all origins (web frontend, mobile apps, local network)
-      callback(null, true);
+      // Native mobile apps, server-to-server calls and curl often omit the Origin header.
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (allowAllOrigins) {
+        return callback(null, true);
+      }
+
+      const normalized = origin.trim().replace(/\/$/, '');
+      if (configuredOrigins.includes(normalized)) {
+        return callback(null, true);
+      }
+
+      const originHost = hostnameOf(normalized);
+      const sameConfiguredHost = configuredOrigins.some((allowed) => {
+        const allowedHost = hostnameOf(allowed);
+        return (
+          !!allowedHost &&
+          !!originHost &&
+          (originHost === allowedHost || originHost.endsWith(`.${allowedHost}`))
+        );
+      });
+      if (sameConfiguredHost) {
+        return callback(null, true);
+      }
+
+      if (isDevelopment && localOriginPattern.test(normalized)) {
+        return callback(null, true);
+      }
+
+      logger.warn(`Blocked CORS origin: ${origin}`);
+      return callback(null, false);
     },
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: [

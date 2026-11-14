@@ -38,8 +38,8 @@ import {
   PartnershipPost,
   NetworkPerson,
   NetworkCompany,
-  NETWORK_PEOPLE,
-  NETWORK_COMPANIES,
+  NETWORK_PEOPLE as DEMO_NETWORK_PEOPLE,
+  NETWORK_COMPANIES as DEMO_NETWORK_COMPANIES,
   getStoredPosts,
   saveStoredPosts,
   getRegisteredHashtags,
@@ -76,146 +76,18 @@ interface KanbanDeal {
   notes?: string;
 }
 
-const INITIAL_DEALS: KanbanDeal[] = [
-  {
-    id: 'deal-1',
-    title: 'Product Launch – Kinetic Labs',
-    amount: 22000,
-    stage: 'QUALIFIED',
-    probability: 20,
-    age: '4d',
-    company: 'Kinetic Labs',
-    dueDate: 'Mar 30',
-    avatarInitials: 'KL',
-  },
-  {
-    id: 'deal-2',
-    title: 'Brand Strategy – Arcadia Ventures',
-    amount: 8000,
-    stage: 'DISCOVERY',
-    probability: 40,
-    age: '2d',
-    company: 'Arcadia Ventures',
-    dueDate: 'Mar 31',
-    avatarInitials: 'AV',
-  },
-  {
-    id: 'deal-3',
-    title: 'Website Redesign – Bloom Studio',
-    amount: 12500,
-    stage: 'PROPOSAL_SENT',
-    probability: 70,
-    age: '3d',
-    company: 'Bloom Studio',
-    dueDate: 'Apr 1',
-    avatarInitials: 'BS',
-  },
-  {
-    id: 'deal-4',
-    title: 'Health Portal – Meridian',
-    amount: 55000,
-    stage: 'PROPOSAL_SENT',
-    probability: 30,
-    age: 'now',
-    company: 'Meridian Health',
-    dueDate: 'Apr 4',
-    avatarInitials: 'MH',
-  },
-  {
-    id: 'deal-5',
-    title: 'Event Platform – Riviera',
-    amount: 15000,
-    stage: 'PROPOSAL_SENT',
-    probability: 50,
-    age: '1d',
-    company: 'Riviera Hospitality',
-    dueDate: 'Apr 3',
-    avatarInitials: 'RH',
-  },
-  {
-    id: 'deal-6',
-    title: 'Logistics App – Atlas Freight',
-    amount: 41000,
-    stage: 'PROPOSAL_SENT',
-    probability: 60,
-    age: '2d',
-    company: 'Atlas Freight',
-    dueDate: 'Mar 29',
-    avatarInitials: 'AF',
-  },
-  {
-    id: 'deal-7',
-    title: 'IP Portfolio Review – Summit Legal',
-    amount: 9500,
-    stage: 'NEGOTIATION',
-    probability: 100,
-    age: 'now',
-    company: 'Summit Legal',
-    dueDate: 'Apr 2',
-    avatarInitials: 'SL',
-  },
-  {
-    id: 'deal-8',
-    title: 'Lab Management System – Helix',
-    amount: 28000,
-    stage: 'NEGOTIATION',
-    probability: 15,
-    age: 'now',
-    company: 'Helix Biotech',
-    dueDate: 'Apr 1',
-    avatarInitials: 'HB',
-  },
-  {
-    id: 'deal-9',
-    title: 'Office Renovation Plans – Norden',
-    amount: 45000,
-    stage: 'WON',
-    probability: 80,
-    age: 'now',
-    company: 'Norden Architecture',
-    dueDate: 'Apr 3',
-    avatarInitials: 'NA',
-  },
-  {
-    id: 'deal-10',
-    title: 'Annual Retainer – Tidewater',
-    amount: 36000,
-    stage: 'WON',
-    probability: 100,
-    age: 'now',
-    company: 'Tidewater Consulting',
-    dueDate: 'Mar 25',
-    avatarInitials: 'TC',
-  },
-  {
-    id: 'deal-11',
-    title: 'Digital Transformation – Canopy',
-    amount: 32000,
-    stage: 'WON',
-    probability: 75,
-    age: 'now',
-    company: 'Canopy Digital',
-    dueDate: 'Mar 31',
-    avatarInitials: 'CD',
-  },
-  {
-    id: 'deal-12',
-    title: 'Financial Dashboard – Cobalt',
-    amount: 15000,
-    stage: 'LOST',
-    probability: 0,
-    age: 'now',
-    company: 'Cobalt Financial',
-    dueDate: 'Mar 15',
-    avatarInitials: 'CF',
-    notes: 'Budget constraints — chose in-house solution',
-  },
-];
+const INITIAL_DEALS: KanbanDeal[] = [];
 
 export const PartnershipsPage: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Network suggestions are demo-only; production uses real connections from the backend.
+  const networkPeople = Boolean((import.meta as any).env?.DEV) ? DEMO_NETWORK_PEOPLE : [];
+  const networkCompanies = Boolean((import.meta as any).env?.DEV)
+    ? DEMO_NETWORK_COMPANIES
+    : [];
 
   // Top Consolidated Destination Tab: FEED | REQUESTS
   const [mainNavTab, setMainNavTab] = useState<'FEED' | 'DEALS' | 'REQUESTS'>(() => {
@@ -467,7 +339,7 @@ export const PartnershipsPage: React.FC = () => {
     if (!text) return;
 
     const tagged: string[] = [];
-    NETWORK_PEOPLE.forEach((p) => {
+    networkPeople.forEach((p) => {
       if (text.includes(`@${p.name}`)) {
         tagged.push(p.name);
       }
@@ -525,7 +397,7 @@ export const PartnershipsPage: React.FC = () => {
   ) => {
     if (!initiatePartnerPost) return;
 
-    const authorPerson = NETWORK_PEOPLE.find(
+    const authorPerson = networkPeople.find(
       (p) => p.name === initiatePartnerPost.authorName
     );
     const isConn = Boolean(authorPerson?.isActiveConnection);
@@ -685,7 +557,7 @@ export const PartnershipsPage: React.FC = () => {
       : [];
 
     const matchingPeople = cleanQ
-      ? NETWORK_PEOPLE.filter(
+      ? networkPeople.filter(
           (person) =>
             person.name.toLowerCase().includes(cleanQ) ||
             person.company.toLowerCase().includes(cleanQ) ||
@@ -694,7 +566,7 @@ export const PartnershipsPage: React.FC = () => {
       : [];
 
     const matchingCompanies = cleanQ
-      ? NETWORK_COMPANIES.filter(
+      ? networkCompanies.filter(
           (comp) =>
             comp.name.toLowerCase().includes(cleanQ) ||
             comp.industry.toLowerCase().includes(cleanQ)
@@ -718,7 +590,7 @@ export const PartnershipsPage: React.FC = () => {
   // Mention Autocomplete suggestions in comments
   const mentionSuggestions = useMemo(() => {
     if (!activeMentionPostId) return [];
-    return NETWORK_PEOPLE.filter(
+    return networkPeople.filter(
       (p) =>
         p.name.toLowerCase().includes(mentionQuery) ||
         p.company.toLowerCase().includes(mentionQuery)
@@ -1518,7 +1390,7 @@ export const PartnershipsPage: React.FC = () => {
             const isCommentsOpen = Boolean(openComments[post.id]);
             const commentsList = post.comments || [];
             const isTargetHighlight = targetPostId === post.id;
-            const authorPerson = NETWORK_PEOPLE.find((p) => p.name === post.authorName);
+            const authorPerson = networkPeople.find((p) => p.name === post.authorName);
             void authorPerson;
             const isOwnPost =
               post.authorId === (user?.id || 'current-user') ||
@@ -1899,7 +1771,7 @@ export const PartnershipsPage: React.FC = () => {
         onClose={() => setInitiatePartnerPost(null)}
         isAlreadyConnected={
           initiatePartnerPost
-            ? Boolean(NETWORK_PEOPLE.find((p) => p.name === initiatePartnerPost.authorName)?.isActiveConnection)
+            ? Boolean(networkPeople.find((p) => p.name === initiatePartnerPost.authorName)?.isActiveConnection)
             : false
         }
         onSubmit={handleInitiatePartnershipSubmit}

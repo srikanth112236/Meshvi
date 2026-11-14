@@ -54,6 +54,8 @@ interface ConversationItem {
   } | null;
   unread: boolean;
   unreadCount?: number;
+  blockedByMe?: boolean;
+  blockedMe?: boolean;
   updatedAt: string;
 }
 
@@ -282,6 +284,23 @@ export const MessagesPage = () => {
       }
 
       setConversations(list);
+
+      // Hydrate block state from the server so blocks made on another device are reflected here.
+      const serverBlockedPartnerIds = list
+        .filter((c) => c.blockedByMe && c.partner?.userId)
+        .map((c) => c.partner.userId);
+
+      if (serverBlockedPartnerIds.length > 0) {
+        setBlockedUserIds((prev) => {
+          const merged = Array.from(new Set([...prev, ...serverBlockedPartnerIds]));
+          try {
+            localStorage.setItem('setu_blocked_user_ids', JSON.stringify(merged));
+          } catch {
+            // Ignore storage failures
+          }
+          return merged;
+        });
+      }
     } catch {
       // Fallback
     } finally {
@@ -353,7 +372,7 @@ export const MessagesPage = () => {
                 isMine,
                 meeting,
                 attachment: getAttachmentFromMsg(m),
-                status: isMine ? (m.status || 'READ') : undefined,
+                status: isMine ? (m.status || 'SENT') : undefined,
                 sentAt: m.sentAt || m.createdAt,
                 deliveredAt: m.deliveredAt || m.createdAt,
                 readAt: m.readAt || m.createdAt,
@@ -432,7 +451,6 @@ export const MessagesPage = () => {
           try {
             const incoming = JSON.parse(event.data);
             if (incoming.type === 'HEARTBEAT') return;
-            if (incoming.body?.includes('Received attachment') || incoming.attachmentName?.startsWith('Counter_Attested')) return;
             if (incoming.type === 'TYPING') {
               setIsPartnerTyping(Boolean(incoming.isTyping));
               return;
@@ -453,8 +471,25 @@ export const MessagesPage = () => {
               attachment: parsedAttachment,
             };
             setMessages((prev) => {
-              if (prev.some((m) => m.id === msgItem.id)) return prev;
               const isMine = msgItem.senderUserId === user?.id;
+              const existingIndex = prev.findIndex((m) => m.id === msgItem.id);
+
+              // Edits and delete tombstones reuse the message id, so merge instead of skipping.
+              if (existingIndex >= 0) {
+                return prev.map((m, idx) =>
+                  idx === existingIndex
+                    ? {
+                        ...m,
+                        ...msgItem,
+                        isMine,
+                        status: m.status,
+                        attachment: msgItem.isDeleted ? undefined : parsedAttachment,
+                        meeting: msgItem.isDeleted ? undefined : parsedMeeting,
+                      }
+                    : m,
+                );
+              }
+
               if (!isMine) {
                 playNotificationSound();
               }
@@ -463,7 +498,7 @@ export const MessagesPage = () => {
                 {
                   ...msgItem,
                   isMine,
-                  status: isMine ? (msgItem.status || 'DELIVERED') : undefined,
+                  status: isMine ? (msgItem.status || 'SENT') : undefined,
                 },
               ];
             });
@@ -479,8 +514,16 @@ export const MessagesPage = () => {
     }
 
     const syncInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       fetchMessages(activeConvId);
       fetchConversations();
+      // Keep the read cursor moving while this conversation is actively open.
+      if (token && !activeConvId.startsWith('conv-conn-')) {
+        fetch(`/api/v1/conversations/${activeConvId}/read`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => {});
+      }
     }, 3100);
 
     return () => {
@@ -671,29 +714,7 @@ export const MessagesPage = () => {
     setReplyingTo(null);
     setIsUserTyping(false);
 
-    // Progressive Delivery Simulation: SENT -> DELIVERED after 500ms
-    setTimeout(() => {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === tempId || (m.createdAt === nowIso && m.isMine)
-            ? { ...m, status: m.status === 'READ' ? 'READ' : 'DELIVERED', deliveredAt: new Date().toISOString() }
-            : m
-        )
-      );
-    }, 500);
-
-    // DELIVERED -> READ after 1400ms if partner is online
-    if (partnerOnlineStatus === 'ONLINE') {
-      setTimeout(() => {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempId || (m.createdAt === nowIso && m.isMine)
-              ? { ...m, status: 'READ', readAt: new Date().toISOString() }
-              : m
-          )
-        );
-      }, 1400);
-    }
+    // Read receipts are derived from the backend; do not simulate delivery/read states.
 
     try {
       let convId = activeConvId;
@@ -730,8 +751,6 @@ export const MessagesPage = () => {
                         ...createData.data.message,
                         attachment: serverAttachment,
                         isMine: true,
-                        status: 'DELIVERED',
-                        deliveredAt: new Date().toISOString(),
                       }
                     : m
                 )
@@ -763,8 +782,6 @@ export const MessagesPage = () => {
                     ...sendData.data,
                     attachment: serverAttachment,
                     isMine: true,
-                    status: 'DELIVERED',
-                    deliveredAt: new Date().toISOString(),
                   }
                 : m
             )
@@ -870,8 +887,6 @@ export const MessagesPage = () => {
                         ...createData.data.message,
                         meeting: meetingPayload,
                         isMine: true,
-                        status: 'DELIVERED',
-                        deliveredAt: new Date().toISOString(),
                       }
                     : m
                 )
@@ -901,8 +916,6 @@ export const MessagesPage = () => {
                     ...sendData.data,
                     meeting: meetingPayload,
                     isMine: true,
-                    status: 'DELIVERED',
-                    deliveredAt: new Date().toISOString(),
                   }
                 : m
             )

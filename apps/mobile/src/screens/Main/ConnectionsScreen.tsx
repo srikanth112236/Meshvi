@@ -90,131 +90,6 @@ export interface ColleagueItem {
   function?: string;
 }
 
-const FALLBACK_CONNECTIONS: ActiveConnection[] = [
-  {
-    id: 'conn_demo_1',
-    businessReason: 'Direct alignment with cross-border retail beverage expansion, lounge concessions, and SEA hub distribution.',
-    status: 'CONNECTED',
-    connectedAt: new Date(Date.now() - 86400000 * 4).toISOString(),
-    partner: {
-      userId: 'usr_gabriel_choi',
-      fullName: 'Gabriel Choi',
-      headline: 'VP of Global Strategic Sourcing & Partnerships',
-      function: 'Sourcing & Supply Chain',
-      companyName: 'Vector Global SE',
-      profileId: 'prof_gabriel',
-      email: 'gabriel.choi@vector-global.com',
-      phoneNumber: '+65 9123 4567',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-      city: 'Singapore',
-      countryCode: 'SG',
-    },
-  },
-  {
-    id: 'conn_demo_2',
-    businessReason: 'Joint co-selling corridor across enterprise infrastructure procurement and APAC system integrators.',
-    status: 'CONNECTED',
-    connectedAt: new Date(Date.now() - 86400000 * 12).toISOString(),
-    partner: {
-      userId: 'usr_elena_rostova',
-      fullName: 'Elena Rostova',
-      headline: 'Chief Commercial Officer',
-      function: 'Commercial Partnerships',
-      companyName: 'Aura Logistics APAC',
-      profileId: 'prof_elena',
-      email: 'elena.rostova@aura-logistics.com',
-      phoneNumber: '+971 50 123 4567',
-      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-      city: 'Dubai',
-      countryCode: 'AE',
-    },
-  },
-  {
-    id: 'conn_demo_3',
-    businessReason: 'Enterprise supply chain SLA fulfillment and strategic procurement partnership across ASEAN nodes.',
-    status: 'CONNECTED',
-    connectedAt: new Date(Date.now() - 86400000 * 30).toISOString(),
-    partner: {
-      userId: 'usr_marcus_vance',
-      fullName: 'Marcus Vance',
-      headline: 'Managing Director & VP Alliances',
-      function: 'Supply Chain & Logistics',
-      companyName: 'Apex Logistics APAC',
-      profileId: 'prof_marcus',
-      email: 'marcus.vance@apex-logistics.com',
-      phoneNumber: '+60 12 345 6789',
-      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
-      city: 'Kuala Lumpur',
-      countryCode: 'MY',
-    },
-  },
-];
-
-const FALLBACK_INCOMING: RequestItem[] = [
-  {
-    id: 'req_demo_in_1',
-    businessReason: 'Requesting bilateral alignment on bonded warehouse customs automation and Tier-1 freight handling in Singapore.',
-    status: 'PENDING',
-    createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-    requester: {
-      id: 'usr_marcus_vance',
-      email: 'marcus.vance@apex-logistics.com',
-      profile: {
-        displayName: 'Marcus Vance',
-        headline: 'Managing Director & VP Alliances',
-        function: 'Supply Chain & Logistics',
-        company: { name: 'Apex Logistics APAC' },
-        avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
-        city: 'Singapore',
-        countryCode: 'SG',
-      },
-    },
-  },
-  {
-    id: 'req_demo_in_2',
-    businessReason: 'Exploring corporate procurement syndication and preferential distribution pricing for enterprise clients.',
-    status: 'PENDING',
-    createdAt: new Date(Date.now() - 3600000 * 22).toISOString(),
-    requester: {
-      id: 'usr_sarah_jenkins',
-      email: 'sarah.j@meridian-capital.com',
-      profile: {
-        displayName: 'Sarah Jenkins',
-        headline: 'Director of Corporate Alliances',
-        function: 'Corporate Finance & Strategy',
-        company: { name: 'Meridian Capital Partners' },
-        avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
-        city: 'London',
-        countryCode: 'GB',
-      },
-    },
-  },
-];
-
-const FALLBACK_OUTGOING: RequestItem[] = [
-  {
-    id: 'req_demo_out_1',
-    businessReason: 'Evaluating secondary institutional liquidity rail for supplier early-payment settlement.',
-    status: 'PENDING',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    recipientProfile: {
-      displayName: 'Ananya Roy',
-      headline: 'Partner, Corporate Venture & M&A',
-      function: 'Corporate Strategy & M&A',
-      company: { name: 'FinBridge Capital' },
-      avatarUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=400&q=80',
-      city: 'Dubai',
-      countryCode: 'AE',
-    },
-  },
-];
-
-const COLLEAGUES_ROSTER: ColleagueItem[] = [
-  { id: 'colleague-1', displayName: 'Priya Sharma', currentTitle: 'Head of Business Development', function: 'Business Development' },
-  { id: 'colleague-2', displayName: 'David Tan', currentTitle: 'Director of Strategic Alliances', function: 'Partnerships' },
-  { id: 'colleague-3', displayName: 'Amanda Wong', currentTitle: 'VP of Commercial Procurement', function: 'Procurement' },
-  { id: 'colleague-4', displayName: 'Alex Chen', currentTitle: 'Regional Sales Director, APAC', function: 'Sales & Channel' },
-];
 
 const DECLINE_REASONS = [
   { code: 'OUT_OF_SCOPE', label: 'Out of Scope', desc: 'Not aligned with current strategic priorities or active mandates' },
@@ -243,21 +118,22 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { token } = useAuth();
-  const { showSuccess, showConfirm } = useModal();
+  const { showSuccess, showConfirm, showError } = useModal();
 
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<'CONNECTIONS' | 'INCOMING' | 'OUTGOING'>('CONNECTIONS');
 
   // Data states
-  const [connections, setConnections] = useState<ActiveConnection[]>(FALLBACK_CONNECTIONS);
-  const [incomingRequests, setIncomingRequests] = useState<RequestItem[]>(FALLBACK_INCOMING);
-  const [outgoingRequests, setOutgoingRequests] = useState<RequestItem[]>(FALLBACK_OUTGOING);
+  const [connections, setConnections] = useState<ActiveConnection[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<RequestItem[]>([]);
+  const [outgoingRequests, setOutgoingRequests] = useState<RequestItem[]>([]);
+  const [colleagues, setColleagues] = useState<ColleagueItem[]>([]);
   const [quota, setQuota] = useState<QuotaState>({
     limit: 10,
-    used: 2,
-    remaining: 8,
+    used: 0,
+    remaining: 10,
     canConnect: true,
-    isVerified: true,
+    isVerified: false,
     resetsInDays: 7,
   });
   const [loading, setLoading] = useState(false);
@@ -275,7 +151,7 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
   const [ignoreModalTarget, setIgnoreModalTarget] = useState<RequestItem | null>(null);
 
   // Modal form states
-  const [selectedColleagueId, setSelectedColleagueId] = useState<string>(COLLEAGUES_ROSTER[0].id);
+  const [selectedColleagueId, setSelectedColleagueId] = useState<string>('');
   const [delegationNote, setDelegationNote] = useState('Passing this connection over to you as it directly aligns with your team focus.');
   const [declineReasonCode, setDeclineReasonCode] = useState('OUT_OF_SCOPE');
   const [declineNote, setDeclineNote] = useState('Thank you for reaching out. We are currently focusing on core initiatives and cannot pursue this opportunity at this stage.');
@@ -285,10 +161,11 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
   const fetchConnectionsData = useCallback(async () => {
     setLoading(true);
     try {
-      const [connRes, reqRes, quotaRes] = await Promise.all([
+      const [connRes, reqRes, quotaRes, colleaguesRes] = await Promise.all([
         apiRequest<ActiveConnection[]>('/connections', { token }),
         apiRequest<{ incoming: RequestItem[]; outgoing: RequestItem[] }>('/connections/requests', { token }),
         apiRequest<QuotaState>('/connections/quota', { token }),
+        apiRequest<ColleagueItem[]>('/connections/colleagues-for-handover', { token }),
       ]);
 
       if (connRes.success && Array.isArray(connRes.data)) {
@@ -301,8 +178,12 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
       if (quotaRes.success && quotaRes.data) {
         setQuota(quotaRes.data);
       }
+      if (colleaguesRes.success && Array.isArray(colleaguesRes.data)) {
+        setColleagues(colleaguesRes.data);
+        setSelectedColleagueId((current) => current || colleaguesRes.data![0]?.id || '');
+      }
     } catch {
-      // Keeps pre-populated fallback data on network failure
+      // Keep the current real data on transient network failure.
     } finally {
       setLoading(false);
     }
@@ -379,35 +260,27 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
   const handleAcceptDirect = async (req: RequestItem) => {
     setActionInProgressId(req.id);
     try {
-      const res = await apiRequest(`/connections/requests/${req.id}/accept`, {
+      const res = await apiRequest(`/connections/${req.id}/accept`, {
         method: 'POST',
         token,
       });
+
+      if (!res.success) {
+        throw new Error(res.error || 'Unable to accept the connection request.');
+      }
+
       setIncomingRequests((prev) => prev.filter((r) => r.id !== req.id));
-      const p = req.requester?.profile;
-      const newConn: ActiveConnection = {
-        id: `conn_${Date.now()}`,
-        businessReason: req.businessReason,
-        status: 'CONNECTED',
-        connectedAt: new Date().toISOString(),
-        partner: {
-          userId: req.requester?.id || '',
-          fullName: p?.displayName || req.requester?.email || 'Executive Partner',
-          headline: p?.headline || p?.function || 'Senior Executive',
-          function: p?.function || 'Corporate',
-          companyName: p?.company?.name || 'Enterprise',
-          profileId: null,
-          email: req.requester?.email,
-          city: p?.city,
-          countryCode: p?.countryCode,
-        },
-      };
-      setConnections((prev) => [newConn, ...prev]);
-      showSuccess('Connection Established! 🤝', `You and ${p?.displayName || 'the requester'} are now directly connected as 1st-degree partners. Contact credentials and deal corridor unlocked.`);
+      await fetchConnectionsData();
+      showSuccess(
+        'Connection Established! 🤝',
+        `You and ${req.requester?.profile?.displayName || 'the requester'} are now directly connected as 1st-degree partners. Contact credentials and deal corridor unlocked.`,
+      );
       setAcceptModalTarget(null);
-    } catch {
-      setIncomingRequests((prev) => prev.filter((r) => r.id !== req.id));
-      setAcceptModalTarget(null);
+    } catch (err: any) {
+      showError(
+        'Accept Failed',
+        err?.message || 'The connection request could not be accepted. Please try again.',
+      );
     } finally {
       setActionInProgressId(null);
     }
@@ -417,25 +290,38 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
   const handleSubmitDelegate = async () => {
     if (!delegateModalTarget) return;
     setIsSubmittingTriage(true);
-    const chosen = COLLEAGUES_ROSTER.find((c) => c.id === selectedColleagueId) || COLLEAGUES_ROSTER[0];
+    const chosen = colleagues.find((c) => c.id === selectedColleagueId) || colleagues[0];
+    if (!chosen) {
+      showError(
+        'No Colleague Available',
+        'No verified colleague is available for delegation in your organization.',
+      );
+      setIsSubmittingTriage(false);
+      return;
+    }
+
     try {
-      await apiRequest(`/connections/requests/${delegateModalTarget.id}/delegate`, {
+      const res = await apiRequest(`/connections/${delegateModalTarget.id}/delegate`, {
         method: 'POST',
         token,
         body: {
-          targetUserId: chosen.id,
-          note: delegationNote,
+          targetProfileId: chosen.id,
+          delegationNote,
         },
       });
+
+      if (!res.success) {
+        throw new Error(res.error || 'Delegation failed.');
+      }
+
       setIncomingRequests((prev) => prev.filter((r) => r.id !== delegateModalTarget.id));
       showSuccess(
         'Opportunity Delegated',
-        `Successfully routed the proposal to ${chosen.displayName} (${chosen.currentTitle}) with your strategic handover memo.`
+        `Successfully routed the proposal to ${chosen.displayName} (${chosen.currentTitle || 'Colleague'}) with your strategic handover memo.`,
       );
       setDelegateModalTarget(null);
-    } catch {
-      setIncomingRequests((prev) => prev.filter((r) => r.id !== delegateModalTarget.id));
-      setDelegateModalTarget(null);
+    } catch (err: any) {
+      showError('Delegation Failed', err?.message || 'The request could not be delegated.');
     } finally {
       setIsSubmittingTriage(false);
     }
@@ -446,24 +332,27 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
     if (!declineModalTarget) return;
     setIsSubmittingTriage(true);
     try {
-      await apiRequest(`/connections/requests/${declineModalTarget.id}/decline`, {
+      const res = await apiRequest(`/connections/${declineModalTarget.id}/decline`, {
         method: 'POST',
         token,
         body: {
-          action: 'DECLINE',
-          reasonCode: declineReasonCode,
-          note: declineNote,
+          declineReasonCode,
+          declineNote,
         },
       });
+
+      if (!res.success) {
+        throw new Error(res.error || 'Decline failed.');
+      }
+
       setIncomingRequests((prev) => prev.filter((r) => r.id !== declineModalTarget.id));
       showSuccess(
         'Opportunity Bridge Closed',
-        'Polite decline memo dispatched to requester with governance feedback.'
+        'Polite decline memo dispatched to requester with governance feedback.',
       );
       setDeclineModalTarget(null);
-    } catch {
-      setIncomingRequests((prev) => prev.filter((r) => r.id !== declineModalTarget.id));
-      setDeclineModalTarget(null);
+    } catch (err: any) {
+      showError('Decline Failed', err?.message || 'The request could not be declined.');
     } finally {
       setIsSubmittingTriage(false);
     }
@@ -474,19 +363,24 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
     if (!ignoreModalTarget) return;
     setIsSubmittingTriage(true);
     try {
-      await apiRequest(`/connections/requests/${ignoreModalTarget.id}/ignore`, {
+      const res = await apiRequest(`/connections/${ignoreModalTarget.id}/ignore`, {
         method: 'POST',
         token,
+        body: { reason: 'IGNORED_BY_RECIPIENT' },
       });
+
+      if (!res.success) {
+        throw new Error(res.error || 'Ignore failed.');
+      }
+
       setIncomingRequests((prev) => prev.filter((r) => r.id !== ignoreModalTarget.id));
       showSuccess(
         'Proposal Archived',
-        'Request moved to silent archive without triggering counterparty notifications.'
+        'Request moved to silent archive without triggering counterparty notifications.',
       );
       setIgnoreModalTarget(null);
-    } catch {
-      setIncomingRequests((prev) => prev.filter((r) => r.id !== ignoreModalTarget.id));
-      setIgnoreModalTarget(null);
+    } catch (err: any) {
+      showError('Archive Failed', err?.message || 'The request could not be archived.');
     } finally {
       setIsSubmittingTriage(false);
     }
@@ -503,14 +397,23 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
       onConfirm: async () => {
         setActionInProgressId(req.id);
         try {
-          await apiRequest(`/connections/requests/${req.id}/cancel`, {
+          const res = await apiRequest(`/connections/${req.id}/withdraw`, {
             method: 'POST',
             token,
           });
+
+          if (!res.success) {
+            throw new Error(res.error || 'Withdraw failed.');
+          }
+
           setOutgoingRequests((prev) => prev.filter((r) => r.id !== req.id));
+          await fetchConnectionsData();
           showSuccess('Request Withdrawn', 'Your bilateral connection invitation was cleanly withdrawn.');
-        } catch {
-          setOutgoingRequests((prev) => prev.filter((r) => r.id !== req.id));
+        } catch (err: any) {
+          showError(
+            'Withdraw Failed',
+            err?.message || 'The connection request could not be withdrawn.',
+          );
         } finally {
           setActionInProgressId(null);
         }
@@ -1476,7 +1379,12 @@ export const ConnectionsScreen: React.FC<ConnectionsScreenProps> = ({
             <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 12 }}>
               <Text style={styles.fieldLabel}>Select Internal Stakeholder</Text>
               <View style={{ gap: 6, marginBottom: 12 }}>
-                {COLLEAGUES_ROSTER.map((c) => {
+                {colleagues.length === 0 && (
+                  <Text style={styles.modalSubTitle}>
+                    No verified colleagues are available in your organization for delegation.
+                  </Text>
+                )}
+                {colleagues.map((c) => {
                   const isSelected = selectedColleagueId === c.id;
                   return (
                     <TouchableOpacity

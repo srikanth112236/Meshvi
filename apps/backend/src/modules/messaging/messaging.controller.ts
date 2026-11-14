@@ -214,14 +214,16 @@ export class MessagingController {
   }
 
   @Get('email-outbox')
-  @ApiOperation({ summary: 'List recent transactional emails in outbox' })
+  @PortalScope('SUPER_ADMIN')
+  @ApiOperation({ summary: 'List recent transactional emails in outbox (platform administrators only)' })
   async getEmailOutbox(@Query('status') status?: string) {
     return this.messagingService.getEmailOutbox(status);
   }
 
   @Post('email-outbox/process')
+  @PortalScope('SUPER_ADMIN')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Trigger transactional email outbox batch delivery' })
+  @ApiOperation({ summary: 'Trigger transactional email outbox batch delivery (platform administrators only)' })
   async processOutboxBatch() {
     return this.messagingService.processOutboxBatch(10);
   }

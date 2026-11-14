@@ -166,6 +166,7 @@ describe('ConnectionsController', () => {
       'conn-1',
       'colleague-prof-99',
       'Handles SEA partnerships',
+      undefined,
     );
   });
 

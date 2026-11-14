@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { MailSenderService } from '../auth/mail-sender.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { ConnectionStatus, NotificationType } from '@prisma/client';
@@ -25,6 +26,7 @@ export class MessagingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly mailSender: MailSenderService,
   ) {}
 
   /**
@@ -62,6 +64,7 @@ export class MessagingService {
               },
             },
             messages: {
+              where: { NOT: { deletedForUserIds: { has: userId } } },
               orderBy: { createdAt: 'desc' },
               take: 1,
             },
@@ -70,6 +73,17 @@ export class MessagingService {
       },
       orderBy: { conversation: { updatedAt: 'desc' } },
     });
+
+    const blocks = await this.prisma.userBlock.findMany({
+      where: { OR: [{ blockerUserId: userId }, { blockedUserId: userId }] },
+      select: { blockerUserId: true, blockedUserId: true },
+    });
+    const blockedByMe = new Set(
+      blocks.filter((b) => b.blockerUserId === userId).map((b) => b.blockedUserId),
+    );
+    const blockedMe = new Set(
+      blocks.filter((b) => b.blockedUserId === userId).map((b) => b.blockerUserId),
+    );
 
     const results = await Promise.all(
       participations.map(async (p) => {
@@ -84,6 +98,7 @@ export class MessagingService {
                 otherParticipant.user.profile?.displayName || otherParticipant.user.email,
               headline: otherParticipant.user.profile?.headline || null,
               companyName: otherParticipant.user.profile?.company?.name || null,
+              avatarUrl: otherParticipant.user.profile?.avatarUrl || null,
             }
           : {
               userId: 'unknown',
@@ -97,6 +112,7 @@ export class MessagingService {
             conversationId: conv.id,
             senderUserId: { not: userId },
             deletedAt: null,
+            NOT: { deletedForUserIds: { has: userId } },
             ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
           },
         });
@@ -117,6 +133,8 @@ export class MessagingService {
             : null,
           unread: !!unread,
           unreadCount,
+          blockedByMe: otherParticipant ? blockedByMe.has(otherParticipant.userId) : false,
+          blockedMe: otherParticipant ? blockedMe.has(otherParticipant.userId) : false,
           updatedAt: conv.updatedAt,
         };
       }),
@@ -140,6 +158,21 @@ export class MessagingService {
 
     if (!recipient) {
       throw new NotFoundException('Recipient user not found');
+    }
+
+    const activeBlock = await this.prisma.userBlock.findFirst({
+      where: {
+        OR: [
+          { blockerUserId: userId, blockedUserId: dto.recipientUserId },
+          { blockerUserId: dto.recipientUserId, blockedUserId: userId },
+        ],
+      },
+    });
+
+    if (activeBlock) {
+      throw new ForbiddenException(
+        'Messaging is unavailable with this user because a block is active.',
+      );
     }
 
     // Authorization Check: Must have mutual connection or accepted intro
@@ -269,8 +302,18 @@ export class MessagingService {
       throw new ForbiddenException('You are not an authorized participant in this conversation');
     }
 
-    const messages = await this.prisma.message.findMany({
+    const participants = await this.prisma.conversationParticipant.findMany({
       where: { conversationId },
+      select: { userId: true, lastReadAt: true },
+    });
+    const partnerReadAt =
+      participants.find((p) => p.userId !== userId)?.lastReadAt || null;
+
+    const messages = await this.prisma.message.findMany({
+      where: {
+        conversationId,
+        NOT: { deletedForUserIds: { has: userId } },
+      },
       orderBy: { createdAt: 'asc' },
       include: {
         sender: {
@@ -294,6 +337,13 @@ export class MessagingService {
       deletedAt: m.deletedAt || null,
       isDeleted: Boolean(m.deletedAt),
       isMine: m.senderUserId === userId,
+      // Real read receipt derived from the recipient's lastReadAt (never simulated).
+      status:
+        m.senderUserId === userId
+          ? partnerReadAt && partnerReadAt >= m.createdAt
+            ? 'READ'
+            : 'SENT'
+          : undefined,
     }));
   }
 
@@ -339,22 +389,50 @@ export class MessagingService {
       },
     });
 
-    return {
+    const participants = await this.prisma.conversationParticipant.findMany({
+      where: { conversationId },
+      select: { userId: true },
+    });
+
+    const messagePayload = {
       id: updated.id,
       body: updated.body,
+      messageType: updated.messageType || 'TEXT',
+      attachmentUrl: updated.attachmentUrl || null,
+      attachmentName: updated.attachmentName || null,
+      meetingPayloadJson: updated.meetingPayloadJson || null,
       editedAt: updated.editedAt,
       isEdited: true,
+      deletedAt: null,
+      isDeleted: false,
       senderUserId: updated.senderUserId,
       senderName: updated.sender.profile?.displayName || updated.sender.email,
       createdAt: updated.createdAt,
       isMine: true,
     };
+
+    // Broadcast the edit so other open clients update immediately.
+    this.messageStream$.next({
+      conversationId,
+      recipientUserIds: participants.map((p) => p.userId),
+      message: messagePayload,
+    });
+
+    return messagePayload;
   }
 
   /**
    * Delete message: for everyone (replaces content) or for me
    */
   async deleteMessage(userId: string, conversationId: string, messageId: string, mode: 'everyone' | 'me' = 'everyone') {
+    const participant = await this.prisma.conversationParticipant.findUnique({
+      where: { conversationId_userId: { conversationId, userId } },
+    });
+
+    if (!participant) {
+      throw new ForbiddenException('You are not an authorized participant in this conversation');
+    }
+
     const message = await this.prisma.message.findUnique({
       where: { id: messageId },
     });
@@ -368,14 +446,41 @@ export class MessagingService {
         throw new ForbiddenException('You can only delete your own messages for everyone');
       }
 
+      const deletedAt = new Date();
       await this.prisma.message.update({
         where: { id: messageId },
         data: {
-          deletedAt: new Date(),
+          deletedAt,
           body: 'This message was deleted by sender',
           attachmentUrl: null,
           attachmentName: null,
           meetingPayloadJson: null,
+        },
+      });
+
+      const participants = await this.prisma.conversationParticipant.findMany({
+        where: { conversationId },
+        select: { userId: true },
+      });
+
+      // Broadcast the tombstone so other open clients remove the content immediately.
+      this.messageStream$.next({
+        conversationId,
+        recipientUserIds: participants.map((p) => p.userId),
+        message: {
+          id: messageId,
+          body: 'This message was deleted by sender',
+          messageType: message.messageType || 'TEXT',
+          attachmentUrl: null,
+          attachmentName: null,
+          meetingPayloadJson: null,
+          editedAt: null,
+          isEdited: false,
+          deletedAt,
+          isDeleted: true,
+          senderUserId: message.senderUserId,
+          senderName: 'Sender',
+          createdAt: message.createdAt,
         },
       });
 
@@ -387,10 +492,19 @@ export class MessagingService {
       };
     }
 
+    // Delete for me only: hide the message for this participant without affecting others.
+    if (!message.deletedForUserIds.includes(userId)) {
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: { deletedForUserIds: { push: userId } },
+      });
+    }
+
     return {
       success: true,
       messageId,
       mode: 'me',
+      isDeleted: true,
     };
   }
 
@@ -452,24 +566,75 @@ export class MessagingService {
 
     const otherParticipant = participant.conversation.participants.find((p) => p.userId !== userId);
 
+    if (!otherParticipant) {
+      throw new BadRequestException('This conversation has no other participant to block');
+    }
+
+    await this.prisma.userBlock.upsert({
+      where: {
+        blockerUserId_blockedUserId: {
+          blockerUserId: userId,
+          blockedUserId: otherParticipant.userId,
+        },
+      },
+      create: {
+        blockerUserId: userId,
+        blockedUserId: otherParticipant.userId,
+      },
+      update: {},
+    });
+
     await this.prisma.auditLog.create({
       data: {
         userId,
         action: 'BLOCK_USER',
         resource: 'User',
-        resourceId: otherParticipant?.userId || conversationId,
+        resourceId: otherParticipant.userId,
       },
     });
 
     return {
       success: true,
-      blockedUserId: otherParticipant?.userId || null,
+      blockedUserId: otherParticipant.userId,
       conversationId,
       message: 'User blocked successfully.',
     };
   }
 
   async unblockConversation(userId: string, conversationId: string) {
+    const participant = await this.prisma.conversationParticipant.findUnique({
+      where: { conversationId_userId: { conversationId, userId } },
+      include: {
+        conversation: {
+          include: { participants: true },
+        },
+      },
+    });
+
+    if (!participant) {
+      throw new ForbiddenException('You are not a participant in this conversation');
+    }
+
+    const otherParticipant = participant.conversation.participants.find((p) => p.userId !== userId);
+
+    if (otherParticipant) {
+      await this.prisma.userBlock.deleteMany({
+        where: {
+          blockerUserId: userId,
+          blockedUserId: otherParticipant.userId,
+        },
+      });
+
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action: 'UNBLOCK_USER',
+          resource: 'User',
+          resourceId: otherParticipant.userId,
+        },
+      });
+    }
+
     return {
       success: true,
       conversationId,
@@ -498,6 +663,26 @@ export class MessagingService {
 
     if (!participant) {
       throw new ForbiddenException('You are not an authorized participant in this conversation');
+    }
+
+    const otherUserIds = participant.conversation.participants
+      .map((p) => p.userId)
+      .filter((id) => id !== userId);
+
+    if (otherUserIds.length > 0) {
+      const activeBlock = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blockerUserId: userId, blockedUserId: { in: otherUserIds } },
+            { blockerUserId: { in: otherUserIds }, blockedUserId: userId },
+          ],
+        },
+      });
+      if (activeBlock) {
+        throw new ForbiddenException(
+          'Messaging is unavailable for this conversation because a block is active.',
+        );
+      }
     }
 
     const message = await this.prisma.message.create({
@@ -666,13 +851,37 @@ export class MessagingService {
     const results = [];
     for (const email of pendingEmails) {
       try {
-        // In local development or production without external SMTP key,
-        // we simulate guaranteed outbox delivery and mark SENT
+        const delivery = await this.mailSender.sendRawEmail(
+          email.toAddress,
+          email.subject,
+          email.htmlBody,
+        );
+
+        if (!delivery.delivered) {
+          // No SMTP transport: keep the message queued honestly instead of claiming success.
+          const nextAttempts = email.attempts + 1;
+          await this.prisma.emailOutbox.update({
+            where: { id: email.id },
+            data: {
+              attempts: nextAttempts,
+              lastError: 'SMTP transport is not configured',
+              status: nextAttempts >= 3 ? 'FAILED' : 'PENDING',
+            },
+          });
+          results.push({
+            id: email.id,
+            status: 'NOT_DELIVERED',
+            reason: 'SMTP transport is not configured',
+          });
+          continue;
+        }
+
         await this.prisma.emailOutbox.update({
           where: { id: email.id },
           data: {
             status: 'SENT',
             attempts: email.attempts + 1,
+            lastError: null,
             sentAt: new Date(),
           },
         });
@@ -686,7 +895,7 @@ export class MessagingService {
             status: email.attempts + 1 >= 3 ? 'FAILED' : 'PENDING',
           },
         });
-        results.push({ id: email.id, status: 'RETRY' });
+        results.push({ id: email.id, status: 'RETRY', error: err.message });
       }
     }
 

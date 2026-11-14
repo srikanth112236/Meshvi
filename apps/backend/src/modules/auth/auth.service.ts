@@ -3,10 +3,13 @@ import {
   BadRequestException,
   UnauthorizedException,
   ForbiddenException,
+  HttpException,
+  ServiceUnavailableException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { RegisterDto, VerifyRegistrationOtpDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -14,6 +17,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailSenderService } from './mail-sender.service';
 import { PortalScopeType } from './decorators/portal-scope.decorator';
+import { getAccessTokenTtl, getRefreshTokenTtl } from '../../common/config/jwt.config';
 
 @Injectable()
 export class AuthService {
@@ -44,23 +48,36 @@ export class AuthService {
     );
 
     let portalScope: PortalScopeType = 'CONSUMER';
-    if (requestedPortal === 'SUPER_ADMIN' && roles.includes('SUPER_ADMIN')) {
+
+    if (requestedPortal === 'SUPER_ADMIN') {
+      if (!roles.includes('SUPER_ADMIN')) {
+        throw new ForbiddenException(
+          'Super Administrator clearance is required to access this portal.',
+        );
+      }
       portalScope = 'SUPER_ADMIN';
-    } else if (
-      requestedPortal === 'COMPANY_ADMIN' &&
-      (roles.includes('COMPANY_ADMIN') ||
+    } else if (requestedPortal === 'COMPANY_ADMIN') {
+      const isCompanyAdmin =
+        roles.includes('COMPANY_ADMIN') ||
         (user.memberships &&
           user.memberships.some(
             (m: any) =>
               m.membershipStatus === 'ACTIVE' &&
               (m.companyRole === 'OWNER' || m.companyRole === 'ADMIN'),
-          )))
-    ) {
+          ));
+
+      if (!isCompanyAdmin) {
+        throw new ForbiddenException(
+          'Company Administrator clearance is required to access this portal.',
+        );
+      }
       portalScope = 'COMPANY_ADMIN';
-    } else if (requestedPortal === 'CONSUMER' && !roles.includes('SUPER_ADMIN')) {
+    } else if (requestedPortal === 'CONSUMER') {
+      // The consumer portal is always consumer-scoped. Elevated roles must use
+      // their dedicated portal so a SUPER_ADMIN token can never leak into /app.
       portalScope = 'CONSUMER';
     } else {
-      // Role-based fallback
+      // No explicit portal requested: preserve role-based default for internal callers.
       if (roles.includes('SUPER_ADMIN')) {
         portalScope = 'SUPER_ADMIN';
       } else if (roles.includes('COMPANY_ADMIN')) {
@@ -78,7 +95,7 @@ export class AuthService {
         portalScope,
         tokenType: 'ACCESS',
       },
-      { expiresIn: '24h' },
+      { expiresIn: getAccessTokenTtl() as any },
     );
 
     const refreshToken = this.jwtService.sign(
@@ -88,7 +105,7 @@ export class AuthService {
         portalScope,
         tokenType: 'REFRESH',
       },
-      { expiresIn: '24h' },
+      { expiresIn: getRefreshTokenTtl() as any },
     );
 
     return {
@@ -107,104 +124,30 @@ export class AuthService {
     };
   }
 
+  /**
+   * Sandbox identity switching must be explicitly opt-in and can never run in production.
+   */
+  private assertAuthSandboxEnabled(action: string) {
+    const enabled =
+      process.env.ENABLE_AUTH_SANDBOX === 'true' && process.env.NODE_ENV !== 'production';
+    if (!enabled) {
+      throw new ForbiddenException(
+        `${action} is disabled. Sandbox authentication requires ENABLE_AUTH_SANDBOX=true in a non-production environment.`,
+      );
+    }
+  }
+
+  /**
+   * Development-only convenience: echoing OTPs in API responses is never allowed in production.
+   */
+  private shouldExposeDevOtp(): boolean {
+    return process.env.NODE_ENV !== 'production' && process.env.ENABLE_DEV_OTP === 'true';
+  }
+
   async register(dto: RegisterDto) {
-    if (!dto.agreeTerms) {
-      throw new BadRequestException('You must accept the terms of service and privacy policy.');
-    }
-
-    const emailNormalized = dto.email.trim().toLowerCase();
-
-    const existingUser = await this.prisma.user.findUnique({
-      where: { emailNormalized },
-    });
-
-    if (existingUser) {
-      const providerLabel =
-        existingUser.authProvider === 'GOOGLE'
-          ? 'Google Sign-In'
-          : existingUser.authProvider === 'LINKEDIN'
-          ? 'LinkedIn Sign-In'
-          : 'password';
-      throw new BadRequestException({
-        statusCode: 400,
-        error: 'EMAIL_ALREADY_EXISTS',
-        message: `An account with this email is already registered using ${providerLabel}. Please sign in to continue.`,
-        email: existingUser.email,
-        authProvider: existingUser.authProvider || 'LOCAL',
-      });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(dto.password, salt);
-
-    // Create User, UserRole, and Profile in transaction
-    const newUser = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email: dto.email.trim(),
-          emailNormalized,
-          passwordHash,
-          accountStatus: 'ACTIVE',
-        },
-      });
-
-      await tx.userRole.create({
-        data: {
-          userId: user.id,
-          role: 'USER',
-        },
-      });
-
-      const profile = await tx.professionalProfile.create({
-        data: {
-          userId: user.id,
-          displayName: dto.name.trim(),
-          visibility: 'SIGNED_IN_ONLY',
-          verificationStatus: 'UNVERIFIED',
-        },
-      });
-
-      // Audit log
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'USER_REGISTERED',
-          resource: 'USER',
-          metadata: JSON.stringify({ email: user.email, name: dto.name }),
-        },
-      });
-
-      // Enqueue welcome & email verification notification
-      await tx.emailOutbox.create({
-        data: {
-          toAddress: user.email,
-          subject: 'Welcome to Project Setu — Verify your email',
-          htmlBody: `<p>Hi ${dto.name},</p><p>Welcome to Project Setu. Your account has been created. Please complete your professional onboarding to start discovering business connections.</p>`,
-          templateKey: 'WELCOME_VERIFY_EMAIL',
-          status: 'PENDING',
-        },
-      });
-
-      return { user, profile };
-    });
-
-    const authResult = this.generateAuthTokens(
-      {
-        id: newUser.user.id,
-        email: newUser.user.email,
-        roles: ['USER'],
-        profile: newUser.profile,
-        onboardingCompleted: false,
-      },
-      'CONSUMER',
-    );
-
-    this.logger.log(`New user registered: ${newUser.user.email} (${newUser.user.id})`);
-
-    return {
-      message: 'Account registered successfully',
-      ...authResult,
-    };
+    // Account creation always goes through email OTP verification so nobody can
+    // register an address they do not control.
+    return this.registerInit(dto);
   }
 
   async registerInit(dto: RegisterDto) {
@@ -234,7 +177,7 @@ export class AuthService {
       });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = Date.now() + 15 * 60 * 1000;
     this.pendingRegistrationStore.set(emailNormalized, {
       dto,
@@ -265,7 +208,7 @@ export class AuthService {
       this.logger.warn(`Could not persist registration OTP to database (in-memory active): ${otpErr.message}`);
     }
 
-    this.logger.log(`[AUTH-REGISTER-INIT] Generated OTP ${otp} for ${emailNormalized}`);
+    this.logger.log(`[AUTH-REGISTER-INIT] Generated registration OTP for ${emailNormalized}`);
 
     // Real-time email dispatch (SMTP or outbox)
     await this.mailSender.sendOtpEmail(
@@ -279,7 +222,7 @@ export class AuthService {
       success: true,
       message: 'Verification OTP sent to your email. Enter the code below to complete registration.',
       email: dto.email.trim(),
-      ...(process.env.ENABLE_DEV_OTP === 'true' ? { devOtp: otp } : {}),
+      ...(this.shouldExposeDevOtp() ? { devOtp: otp } : {}),
     };
   }
 
@@ -304,16 +247,15 @@ export class AuthService {
       }
     }
 
-    const isMasterCode = dto.otp === '123456';
-    if (!pending && !isMasterCode) {
+    if (!pending) {
       throw new BadRequestException('No pending registration found for this email, or session expired. Please register again.');
     }
 
-    if (pending && !isMasterCode && pending.otp !== dto.otp) {
+    if (pending.otp !== dto.otp) {
       throw new BadRequestException('Invalid OTP. Please check the code and try again.');
     }
 
-    if (pending && pending.expiresAt < Date.now()) {
+    if (pending.expiresAt < Date.now()) {
       this.pendingRegistrationStore.delete(emailNormalized);
     try {
       await (this.prisma as any).authVerificationOtp.deleteMany({
@@ -376,24 +318,39 @@ export class AuthService {
               intakeStatus: 'OPEN',
             },
           });
+
+          // Ownership is only granted for a company shell created by this registration.
+          await tx.companyMembership.create({
+            data: {
+              companyId: company.id,
+              userId: user.id,
+              companyRole: 'OWNER',
+              membershipStatus: 'ACTIVE',
+            },
+          });
+
+          await tx.userRole.create({
+            data: {
+              userId: user.id,
+              role: 'COMPANY_ADMIN',
+            },
+          });
+        } else {
+          // Never attach a new registration as OWNER of an existing company.
+          // Record a pending claim instead so ownership must be proven separately.
+          await tx.companyClaimRequest.create({
+            data: {
+              companyId: company.id,
+              requestedByUserId: user.id,
+              verificationMethod: 'DOMAIN_EMAIL',
+              status: 'PENDING',
+              reviewNotes:
+                'Registration-time company affiliation pending ownership verification.',
+            },
+          });
         }
+
         companyId = company.id;
-
-        await tx.companyMembership.create({
-          data: {
-            companyId: company.id,
-            userId: user.id,
-            companyRole: 'OWNER',
-            membershipStatus: 'ACTIVE',
-          },
-        });
-
-        await tx.userRole.create({
-          data: {
-            userId: user.id,
-            role: 'COMPANY_ADMIN',
-          },
-        });
       }
 
       const profile = await tx.professionalProfile.create({
@@ -587,49 +544,91 @@ export class AuthService {
     avatarUrl?: string;
     idToken?: string;
   }) {
-    let email = googleUser.email?.trim().toLowerCase();
-    let googleId = googleUser.googleId;
-    let displayName = googleUser.displayName;
-    let avatarUrl = googleUser.avatarUrl;
-
-    // If Google ID token is provided, verify it or extract claims
-    if (googleUser.idToken) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 4000);
-        const res = await fetch(
-          `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleUser.idToken)}`,
-          { signal: controller.signal },
-        );
-        clearTimeout(timeout);
-        if (res.ok) {
-          const payload = await res.json();
-          if (payload && payload.email) {
-            email = payload.email.trim().toLowerCase();
-            googleId = payload.sub || googleId;
-            displayName = payload.name || displayName;
-            avatarUrl = payload.picture || avatarUrl;
-          }
-        }
-      } catch {
-        // Fallback: decode JWT payload without external network call
-        try {
-          const parts = googleUser.idToken.split('.');
-          if (parts.length >= 2) {
-            const base64Url = parts[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonStr = Buffer.from(base64, 'base64').toString('utf-8');
-            const payload = JSON.parse(jsonStr);
-            if (payload && payload.email) {
-              email = payload.email.trim().toLowerCase();
-              googleId = payload.sub || googleId;
-              displayName = payload.name || displayName;
-              avatarUrl = payload.picture || avatarUrl;
-            }
-          }
-        } catch {}
-      }
+    if (!googleUser?.idToken || !googleUser.idToken.trim()) {
+      throw new UnauthorizedException(
+        'A Google ID token is required to sign in with Google. Client-supplied email addresses are not accepted.',
+      );
     }
+
+    const claims = await this.verifyGoogleIdToken(googleUser.idToken);
+    return this.loginOrRegisterGoogleUser({
+      email: claims.email,
+      googleId: claims.sub,
+      displayName: claims.name,
+      avatarUrl: claims.picture,
+    });
+  }
+
+  /**
+   * Verifies a Google-issued ID token (signature, expiry, issuer and audience) before trusting any claim.
+   */
+  private async verifyGoogleIdToken(idToken: string): Promise<{
+    email: string;
+    sub: string;
+    name?: string;
+    picture?: string;
+  }> {
+    const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+    if (!clientId || clientId.includes('placeholder') || clientId.includes('your_google')) {
+      throw new ServiceUnavailableException('Google Sign-In is not configured on this server.');
+    }
+
+    let payload: any;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`,
+        { signal: controller.signal },
+      );
+      clearTimeout(timeout);
+      if (!res.ok) {
+        throw new Error(`Google token verification rejected the token (HTTP ${res.status})`);
+      }
+      payload = await res.json();
+    } catch (err: any) {
+      this.logger.warn(`Google ID token verification failed: ${err?.message || 'network error'}`);
+      throw new UnauthorizedException('Google ID token could not be verified.');
+    }
+
+    const issuer = payload?.iss;
+    if (issuer !== 'accounts.google.com' && issuer !== 'https://accounts.google.com') {
+      throw new UnauthorizedException('Google ID token has an invalid issuer.');
+    }
+    if (payload?.aud !== clientId) {
+      throw new UnauthorizedException('Google ID token was issued for a different application.');
+    }
+    if (String(payload?.email_verified) !== 'true') {
+      throw new UnauthorizedException('Google account email address is not verified.');
+    }
+    if (!payload?.email) {
+      throw new UnauthorizedException('Google account did not expose an email address.');
+    }
+    if (payload?.exp && Number(payload.exp) * 1000 <= Date.now()) {
+      throw new UnauthorizedException('Google ID token has expired.');
+    }
+
+    return {
+      email: String(payload.email).trim().toLowerCase(),
+      sub: String(payload.sub || ''),
+      name: payload.name,
+      picture: payload.picture,
+    };
+  }
+
+  /**
+   * Creates or resumes a local account from identity claims that have already been verified by Google.
+   */
+  private async loginOrRegisterGoogleUser(googleUser: {
+    email: string;
+    googleId?: string;
+    displayName?: string;
+    avatarUrl?: string;
+  }) {
+    const email = googleUser.email.trim().toLowerCase();
+    const googleId = googleUser.googleId;
+    const displayName = googleUser.displayName;
+    const avatarUrl = googleUser.avatarUrl;
 
     if (!email) {
       throw new BadRequestException('A valid Google email address is required');
@@ -700,6 +699,11 @@ export class AuthService {
       }
       if (!user.emailVerifiedAt) {
         updates.emailVerifiedAt = new Date();
+        // The account predates verified email ownership. Google has now proven ownership,
+        // so invalidate any password that may have been set by whoever pre-registered it.
+        if (user.passwordHash) {
+          updates.passwordHash = null;
+        }
       }
 
       if (Object.keys(updates).length > 0) {
@@ -773,7 +777,7 @@ export class AuthService {
       };
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // Strictly 10 minutes expiry
 
     this.passwordResetStore.set(emailNormalized, {
@@ -803,7 +807,7 @@ export class AuthService {
       this.logger.warn(`Could not persist password reset OTP to database: ${resetErr.message}`);
     }
 
-    this.logger.log(`[AUTH-FORGOT-PASSWORD] Generated 10-minute reset OTP ${otp} for ${emailNormalized}`);
+    this.logger.log(`[AUTH-FORGOT-PASSWORD] Generated 10-minute reset OTP for ${emailNormalized}`);
 
     // Real-time email dispatch (SMTP or outbox fallback)
     const recipientName = user.profile?.displayName || 'Executive';
@@ -814,7 +818,7 @@ export class AuthService {
       message: 'A 6-digit recovery code has been dispatched to your email. It expires in 10 minutes.',
       email: user.email,
       expiresInMinutes: 10,
-      ...(process.env.ENABLE_DEV_OTP === 'true' ? { devOtp: otp } : {}),
+      ...(this.shouldExposeDevOtp() ? { devOtp: otp } : {}),
     };
   }
 
@@ -839,16 +843,15 @@ export class AuthService {
       }
     }
 
-    const isMasterCode = dto.otp === '123456';
-    if (!resetEntry && !isMasterCode) {
+    if (!resetEntry) {
       throw new BadRequestException('No pending password reset found for this email, or the code has expired. Please request a new code.');
     }
 
-    if (resetEntry && !isMasterCode && resetEntry.otp !== dto.otp) {
+    if (resetEntry.otp !== dto.otp) {
       throw new BadRequestException('Invalid 6-digit recovery code. Please check your email and try again.');
     }
 
-    if (resetEntry && resetEntry.expiresAt < Date.now()) {
+    if (resetEntry.expiresAt < Date.now()) {
       this.passwordResetStore.delete(emailNormalized);
     try {
       await (this.prisma as any).authVerificationOtp.deleteMany({
@@ -957,7 +960,12 @@ export class AuthService {
   }
 
   getGoogleAuthUrl(state?: string, redirectUri?: string) {
-    const clientId = process.env.GOOGLE_CLIENT_ID || '';
+    const clientId = process.env.GOOGLE_CLIENT_ID?.trim() || '';
+    if (!clientId || clientId.includes('placeholder') || clientId.includes('your_google')) {
+      throw new ServiceUnavailableException(
+        'Google Sign-In is not configured on this server. Please contact the administrator.',
+      );
+    }
     const effectiveRedirectUri = this.normalizeGoogleRedirectUri(redirectUri);
     const effectiveState = state || Math.random().toString(36).substring(2, 15);
 
@@ -977,23 +985,27 @@ export class AuthService {
    * Phase 2: Handle Google OAuth 2.0 Callback & Exchange Code
    */
   async handleGoogleCallback(code: string, state?: string, redirectUri?: string) {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
     const effectiveRedirectUri = this.normalizeGoogleRedirectUri(redirectUri);
 
-    // If sandbox or credentials not set, fallback gracefully
-    if (!clientId || !clientSecret || clientId.trim() === '' || clientId.includes('placeholder')) {
-      this.logger.warn('Live Google OAuth credentials not detected in .env; using sandbox profile.');
-      return this.googleLogin({
-        email: 'rajiv.sharma.executive@gmail.com',
-        displayName: 'Rajiv Sharma',
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-        googleId: 'google_sub_' + Math.random().toString(36).substring(2, 12),
-      });
+    if (
+      !clientId ||
+      !clientSecret ||
+      clientId.includes('placeholder') ||
+      clientSecret.includes('placeholder')
+    ) {
+      throw new ServiceUnavailableException(
+        'Google Sign-In is not configured on this server. Please contact the administrator.',
+      );
+    }
+
+    if (!code) {
+      throw new BadRequestException('Google authorization code is required.');
     }
 
     try {
-      // 1. Exchange code for access & id token
+      // 1. Exchange the authorization code for Google tokens (server-to-server)
       const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1014,29 +1026,44 @@ export class AuthService {
         );
       }
 
-      // 2. Fetch UserInfo with access token if available
-      let googleUser: any = {};
-      if (tokenData.access_token) {
-        try {
-          const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${tokenData.access_token}` },
-          });
-          if (userinfoRes.ok) {
-            googleUser = await userinfoRes.json();
-          }
-        } catch (e: any) {
-          this.logger.warn(`Could not fetch Google userinfo endpoint: ${e.message}`);
+      let claims: { email: string; sub: string; name?: string; picture?: string };
+
+      if (tokenData.id_token) {
+        // Preferred path: cryptographically verify the Google ID token.
+        claims = await this.verifyGoogleIdToken(tokenData.id_token);
+      } else {
+        // Fallback: the access token was issued to this server by Google, so userinfo is trusted.
+        const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        });
+        if (!userinfoRes.ok) {
+          throw new UnauthorizedException('Google did not return a valid user profile.');
         }
+        const googleUser = await userinfoRes.json();
+        if (!googleUser?.email) {
+          throw new UnauthorizedException('Google account did not expose an email address.');
+        }
+        if (googleUser.email_verified === false) {
+          throw new UnauthorizedException('Google account email address is not verified.');
+        }
+        claims = {
+          email: String(googleUser.email).trim().toLowerCase(),
+          sub: String(googleUser.sub || ''),
+          name: googleUser.name,
+          picture: googleUser.picture,
+        };
       }
 
-      return this.googleLogin({
-        idToken: tokenData.id_token,
-        email: googleUser.email,
-        googleId: googleUser.sub,
-        displayName: googleUser.name,
-        avatarUrl: googleUser.picture,
+      return this.loginOrRegisterGoogleUser({
+        email: claims.email,
+        googleId: claims.sub,
+        displayName: claims.name,
+        avatarUrl: claims.picture,
       });
     } catch (err: any) {
+      if (err instanceof HttpException) {
+        throw err;
+      }
       this.logger.error(`Google OAuth exchange error: ${err.message}`);
       throw new BadRequestException(err.message || 'Google authorization failed');
     }
@@ -1046,7 +1073,12 @@ export class AuthService {
    * Phase 2: Construct LinkedIn OIDC Authorization Redirect URL
    */
   getLinkedInAuthUrl(state?: string, redirectUri?: string) {
-    const clientId = process.env.LINKEDIN_CLIENT_ID || 'setu_linkedin_dev_app';
+    const clientId = process.env.LINKEDIN_CLIENT_ID?.trim();
+    if (!clientId || clientId.includes('placeholder') || clientId === 'setu_linkedin_dev_app') {
+      throw new ServiceUnavailableException(
+        'LinkedIn Sign-In is not configured on this server. Please contact the administrator.',
+      );
+    }
     const defaultRedirect =
       process.env.NODE_ENV === 'production'
         ? 'https://meshvi.org/auth/linkedin/callback'
@@ -1080,24 +1112,16 @@ export class AuthService {
     const effectiveRedirectUri =
       redirectUri || process.env.LINKEDIN_REDIRECT_URI || defaultRedirect;
 
-    // If sandbox / placeholder credentials, fall back gracefully to high-fidelity test OIDC handshake
+    // Live credentials are mandatory — never fabricate an identity in place of a failed handshake.
     if (
       !clientId ||
       clientId.includes('placeholder') ||
       !clientSecret ||
       clientSecret.includes('placeholder')
     ) {
-      this.logger.warn(
-        'Live LinkedIn credentials not detected; using high-fidelity test OIDC handshake.',
+      throw new ServiceUnavailableException(
+        'LinkedIn Sign-In is not configured on this server. Please contact the administrator.',
       );
-      return this.linkedinSandboxLogin({
-        email: 'priya.sharma@borneoagro.my',
-        displayName: 'Priya Sharma',
-        headline: 'VP of Commercial Alliances & Regional Distribution',
-        avatarUrl:
-          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
-        linkedinId: 'li_sub_' + Math.random().toString(36).substring(2, 10),
-      });
     }
 
     try {
@@ -1161,16 +1185,20 @@ export class AuthService {
         }
       }
 
-      // If still missing claims (e.g. Developer App pending OpenID Connect product approval), synthesize verified identity
+      // Never fabricate an identity: require a stable subject and a verified email from LinkedIn.
       if (!sub) {
-        this.logger.warn('LinkedIn claims missing sub; synthesizing verified OAuth session from authorized token.');
-        sub = 'li_sub_' + Buffer.from(code.substring(0, 16)).toString('hex').slice(0, 10);
-        email = email || `user_${sub}@linkedin.setu.user`;
-        displayName = displayName || 'LinkedIn Member';
+        throw new UnauthorizedException(
+          'LinkedIn did not return a stable user identifier. Please try again or use another sign-in method.',
+        );
+      }
+      if (!email || !String(email).includes('@')) {
+        throw new UnauthorizedException(
+          'LinkedIn did not share a verified email address. Grant the email permission and try again.',
+        );
       }
 
       return this.loginOrRegisterLinkedInUser({
-        email: email || `${sub}@linkedin.setu.user`,
+        email: String(email),
         linkedinId: sub,
         displayName: displayName || 'LinkedIn Member',
         avatarUrl,
@@ -1265,6 +1293,9 @@ export class AuthService {
             linkedinVerified: true,
             avatarUrl: linkedInUser.avatarUrl || user.avatarUrl,
             lastLoginAt: new Date(),
+            ...(user.emailVerifiedAt
+              ? {}
+              : { emailVerifiedAt: new Date(), passwordHash: null }),
           },
           include: {
             roles: true,
@@ -1318,6 +1349,7 @@ export class AuthService {
     headline?: string;
     linkedinId?: string;
   }) {
+    this.assertAuthSandboxEnabled('LinkedIn sandbox login');
     const sandboxEmail = customProfile?.email || 'priya.sharma@borneoagro.my';
     const sandboxName = customProfile?.displayName || 'Priya Sharma';
     const sandboxAvatar =
@@ -1458,18 +1490,25 @@ export class AuthService {
     }
 
     // Generate 6-digit cryptographic-like OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = Date.now() + 15 * 60 * 1000; // 15 mins
 
     this.otpStore.set(userId, { otp, expiresAt, workEmail: workEmail.toLowerCase().trim() });
 
-    this.logger.log(`[WORK_EMAIL_OTP] Generated OTP for user ${userId} (${workEmail}): ${otp}`);
+    await this.mailSender.sendVerificationCodeEmail(
+      workEmail.toLowerCase().trim(),
+      workEmail.split('@')[0],
+      otp,
+      { expiryMinutes: 15, purposeLabel: 'Corporate work email verification' },
+    );
+
+    this.logger.log(`[WORK_EMAIL_OTP] Dispatched verification code for user ${userId} (${workEmail})`);
 
     return {
       success: true,
       message: `A 6-digit cryptographic verification code has been dispatched to ${workEmail}.`,
       expiresInMinutes: 15,
-      ...(process.env.ENABLE_DEV_OTP === 'true' ? { devOtp: otp } : {}),
+      ...(this.shouldExposeDevOtp() ? { devOtp: otp } : {}),
     };
   }
 
@@ -1498,22 +1537,31 @@ export class AuthService {
       );
     }
 
-    // OTP validation if OTP was requested or supplied
+    // A code sent to the corporate mailbox is mandatory — email ownership cannot be asserted.
     const stored = this.otpStore.get(userId);
-    if (otp) {
-      const isMasterDevCode = otp === '123456';
-      const isMatchingCode = stored && stored.otp === otp && stored.expiresAt > Date.now();
-      if (!isMasterDevCode && !isMatchingCode) {
-        throw new BadRequestException('Invalid or expired 6-digit verification code. Please request a new code.');
-      }
-      this.otpStore.delete(userId);
+    if (!otp) {
+      throw new BadRequestException(
+        'Enter the 6-digit verification code sent to your corporate email address.',
+      );
     }
+    if (!stored || stored.otp !== otp || stored.expiresAt <= Date.now()) {
+      throw new BadRequestException(
+        'Invalid or expired 6-digit verification code. Please request a new code.',
+      );
+    }
+    if (stored.workEmail && stored.workEmail !== workEmail.trim().toLowerCase()) {
+      throw new BadRequestException(
+        'This verification code was issued for a different email address. Please request a new code.',
+      );
+    }
+    this.otpStore.delete(userId);
 
     // Update user verification
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
         workEmailVerified: true,
+        workEmail: workEmail.trim().toLowerCase(),
       },
       include: {
         profile: true,

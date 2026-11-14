@@ -272,21 +272,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       throw new Error(res.error || 'Invalid OTP');
     } catch (err: any) {
-      if (otp === '123456' || otp.length === 6) {
-        const newUser: User = {
-          id: 'usr_new_' + Date.now(),
-          email,
-          role: 'EXECUTIVE',
-          isEmailVerified: true,
-          onboardingCompleted: false,
-        };
-        const demoToken = 'demo_token_' + Date.now();
-        setToken(demoToken);
-        setUser(newUser);
-        await SafeStorage.setItem('@meshvi_token', demoToken);
-        await SafeStorage.setItem('@meshvi_user', JSON.stringify(newUser));
-        return { success: true };
-      }
       return { success: false, error: err.message || 'Verification failed' };
     } finally {
       setIsLoading(false);
@@ -295,13 +280,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const forgotPassword = async (email: string) => {
     try {
-      const res = await apiRequest('/auth/forgot-password', {
+      const forgotRes = await apiRequest('/auth/forgot-password', {
         method: 'POST',
         body: { email },
       });
-      return { success: res.success, message: res.data?.message || 'Password reset instructions dispatched.', error: res.error };
-    } catch {
-      return { success: true, message: 'Password reset instructions dispatched.' };
+      return { success: forgotRes.success, message: forgotRes.data?.message || 'Password reset instructions dispatched.', error: forgotRes.error };
+    } catch (err: any) {
+      return { success: false, message: '', error: err.message || 'Unable to request a password reset.' };
     }
   };
 
@@ -309,11 +294,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await apiRequest('/auth/reset-password', {
         method: 'POST',
-        body: { email, code, newPassword },
+        body: { email, otp: code, newPassword },
       });
       return { success: res.success, error: res.error };
-    } catch {
-      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Password reset failed' };
     }
   };
 
@@ -509,40 +494,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userName =
         profileData?.displayName || userData?.name || userData?.displayName || 'Executive Leader';
       const userAvatar = profileData?.avatarUrl || userData?.avatarUrl || userData?.photo;
-      const userGoogleId = userData?.id || userData?.googleId;
 
       let finalAuthToken = authToken;
       let finalRefreshToken = refreshToken;
       let finalUserData = userData;
-
-      // In local development or cross-environment flows, sync directly with the active backend
-      // (e.g. 192.168.1.6:3500) so the token and user record exist in this backend's database with a valid local JWT signature.
-      if (userEmail) {
-        try {
-          const syncRes = await apiRequest('/auth/google', {
-            method: 'POST',
-            body: {
-              email: userEmail,
-              displayName: userName,
-              avatarUrl: userAvatar,
-              googleId: userGoogleId,
-            },
-            timeoutMs: 5000,
-          });
-
-          if (syncRes.success && (syncRes.data?.token || syncRes.data?.accessToken)) {
-            finalAuthToken = syncRes.data.token || syncRes.data.accessToken;
-            if (syncRes.data?.refreshToken) {
-              finalRefreshToken = syncRes.data.refreshToken;
-            }
-            if (syncRes.data?.user) {
-              finalUserData = syncRes.data.user;
-            }
-          }
-        } catch {
-          // If backend sync times out, keep original token
-        }
-      }
 
       const finalProfile = finalUserData?.profile || profileData;
       const authUser: User = {

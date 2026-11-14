@@ -275,33 +275,87 @@ export class ProfilesService {
       }
     }
 
-    const completeness = profile.completenessScore || 50;
-    const titleUpper = (profile.currentTitle || '').toUpperCase();
-    const isExecutive = [
-      'VP',
-      'DIRECTOR',
-      'HEAD',
-      'CHIEF',
-      'PRESIDENT',
-      'PARTNER',
-      'FOUNDER',
-      'CEO',
-      'CTO',
-      'COO',
-      'MANAGER',
-    ].some((t) => titleUpper.includes(t));
-    const baselineConnections = isExecutive
-      ? 500 + Math.floor(completeness * 5.8)
-      : 120 + Math.floor(completeness * 3.2);
-
     const formatTier = (c: number): string => {
+      if (c === 0) return '0';
       if (c < 100) return `${c}`;
       if (c < 500) return '100+';
       if (c < 1000) return '500+';
       return '1000+';
     };
-    const totalConnectionsTiered = formatTier(baselineConnections);
-    const mutualCount = Math.floor(3 + (completeness % 9));
+
+    // Real accepted-connection counts only — never fabricate social proof.
+    const profileOwnerUserId = profile.userId;
+    const totalConnections = await this.prisma.connection.count({
+      where: profileOwnerUserId
+        ? {
+            status: 'ACCEPTED',
+            OR: [
+              { requesterUserId: profileOwnerUserId },
+              { recipientProfileId: profileId },
+            ],
+          }
+        : { status: 'ACCEPTED', recipientProfileId: profileId },
+    });
+    const totalConnectionsTiered = formatTier(totalConnections);
+
+    let mutualCount = 0;
+    if (viewerUserId && profileOwnerUserId && viewerUserId !== profileOwnerUserId) {
+      const viewerProfile = await this.prisma.professionalProfile.findUnique({
+        where: { userId: viewerUserId },
+        select: { id: true },
+      });
+
+      if (viewerProfile) {
+        const [viewerConns, targetConns] = await Promise.all([
+          this.prisma.connection.findMany({
+            where: {
+              status: 'ACCEPTED',
+              OR: [
+                { requesterUserId: viewerUserId },
+                { recipientProfileId: viewerProfile.id },
+              ],
+            },
+            select: {
+              requesterUserId: true,
+              recipientProfile: { select: { userId: true } },
+            },
+          }),
+          this.prisma.connection.findMany({
+            where: {
+              status: 'ACCEPTED',
+              OR: [
+                { requesterUserId: profileOwnerUserId },
+                { recipientProfileId: profileId },
+              ],
+            },
+            select: {
+              requesterUserId: true,
+              recipientProfile: { select: { userId: true } },
+            },
+          }),
+        ]);
+
+        const viewerPeers = new Set<string>();
+        viewerConns.forEach((c) => {
+          if (c.requesterUserId !== viewerUserId) viewerPeers.add(c.requesterUserId);
+          if (c.recipientProfile?.userId && c.recipientProfile.userId !== viewerUserId) {
+            viewerPeers.add(c.recipientProfile.userId);
+          }
+        });
+
+        const targetPeers = new Set<string>();
+        targetConns.forEach((c) => {
+          if (c.requesterUserId !== profileOwnerUserId) targetPeers.add(c.requesterUserId);
+          if (c.recipientProfile?.userId && c.recipientProfile.userId !== profileOwnerUserId) {
+            targetPeers.add(c.recipientProfile.userId);
+          }
+        });
+
+        viewerPeers.forEach((peerId) => {
+          if (targetPeers.has(peerId)) mutualCount += 1;
+        });
+      }
+    }
     const mutualTiered = formatTier(mutualCount);
 
     const isConnectedOrOwner = connectionStatus === 'CONNECTED' || profile.userId === viewerUserId;
@@ -322,8 +376,13 @@ export class ProfilesService {
       return `${prefix} ••••• ••${clean.slice(-2)}`;
     };
 
+    const profileResponse: any = { ...profile };
+    // Never expose the raw account record (email/phone) nested under `user`.
+    // Contact details are returned only through the masked/revealed top-level fields below.
+    delete profileResponse.user;
+
     return {
-      ...profile,
+      ...profileResponse,
       email: isConnectedOrOwner ? rawEmail : maskEmail(rawEmail),
       phoneNumber: isConnectedOrOwner ? rawPhone : maskPhone(rawPhone),
       isContactRevealed: isConnectedOrOwner,
@@ -331,7 +390,7 @@ export class ProfilesService {
       connectionId,
       connectedAt,
       connectedDays,
-      totalConnections: baselineConnections,
+      totalConnections,
       totalConnectionsTiered,
       mutualCount,
       mutualTiered,

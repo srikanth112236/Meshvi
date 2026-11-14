@@ -17,9 +17,11 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { RateLimitGuard, RateLimit } from '../../common/guards/rate-limit.guard';
 
 @ApiTags('Authentication & Identity Verification')
 @Controller('auth')
+@UseGuards(RateLimitGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -34,6 +36,7 @@ export class AuthController {
 
   @Post('register-init')
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 5, windowMs: 15 * 60 * 1000, actionName: 'REGISTER_INIT' })
   @ApiOperation({ summary: 'Initiate registration: validate details and dispatch verification OTP' })
   @ApiResponse({ status: 200, description: 'OTP generated and returned for verification' })
   @ApiResponse({ status: 400, description: 'Email already exists or invalid payload' })
@@ -43,6 +46,7 @@ export class AuthController {
 
   @Post('verify-registration-otp')
   @HttpCode(HttpStatus.CREATED)
+  @RateLimit({ limit: 10, windowMs: 15 * 60 * 1000, actionName: 'VERIFY_REGISTRATION_OTP' })
   @ApiOperation({ summary: 'Verify email OTP and create user, role and company profile' })
   @ApiResponse({ status: 201, description: 'Registration completed and tokens generated' })
   @ApiResponse({ status: 400, description: 'Invalid or expired OTP' })
@@ -51,6 +55,7 @@ export class AuthController {
   }
 
   @Get('check-email')
+  @RateLimit({ limit: 20, windowMs: 60 * 1000, actionName: 'CHECK_EMAIL' })
   @ApiOperation({ summary: 'Check if an email address is already registered' })
   async checkEmail(@Query('email') email: string) {
     return this.authService.checkEmailAvailability(email);
@@ -58,6 +63,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 10, windowMs: 5 * 60 * 1000, actionName: 'LOGIN' })
   @ApiOperation({ summary: 'Authenticate user with email and password' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
@@ -67,6 +73,7 @@ export class AuthController {
 
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 30, windowMs: 60 * 1000, actionName: 'REFRESH_TOKEN' })
   @ApiOperation({ summary: 'Exchange valid refresh token for a newly scoped short-lived access token' })
   @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
   @ApiResponse({ status: 401, description: 'Refresh token expired or invalid' })
@@ -76,7 +83,8 @@ export class AuthController {
 
   @Post('google')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Authenticate or register user via Google SSO token' })
+  @RateLimit({ limit: 10, windowMs: 5 * 60 * 1000, actionName: 'GOOGLE_LOGIN' })
+  @ApiOperation({ summary: 'Authenticate or register user via a verified Google ID token' })
   @ApiResponse({ status: 200, description: 'Google SSO successful' })
   async googleLogin(
     @Body()
@@ -113,6 +121,7 @@ export class AuthController {
 
   @Post('google/token')
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 10, windowMs: 5 * 60 * 1000, actionName: 'GOOGLE_TOKEN_EXCHANGE' })
   @ApiOperation({ summary: 'Exchange Google authorization code for Setu JWT session' })
   async googleToken(
     @Body() body: { code: string; redirectUri?: string; state?: string },
@@ -151,6 +160,7 @@ export class AuthController {
    */
   @Post('linkedin/token')
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 10, windowMs: 5 * 60 * 1000, actionName: 'LINKEDIN_TOKEN_EXCHANGE' })
   @ApiOperation({ summary: 'Exchange LinkedIn authorization code for Setu JWT session' })
   async linkedinToken(
     @Body() body: { code: string; redirectUri?: string; state?: string },
@@ -163,6 +173,7 @@ export class AuthController {
    */
   @Post('linkedin/sandbox')
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 5, windowMs: 60 * 1000, actionName: 'LINKEDIN_SANDBOX' })
   @ApiOperation({ summary: 'Simulate LinkedIn OIDC verification in development test mode' })
   async linkedinSandbox(
     @Body()
@@ -184,6 +195,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 5, windowMs: 15 * 60 * 1000, actionName: 'WORK_EMAIL_OTP' })
   @ApiOperation({ summary: 'Request 6-digit OTP code for corporate work email verification' })
   async requestWorkEmailOtp(
     @CurrentUser() user: any,
@@ -224,6 +236,7 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 5, windowMs: 15 * 60 * 1000, actionName: 'FORGOT_PASSWORD' })
   @ApiOperation({ summary: 'Request 6-digit password reset code (10-minute validity)' })
   @ApiResponse({ status: 200, description: 'Reset code dispatched to email' })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -232,6 +245,7 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
+  @RateLimit({ limit: 10, windowMs: 15 * 60 * 1000, actionName: 'RESET_PASSWORD' })
   @ApiOperation({ summary: 'Verify 6-digit code and set new password' })
   @ApiResponse({ status: 200, description: 'Password reset successful; re-login required' })
   @ApiResponse({ status: 400, description: 'Invalid or expired reset code' })

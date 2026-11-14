@@ -118,6 +118,9 @@ export interface PartnershipRequestItem {
   isAlreadyConnected: boolean;
 }
 
+// Demo seed content is only used in local development. Production always starts empty.
+const ALLOW_DEMO_DATA = Boolean((import.meta as any).env?.DEV);
+
 // Pre-seeded enterprise B2B & partnership hashtags
 export const PRESEEDED_HASHTAGS: HashtagItem[] = [
   // Strategic Alliances
@@ -606,7 +609,7 @@ export function getStoredPosts(): PartnershipPost[] {
   } catch {
     // fallback
   }
-  return INITIAL_PARTNERSHIP_POSTS;
+  return ALLOW_DEMO_DATA ? INITIAL_PARTNERSHIP_POSTS : [];
 }
 
 export function saveStoredPosts(posts: PartnershipPost[]): void {
@@ -624,16 +627,16 @@ export function getRegisteredHashtags(): HashtagItem[] {
       const parsed: HashtagItem[] = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const existingTags = new Set(parsed.map((h) => h.tag.toLowerCase()));
-        const missingPreseeded = PRESEEDED_HASHTAGS.filter(
-          (h) => !existingTags.has(h.tag.toLowerCase())
-        );
+        const missingPreseeded = ALLOW_DEMO_DATA
+          ? PRESEEDED_HASHTAGS.filter((h) => !existingTags.has(h.tag.toLowerCase()))
+          : [];
         return [...parsed, ...missingPreseeded];
       }
     }
   } catch {
     // fallback
   }
-  return PRESEEDED_HASHTAGS;
+  return ALLOW_DEMO_DATA ? PRESEEDED_HASHTAGS : [];
 }
 
 export function registerNewHashtag(rawTag: string, category: string = 'User Created'): HashtagItem {
@@ -673,7 +676,7 @@ export function getStoredPartnershipRequests(): PartnershipRequestItem[] {
   } catch {
     // fallback
   }
-  return INITIAL_PARTNERSHIP_REQUESTS;
+  return ALLOW_DEMO_DATA ? INITIAL_PARTNERSHIP_REQUESTS : [];
 }
 
 export function saveStoredPartnershipRequests(reqs: PartnershipRequestItem[]): void {
@@ -710,7 +713,7 @@ export function getStoredReportedPosts(): ReportedPostItem[] {
   } catch {
     // fallback
   }
-  return INITIAL_REPORTED_POSTS;
+  return ALLOW_DEMO_DATA ? INITIAL_REPORTED_POSTS : [];
 }
 
 export function saveStoredReportedPosts(reports: ReportedPostItem[]): void {

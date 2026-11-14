@@ -7,17 +7,27 @@ import { MailSenderService } from './mail-sender.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PortalScopeGuard } from './guards/portal-scope.guard';
 import { PrismaService } from '../../database/prisma.service';
+import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
+import { getJwtSecret } from '../../common/config/jwt.config';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'setu_super_secret_jwt_key_dev_2026_min_32_chars!',
-      signOptions: { expiresIn: '24h' },
+    JwtModule.registerAsync({
+      useFactory: () => ({
+        secret: getJwtSecret(),
+      }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, MailSenderService, JwtStrategy, PortalScopeGuard, PrismaService],
+  providers: [
+    AuthService,
+    MailSenderService,
+    JwtStrategy,
+    PortalScopeGuard,
+    RateLimitGuard,
+    PrismaService,
+  ],
   exports: [AuthService, MailSenderService, JwtModule, PassportModule, PortalScopeGuard],
 })
 export class AuthModule {}

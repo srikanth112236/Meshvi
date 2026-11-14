@@ -139,16 +139,6 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
                 placeholderTextColor="#94A3B8"
                 autoFocus
               />
-
-              {/* Demo Auto-fill */}
-              <TouchableOpacity
-                style={styles.demoFillBtn}
-                onPress={() => setOtp('123456')}
-                activeOpacity={0.7}
-              >
-                <Feather name="zap" size={12} color="#0284C7" style={{ marginRight: 4 }} />
-                <Text style={styles.demoFillText}>Auto-fill test code (123456)</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Verify Button */}

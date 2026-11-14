@@ -145,68 +145,6 @@ export const RegisterPage: React.FC = () => {
     }
   };
 
-  const handleGoogleSandboxRegister = async (customEmail?: string, customName?: string) => {
-    setShowGoogleModal(false);
-    setLoading(true);
-    setError('');
-    try {
-      const emailVal = customEmail || formData.email.trim() || 'rajiv.sharma.executive@gmail.com';
-      const displayName = customName || formData.name.trim() || 'Rajiv Sharma';
-
-      // Pre-fill form state with verified Google identity
-      setFormData((prev) => ({
-        ...prev,
-        email: emailVal,
-        name: displayName,
-        password: prev.password || 'GoogleOAuthSecure#2026',
-      }));
-
-      // MANDATORY OTP DISPATCH FOR GOOGLE REGISTRATION
-      const payload = {
-        name: displayName,
-        email: emailVal,
-        mobile: formData.mobile.trim() || '+1 555-0199',
-        designation: formData.designation.trim() || 'Enterprise Member',
-        companyName: formData.companyName.trim() || 'Independent',
-        password: formData.password || 'GoogleOAuthSecure#2026',
-        agreeTerms: true,
-        track: 'INDIVIDUAL',
-        authProvider: 'GOOGLE',
-      };
-
-      const res = await fetch('/api/v1/auth/register-init', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        const errorMsg = data.error?.message || data.error || 'Failed to dispatch verification code to Google email.';
-        if (
-          errorMsg.toLowerCase().includes('already') ||
-          errorMsg.toLowerCase().includes('registered') ||
-          errorMsg.toLowerCase().includes('exists') ||
-          data.error?.code === 'EMAIL_ALREADY_EXISTS'
-        ) {
-          setExistingAccountNotice({
-            email: emailVal,
-            message: errorMsg,
-          });
-        }
-        throw new Error(errorMsg);
-      }
-
-      setIsGoogleVerifiedFlow(true);
-      setOtpCode('');
-      setAuthStep('OTP');
-    } catch (err: any) {
-      setError(err.message || 'Google registration OTP dispatch failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -225,6 +163,11 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
+    if (!formData.mobile.trim()) {
+      setError('Please enter your mobile number.');
+      return;
+    }
+
     if (!formData.password || formData.password.length < 8) {
       setError('Please create a password of at least 8 characters.');
       return;
@@ -237,7 +180,7 @@ export const RegisterPage: React.FC = () => {
       const payload = {
         name: formData.name.trim(),
         email: formData.email.trim(),
-        mobile: formData.mobile.trim() || '+1 555-0199',
+        mobile: formData.mobile.trim(),
         designation: formData.designation.trim() || 'Enterprise Member',
         companyName: formData.companyName.trim() || 'Independent',
         companyEmail: formData.companyEmail.trim() || undefined,
@@ -288,7 +231,7 @@ export const RegisterPage: React.FC = () => {
       const payload = {
         name: formData.name.trim(),
         email: formData.email.trim(),
-        mobile: formData.mobile.trim() || '+1 555-0199',
+        mobile: formData.mobile.trim(),
         designation: formData.designation.trim() || 'Enterprise Member',
         companyName: formData.companyName.trim() || 'Independent',
         password: formData.password,
@@ -639,21 +582,26 @@ export const RegisterPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Google OAuth Sandbox Setup Modal (Development Fallback) */}
+      {/* Google Sign-Up configuration prompt (no simulated identity is ever offered) */}
       {showGoogleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
             <h3 className="text-base font-bold text-slate-900 mb-1">
-              Google Sign-Up Configuration
+              Google Sign-Up Not Configured
             </h3>
             <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-              Google OAuth client ID is not configured on this host. You can provide your Google Client ID or test with a simulated enterprise sandbox session.
+              Google OAuth is not configured on this host. Provide a Google OAuth client ID below
+              that is registered for this origin, or ask the administrator to set
+              <code className="mx-1 px-1 py-0.5 bg-slate-100 rounded text-[11px]">GOOGLE_CLIENT_ID</code>
+              and
+              <code className="mx-1 px-1 py-0.5 bg-slate-100 rounded text-[11px]">GOOGLE_CLIENT_SECRET</code>
+              on the server.
             </p>
 
             <div className="space-y-3">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                  Google Client ID (Optional)
+                  Google Client ID
                 </label>
                 <input
                   type="text"
@@ -667,20 +615,12 @@ export const RegisterPage: React.FC = () => {
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => handleGoogleSandboxRegister()}
-                  className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm"
+                  disabled={!customGoogleClientId.trim()}
+                  onClick={() => handleGoogleRegister(customGoogleClientId)}
+                  className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Test Sandbox Register
+                  Continue with Client ID
                 </button>
-                {customGoogleClientId.trim() && (
-                  <button
-                    type="button"
-                    onClick={() => handleGoogleRegister(customGoogleClientId)}
-                    className="py-2 px-3 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-lg"
-                  >
-                    Use Client ID
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={() => setShowGoogleModal(false)}

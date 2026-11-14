@@ -29,6 +29,7 @@ import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { PortalScopeGuard } from '../auth/guards/portal-scope.guard';
 import { PortalScope } from '../auth/decorators/portal-scope.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RateLimitGuard, RateLimit } from '../../common/guards/rate-limit.guard';
 
 @ApiTags('Companies & Workflows')
 @Controller('companies')
@@ -131,10 +132,11 @@ export class CompaniesController {
   }
 
   @Post(':id/verify-business')
-  @UseGuards(OptionalJwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RateLimitGuard)
+  @RateLimit({ limit: 10, windowMs: 15 * 60 * 1000, actionName: 'COMPANY_BUSINESS_VERIFY' })
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Enterprise verification for company domain & business (Bypass TXT, Work OTP, Document, Meta Tag)' })
-  @ApiResponse({ status: 200, description: 'Organization and domain verified successfully' })
+  @ApiOperation({ summary: 'Enterprise verification for company domain & business (Work OTP, DNS TXT, Meta Tag, Document review)' })
+  @ApiResponse({ status: 200, description: 'Organization and domain verified successfully, or submitted for review' })
   async verifyBusiness(
     @Param('id') companyId: string,
     @CurrentUser() user: any,
@@ -149,11 +151,12 @@ export class CompaniesController {
       manualToken?: string;
     },
   ) {
-    return this.companiesService.verifyBusinessEntity(user?.id, companyId, dto);
+    return this.companiesService.verifyBusinessEntity(user.id, companyId, dto);
   }
 
   @Post(':id/request-domain-otp')
-  @UseGuards(OptionalJwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RateLimitGuard)
+  @RateLimit({ limit: 5, windowMs: 15 * 60 * 1000, actionName: 'COMPANY_DOMAIN_OTP' })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Request OTP challenge to verify corporate domain ownership' })
   async requestDomainOtp(
@@ -161,7 +164,7 @@ export class CompaniesController {
     @CurrentUser() user: any,
     @Body('email') email: string,
   ) {
-    return this.companiesService.requestDomainOtp(user?.id, companyId, email);
+    return this.companiesService.requestDomainOtp(user.id, companyId, email);
   }
 
   @Post(':id/invitations')

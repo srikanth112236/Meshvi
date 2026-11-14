@@ -72,15 +72,15 @@ interface InboundOpportunity {
   clarificationAnswer?: string;
   isContactRevealed: boolean;
   contactDetails: {
-    email: string;
-    phone: string;
+    email: string | null;
+    phone: string | null;
     linkedinUrl?: string | null;
     unlocked: boolean;
   };
 }
 
 export const CompanyPipelinePage: React.FC = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { showToast } = useNotifications();
 
   const [loading, setLoading] = useState(true);
@@ -89,6 +89,8 @@ export const CompanyPipelinePage: React.FC = () => {
   const [objectiveFilter, setObjectiveFilter] = useState('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [selectedOpportunityForDrawer, setSelectedOpportunityForDrawer] = useState<InboundOpportunity | null>(null);
+  const drawerContactEmail = selectedOpportunityForDrawer?.contactDetails?.email || null;
+  const drawerContactPhone = selectedOpportunityForDrawer?.contactDetails?.phone || null;
 
   // Corporate Multi-Company Workspace Selector State
   const [userCompanies, setUserCompanies] = useState<any[]>([]);
@@ -153,8 +155,9 @@ export const CompanyPipelinePage: React.FC = () => {
         },
         body: JSON.stringify({
           bidId: attributionDealId,
-          signatoryName: 'Elena Rostova',
-          signatoryTitle: 'VP of Commercial Operations',
+          signatoryName:
+            user?.profile?.displayName || user?.email || 'Authorized Signatory',
+          signatoryTitle: user?.profile?.currentTitle || 'Authorized Signatory',
         }),
       });
       const data = await res.json();
@@ -264,20 +267,20 @@ export const CompanyPipelinePage: React.FC = () => {
             intermediaryEmail: item.intermediaryEmail,
             originalStatus: item.originalStatus,
             requesterId: item.requesterId,
-            requesterName: item.requesterName || 'Business Executive',
-            requesterTitle: item.requesterTitle || 'Corporate Executive',
-            requesterCompany: item.requesterCompany || 'Verified Enterprise',
+            requesterName: item.requesterName || 'Unknown requester',
+            requesterTitle: item.requesterTitle || 'Not provided',
+            requesterCompany: item.requesterCompany || 'Not provided',
             requesterAvatar: item.requesterAvatar,
             requesterCity: item.requesterCity,
             requesterCountry: item.requesterCountry,
             isRequesterVerified: item.isRequesterVerified,
-            targetColleagueName: item.targetColleagueName || 'Inbound Triage Desk',
-            targetColleagueTitle: item.targetColleagueTitle || 'Lead',
+            targetColleagueName: item.targetColleagueName || 'Unassigned',
+            targetColleagueTitle: item.targetColleagueTitle || '',
             delegatedToName: item.delegatedToName,
             delegatedToTitle: item.delegatedToTitle,
-            objective: item.objective || 'Commercial Sales',
-            marketFocus: item.marketFocus || 'Enterprise Expansion',
-            pitch: item.pitch || 'High-priority institutional collaboration inquiry.',
+            objective: item.objective || '',
+            marketFocus: item.marketFocus || '',
+            pitch: item.pitch || 'No pitch provided.',
             status: item.status,
             receivedAt: new Date(item.receivedAt).toLocaleDateString(),
             followUpDate: item.followUpDate ? new Date(item.followUpDate).toLocaleDateString() : undefined,
@@ -287,9 +290,10 @@ export const CompanyPipelinePage: React.FC = () => {
             clarificationAnswer: item.clarificationAnswer,
             isContactRevealed: item.isContactRevealed,
             contactDetails: item.contactDetails || {
-              email: item.isContactRevealed ? 'revealed@company.com' : 'm***@company.com',
-              phone: item.isContactRevealed ? '+1 415-555-0199' : '+1 ••• ••• ••89',
-              unlocked: item.isContactRevealed,
+              email: null,
+              phone: null,
+              linkedinUrl: null,
+              unlocked: Boolean(item.isContactRevealed),
             },
           }));
           setOpportunities(apiItems);
@@ -398,6 +402,18 @@ export const CompanyPipelinePage: React.FC = () => {
 
   useEffect(() => {
     fetchOpportunities();
+
+    // Re-sync inbound pipeline when returning to the tab (cross-device changes).
+    const sync = () => {
+      if (document.visibilityState === 'visible') fetchOpportunities();
+    };
+    document.addEventListener('visibilitychange', sync);
+    window.addEventListener('focus', sync);
+
+    return () => {
+      document.removeEventListener('visibilitychange', sync);
+      window.removeEventListener('focus', sync);
+    };
   }, [token]);
 
   const handleAccept = async (opp: InboundOpportunity) => {
@@ -419,15 +435,8 @@ export const CompanyPipelinePage: React.FC = () => {
         throw new Error(data.message || data.error?.message || 'Failed to accept bridge.');
       }
 
-      const rawEmail =
-        data.contactDetails?.email ||
-        (opp.contactDetails.unlocked
-          ? opp.contactDetails.email
-          : `${opp.requesterName.toLowerCase().replace(/\s+/g, '.')}@${opp.requesterCompany.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`);
-
-      const rawPhone =
-        data.contactDetails?.phone ||
-        (opp.contactDetails.unlocked ? opp.contactDetails.phone : '+1 (415) 890-2410');
+      const rawEmail = data.contactDetails?.email || opp.contactDetails.email || null;
+      const rawPhone = data.contactDetails?.phone || opp.contactDetails.phone || null;
 
       const spawnedDealRoomId = data.dealRoomId || 'active';
 
@@ -1547,22 +1556,24 @@ export const CompanyPipelinePage: React.FC = () => {
                         <Mail className="w-4 h-4 text-blue-600 shrink-0" />
                         <span
                           className="font-mono text-xs text-navy truncate"
-                          title={selectedOpportunityForDrawer.contactDetails.email}
+                          title={drawerContactEmail || undefined}
                         >
-                          {selectedOpportunityForDrawer.contactDetails.email}
+                          {drawerContactEmail || 'Not shared by counterparty'}
                         </span>
                       </div>
                       <button
                         type="button"
+                        disabled={!drawerContactEmail}
                         onClick={() => {
-                          navigator.clipboard.writeText(selectedOpportunityForDrawer.contactDetails.email);
+                          if (!drawerContactEmail) return;
+                          navigator.clipboard.writeText(drawerContactEmail);
                           showToast({
                             title: 'Email Copied',
-                            message: selectedOpportunityForDrawer.contactDetails.email,
+                            message: drawerContactEmail,
                             type: 'success',
                           });
                         }}
-                        className="p-1.5 text-text-muted hover:text-navy hover:bg-neutral-100 rounded-lg transition-colors shrink-0"
+                        className="p-1.5 text-text-muted hover:text-navy hover:bg-neutral-100 rounded-lg transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="Copy Email"
                       >
                         <Copy className="w-3.5 h-3.5" />
@@ -1575,22 +1586,24 @@ export const CompanyPipelinePage: React.FC = () => {
                         <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span
                           className="font-mono text-xs text-navy truncate"
-                          title={selectedOpportunityForDrawer.contactDetails.phone}
+                          title={drawerContactPhone || undefined}
                         >
-                          {selectedOpportunityForDrawer.contactDetails.phone}
+                          {drawerContactPhone || 'Not shared by counterparty'}
                         </span>
                       </div>
                       <button
                         type="button"
+                        disabled={!drawerContactPhone}
                         onClick={() => {
-                          navigator.clipboard.writeText(selectedOpportunityForDrawer.contactDetails.phone);
+                          if (!drawerContactPhone) return;
+                          navigator.clipboard.writeText(drawerContactPhone);
                           showToast({
                             title: 'Phone Copied',
-                            message: selectedOpportunityForDrawer.contactDetails.phone,
+                            message: drawerContactPhone,
                             type: 'success',
                           });
                         }}
-                        className="p-1.5 text-text-muted hover:text-navy hover:bg-neutral-100 rounded-lg transition-colors shrink-0"
+                        className="p-1.5 text-text-muted hover:text-navy hover:bg-neutral-100 rounded-lg transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="Copy Phone"
                       >
                         <Copy className="w-3.5 h-3.5" />
@@ -1628,8 +1641,7 @@ export const CompanyPipelinePage: React.FC = () => {
                   </p>
                   <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <span className="font-mono text-xs text-neutral-400">
-                      {selectedOpportunityForDrawer.contactDetails.email} &bull;{' '}
-                      {selectedOpportunityForDrawer.contactDetails.phone}
+                      ••••••@•••••• &bull; +•• ••• ••• •••
                     </span>
                     {selectedOpportunityForDrawer.status !== 'ACCEPTED' && (
                       <button
@@ -1937,8 +1949,16 @@ export const CompanyPipelinePage: React.FC = () => {
                       <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
                         Audit Status
                       </span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded uppercase">
-                        Verified Ledger
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-black rounded uppercase ${
+                          attributionLedger.auditStatus === 'VERIFIED_LEDGER'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {attributionLedger.auditStatus === 'VERIFIED_LEDGER'
+                          ? 'Verified Ledger'
+                          : 'No Evidence Yet'}
                       </span>
                     </div>
                   </div>
@@ -1960,7 +1980,9 @@ export const CompanyPipelinePage: React.FC = () => {
                               <span className="text-[10px] text-text-muted">{party.role}</span>
                             </div>
                             <span className="text-xs font-black text-emerald-600">
-                              {party.attributionPercentage}%
+                              {typeof party.attributionPercentage === 'number'
+                                ? `${party.attributionPercentage}%`
+                                : '—'}
                             </span>
                           </div>
                         ))}
@@ -1976,6 +1998,12 @@ export const CompanyPipelinePage: React.FC = () => {
                     </h4>
 
                     <div className="space-y-3 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-border">
+                      {(!attributionLedger.events || attributionLedger.events.length === 0) && (
+                        <div className="relative z-10 p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900">
+                          No attribution evidence has been recorded for this deal reference yet.
+                          Events appear here only after verified milestones are recorded.
+                        </div>
+                      )}
                       {attributionLedger.events?.map((ev: any, idx: number) => (
                         <div key={ev.id || idx} className="relative flex items-start space-x-4 pl-8">
                           <div className="absolute left-2 top-1.5 w-3.5 h-3.5 rounded-full bg-black border-2 border-white flex items-center justify-center shrink-0" />

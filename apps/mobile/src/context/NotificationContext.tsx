@@ -58,51 +58,20 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType>({} as NotificationContextType);
 
-// Initial mock notifications (marked read so they never trigger toasts on launch)
-const INITIAL_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: 'notif-initial-1',
-    userId: 'current-user',
-    type: 'MEETING_INVITE',
-    title: 'Google Meet Synchronization Dispatched',
-    body: 'Commercial Partnership Synchronization invite confirmed and synchronized to your calendar.',
-    read: true,
-    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    actionUrl: '/app/messages',
-  },
-  {
-    id: 'notif-initial-2',
-    userId: 'current-user',
-    type: 'CONNECTION_ACCEPTED',
-    title: 'Verified Connection Established',
-    body: 'Rajiv Mehra confirmed your direct bilateral communication corridor.',
-    read: true,
-    createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-    actionUrl: '/app/connections',
-  },
-  {
-    id: 'notif-initial-3',
-    userId: 'current-user',
-    type: 'SYSTEM_ALERT',
-    title: 'Executive Firewall Active',
-    body: 'Zero cold outreach and spam filtering actively protecting your executive inbox.',
-    read: true,
-    createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-    actionUrl: '/app/dashboard',
-  },
-];
+// Notifications are loaded exclusively from the backend (no mock seed data).
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const insets = useSafeAreaInsets();
   const { user, token, isAuthenticated } = useAuth();
 
-  const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [activeToast, setActiveToast] = useState<ToastItem | null>(null);
 
   const isInitialLoadRef = useRef(true);
-  const seenIdsRef = useRef<Set<string>>(new Set(INITIAL_NOTIFICATIONS.map((n) => n.id)));
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  const receivedIdsRef = useRef<Set<string>>(new Set());
   const translateY = useRef(new Animated.Value(-120)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const dismissTimerRef = useRef<any>(null);
@@ -211,12 +180,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           // Initial load: populate seen IDs so existing unread notifications do NOT trigger old toasts on refresh
           serverList.forEach((notif) => {
             seenIdsRef.current.add(notif.id);
+            receivedIdsRef.current.add(notif.id);
           });
           saveSeenIds();
           isInitialLoadRef.current = false;
         } else {
           // Subsequent poll: only fire toast for genuine newly arrived notifications
           serverList.forEach((notif) => {
+            receivedIdsRef.current.add(notif.id);
             if (!seenIdsRef.current.has(notif.id)) {
               seenIdsRef.current.add(notif.id);
               saveSeenIds(notif.id);
@@ -256,10 +227,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Mark single as read
   const markAsRead = useCallback(
     async (id: string) => {
+      const target = notifications.find((n) => n.id === id);
+      if (target && !target.read) {
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
-      setUnreadCount((c) => Math.max(0, c - 1));
 
       if (token) {
         await apiRequest(`/notifications/${id}/read`, {
@@ -268,7 +242,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }).catch(() => {});
       }
     },
-    [token]
+    [token, notifications]
   );
 
   // Mark all as read
@@ -297,17 +271,23 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (typeof EventSource !== 'undefined' && token) {
       getWorkingApiBaseUrl().then((baseUrl) => {
         try {
-          es = new EventSource(`${baseUrl}/notifications/stream`);
+          es = new EventSource(
+            `${baseUrl}/notifications/stream?token=${encodeURIComponent(token)}`,
+          );
           es.onmessage = (event: any) => {
             try {
               const parsed = JSON.parse(event.data);
               const data = parsed.data || parsed;
               if (data && data.type !== 'HEARTBEAT' && data.id) {
+                if (!receivedIdsRef.current.has(data.id)) {
+                  receivedIdsRef.current.add(data.id);
+                  setUnreadCount((c) => c + 1);
+                }
+                setNotifications((prev) => [data, ...prev.filter((n) => n.id !== data.id)]);
+
                 if (!seenIdsRef.current.has(data.id)) {
                   seenIdsRef.current.add(data.id);
                   saveSeenIds(data.id);
-                  setNotifications((prev) => [data, ...prev.filter((n) => n.id !== data.id)]);
-                  setUnreadCount((c) => c + 1);
                   showToast({
                     title: data.title || 'New Live Notification',
                     message: data.body || 'A new transaction accord or message has arrived.',

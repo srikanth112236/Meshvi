@@ -28,8 +28,8 @@ interface ContactRevealModalProps {
     objective: string;
     marketFocus: string;
     contactDetails?: {
-      email: string;
-      phone: string;
+      email?: string | null;
+      phone?: string | null;
       linkedinUrl?: string | null;
       unlocked: boolean;
     };
@@ -48,16 +48,18 @@ export const ContactRevealModal: React.FC<ContactRevealModalProps> = ({
 
   if (!isOpen || !opportunity) return null;
 
-  const email = opportunity.contactDetails?.email || 'contact@enterprise.com';
-  const phone = opportunity.contactDetails?.phone || '+1 (415) 890-2410';
+  const email = opportunity.contactDetails?.email || null;
+  const phone = opportunity.contactDetails?.phone || null;
 
   const handleCopyEmail = () => {
+    if (!email) return;
     navigator.clipboard.writeText(email);
     setCopiedEmail(true);
     setTimeout(() => setCopiedEmail(false), 2000);
   };
 
   const handleCopyPhone = () => {
+    if (!phone) return;
     navigator.clipboard.writeText(phone);
     setCopiedPhone(true);
     setTimeout(() => setCopiedPhone(false), 2000);
@@ -95,10 +97,16 @@ export const ContactRevealModal: React.FC<ContactRevealModalProps> = ({
             <div>
               <div className="flex items-center space-x-2">
                 <h3 className="text-lg font-black text-white">{opportunity.requesterName}</h3>
-                <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-full border border-emerald-500/30">
-                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                  <span>Verified CXO</span>
-                </span>
+                {opportunity.isRequesterVerified ? (
+                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-full border border-emerald-500/30">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                    <span>Verified Executive</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 bg-white/10 text-white/70 text-[10px] font-bold rounded-full border border-white/20">
+                    Executive Member
+                  </span>
+                )}
               </div>
               <p className="text-xs text-white/70 mt-0.5">
                 {opportunity.requesterTitle} &bull; <strong className="text-white">{opportunity.requesterCompany}</strong>
@@ -130,37 +138,39 @@ export const ContactRevealModal: React.FC<ContactRevealModalProps> = ({
                     Verified Work Email
                   </span>
                   <span className="text-xs font-mono font-bold text-navy truncate block">
-                    {email}
+                    {email || 'Not shared by counterparty'}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleCopyEmail}
-                  className="px-3 py-1.5 bg-surface hover:bg-neutral-100 border border-border rounded-xl text-xs font-bold text-navy flex items-center space-x-1.5 transition-colors shadow-xs"
-                >
-                  {copiedEmail ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-emerald-700">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-text-muted" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-                <a
-                  href={`mailto:${email}`}
-                  className="p-2 text-text-muted hover:text-navy hover:bg-neutral-100 rounded-xl transition-colors"
-                  title="Open mail client"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
+              {email && (
+                <div className="flex items-center space-x-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleCopyEmail}
+                    className="px-3 py-1.5 bg-surface hover:bg-neutral-100 border border-border rounded-xl text-xs font-bold text-navy flex items-center space-x-1.5 transition-colors shadow-xs"
+                  >
+                    {copiedEmail ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-text-muted" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href={`mailto:${email}`}
+                    className="p-2 text-text-muted hover:text-navy hover:bg-neutral-100 rounded-xl transition-colors"
+                    title="Open mail client"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Phone Card */}
@@ -174,37 +184,39 @@ export const ContactRevealModal: React.FC<ContactRevealModalProps> = ({
                     Executive Direct Line / Mobile
                   </span>
                   <span className="text-xs font-mono font-bold text-navy truncate block">
-                    {phone}
+                    {phone || 'Not shared by counterparty'}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleCopyPhone}
-                  className="px-3 py-1.5 bg-surface hover:bg-neutral-100 border border-border rounded-xl text-xs font-bold text-navy flex items-center space-x-1.5 transition-colors shadow-xs"
-                >
-                  {copiedPhone ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-emerald-700">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-text-muted" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-                <a
-                  href={`tel:${phone}`}
-                  className="p-2 text-text-muted hover:text-navy hover:bg-neutral-100 rounded-xl transition-colors"
-                  title="Call direct number"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
+              {phone && (
+                <div className="flex items-center space-x-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleCopyPhone}
+                    className="px-3 py-1.5 bg-surface hover:bg-neutral-100 border border-border rounded-xl text-xs font-bold text-navy flex items-center space-x-1.5 transition-colors shadow-xs"
+                  >
+                    {copiedPhone ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-text-muted" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href={`tel:${phone}`}
+                    className="p-2 text-text-muted hover:text-navy hover:bg-neutral-100 rounded-xl transition-colors"
+                    title="Call direct number"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 

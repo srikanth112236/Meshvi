@@ -49,28 +49,8 @@ export const GoogleCallbackPage = () => {
       const portalScope = resData.portalScope || 'CONSUMER';
       const isNew = !!resData.isNewUser;
 
-      // If Google sign-up was initiated from RegisterPage, enforce mandatory email OTP verification
-      if (state && (state.startsWith('register_') || state.includes('register'))) {
-        const emailToVerify = user?.email;
-        const nameToVerify = user?.profile?.displayName || user?.email?.split('@')[0] || 'Executive';
-        fetch('/api/v1/auth/register-init', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: nameToVerify,
-            email: emailToVerify,
-            password: 'GoogleOAuthSecure#2026',
-            agreeTerms: true,
-            authProvider: 'GOOGLE',
-          }),
-        }).catch(() => {});
-
-        clearOAuthHandshakeState();
-        navigate(`/register?step=otp&email=${encodeURIComponent(emailToVerify || '')}&name=${encodeURIComponent(nameToVerify)}&google=1`, { replace: true });
-        return;
-      }
-
-      // Save token and user in AuthContext
+      // Save token and user in AuthContext. Google has already verified the email,
+      // so no additional OTP step is required (and would dead-end on an existing account).
       login(token, user, refreshToken, portalScope);
       setIsVerified(true);
 
@@ -122,9 +102,11 @@ export const GoogleCallbackPage = () => {
         return;
       }
 
-      // Web: Automatically transition directly to search console after brief verification feedback
+      // Web: Automatically transition to onboarding for new members, otherwise to the app
+      const needsOnboarding =
+        isNew || resData.onboardingCompleted === false || user?.onboardingCompleted === false;
       setTimeout(() => {
-        navigate('/app/search', { replace: true });
+        navigate(needsOnboarding ? '/app/onboarding' : '/app/search', { replace: true });
       }, 700);
     };
 

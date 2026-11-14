@@ -9,6 +9,7 @@ import * as crypto from 'crypto';
 import * as dns from 'dns/promises';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthService } from '../auth/auth.service';
+import { MailSenderService } from '../auth/mail-sender.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { ClaimCompanyDto } from './dto/claim-company.dto';
 import { NotificationType, ConnectionStatus } from '@prisma/client';
@@ -74,6 +75,7 @@ export class CompaniesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
+    private readonly mailSender: MailSenderService,
   ) {}
 
   async searchCompanies(
@@ -908,24 +910,24 @@ export class CompaniesService {
       throw new BadRequestException('Company does not have an associated domain for DNS verification.');
     }
 
-    const expectedToken = company.dnsTxtToken || manualToken;
+    // 1. Perform live DNS query on the company domain
+    if (!company.dnsTxtToken) {
+      throw new BadRequestException(
+        'No DNS verification challenge exists for this company. Generate a DNS challenge first.',
+      );
+    }
+
+    const expectedToken = company.dnsTxtToken;
     let verified = false;
     let mxRecords: any[] = [];
-    let method = 'DNS_TXT_LOOKUP';
+    const method = 'DNS_TXT_LOOKUP';
 
-    // 1. Allow staging / dev bypass token
-    if (manualToken && (manualToken === 'setu-verify-local-dev-bypass' || manualToken === company.dnsTxtToken)) {
-      verified = true;
-      method = 'TOKEN_MATCH_VERIFIED';
-    } else {
-      // 2. Perform live DNS query on the company domain
-      try {
-        const txtRecords = await dns.resolveTxt(company.domain);
-        const flattened = txtRecords.flat();
-        verified = flattened.some((record) => record.includes(expectedToken || 'setu-verify'));
-      } catch (err: any) {
-        this.logger.warn(`DNS TXT resolution failed for ${company.domain}: ${err.message}`);
-      }
+    try {
+      const txtRecords = await dns.resolveTxt(company.domain);
+      const flattened = txtRecords.flat();
+      verified = flattened.some((record) => record.includes(expectedToken));
+    } catch (err: any) {
+      this.logger.warn(`DNS TXT resolution failed for ${company.domain}: ${err.message}`);
     }
 
     // Informational MX check (Feature #4)
@@ -1007,14 +1009,26 @@ export class CompaniesService {
     });
     if (!company) throw new NotFoundException('Company not found');
 
-    const method = dto.method || 'INSTANT_BYPASS';
-    let verified = false;
-    let verificationMethodLabel = 'Instant Enterprise Fast-Track';
+    const method = (dto.method || '').trim().toUpperCase();
     const compDomain = extractCleanDomain(company.domain);
+    const effectiveUserId = userId;
+
+    if (!effectiveUserId) {
+      throw new ForbiddenException('Authentication is required to verify a company.');
+    }
+
+    let verificationMethodLabel: string;
 
     if (method === 'INSTANT_BYPASS') {
-      verified = true;
-      verificationMethodLabel = 'INSTANT_ENTERPRISE_BYPASS';
+      const allowInstantBypass =
+        process.env.NODE_ENV !== 'production' &&
+        process.env.ALLOW_INSTANT_COMPANY_VERIFICATION === 'true';
+      if (!allowInstantBypass) {
+        throw new ForbiddenException(
+          'Instant company verification is disabled. Use corporate work email OTP, DNS TXT, HTML meta tag, or submit corporate documents for manual review.',
+        );
+      }
+      verificationMethodLabel = 'INSTANT_ENTERPRISE_BYPASS (non-production only)';
     } else if (method === 'WORK_EMAIL_OTP') {
       if (!dto.workEmail) {
         throw new BadRequestException('Corporate work email is required for email verification.');
@@ -1039,113 +1053,150 @@ export class CompaniesService {
         );
       }
 
-      // 3. Verify OTP code
+      // 3. Verify the emailed one-time code
       if (!dto.otpCode) {
         throw new BadRequestException('Please enter the 6-digit corporate verification code.');
       }
 
       const cacheKey = `${companyId}:${cleanEmail}`;
       const cached = this.domainOtpCache.get(cacheKey);
-      const isDevBypass = dto.otpCode.trim() === '123456' || dto.otpCode.trim() === '777888';
 
-      if (cached) {
-        if (Date.now() > cached.expiresAt) {
-          this.domainOtpCache.delete(cacheKey);
-          throw new BadRequestException('Verification code has expired. Please click "Send Verification OTP" again.');
-        }
-        if (cached.otp !== dto.otpCode.trim() && !isDevBypass) {
-          throw new BadRequestException('Invalid verification code entered. Please check and try again.');
-        }
-        this.domainOtpCache.delete(cacheKey);
-        verified = true;
-        verificationMethodLabel = `WORK_EMAIL_OTP (${cleanEmail})`;
-      } else if (isDevBypass) {
-        verified = true;
-        verificationMethodLabel = `WORK_EMAIL_OTP_DEV_BYPASS (${cleanEmail})`;
-      } else {
+      if (!cached) {
         throw new BadRequestException(
           'No active verification code found for this email. Please click "Send Verification OTP" first.',
         );
       }
+      if (Date.now() > cached.expiresAt) {
+        this.domainOtpCache.delete(cacheKey);
+        throw new BadRequestException('Verification code has expired. Please click "Send Verification OTP" again.');
+      }
+      if (cached.otp !== dto.otpCode.trim()) {
+        throw new BadRequestException('Invalid verification code entered. Please check and try again.');
+      }
+
+      this.domainOtpCache.delete(cacheKey);
+      verificationMethodLabel = `WORK_EMAIL_OTP (${cleanEmail})`;
     } else if (method === 'META_TAG') {
-      verified = true;
+      if (!company.domain) {
+        throw new BadRequestException('This company has no website domain for meta tag verification.');
+      }
+
+      const expectedMetaToken = `Meshvi-verify-${company.id.slice(0, 8)}`;
+      const submittedToken = (dto.manualToken || '').trim();
+      if (!submittedToken) {
+        throw new BadRequestException(
+          `Add <meta name="meshvi-verification" content="${expectedMetaToken}"> to the company homepage and try again.`,
+        );
+      }
+      if (submittedToken !== expectedMetaToken) {
+        throw new BadRequestException(`Meta tag token must be exactly "${expectedMetaToken}".`);
+      }
+
+      const homepageHtml = await this.fetchCompanyHomepage(company.domain);
+      if (!homepageHtml.includes(expectedMetaToken)) {
+        throw new BadRequestException(
+          `Meta tag "${expectedMetaToken}" was not found on the company homepage. Publish it and try again.`,
+        );
+      }
+
       verificationMethodLabel = 'WEBMASTER_META_TAG';
     } else if (method === 'DOCUMENT') {
       if (!dto.registrationNumber && !dto.documentType) {
         throw new BadRequestException('Official corporate registration or tax ID number is required.');
       }
-      verified = true;
-      verificationMethodLabel = `OFFICIAL_REGISTRY_DOCUMENT (${dto.documentType || 'Corporate License'}: ${dto.registrationNumber || 'Verified'})`;
+
+      const reviewNote = `OFFICIAL_REGISTRY_DOCUMENT (${dto.documentType || 'Corporate License'}: ${dto.registrationNumber || 'Submitted'})`;
+
+      await this.prisma.company.update({
+        where: { id: companyId },
+        data: { verificationStatus: 'PENDING' },
+      });
+
+      // Ensure a reviewable claim request exists so platform administrators can act on it.
+      const existingClaim = await this.prisma.companyClaimRequest.findFirst({
+        where: { companyId, requestedByUserId: effectiveUserId },
+      });
+
+      if (existingClaim) {
+        await this.prisma.companyClaimRequest.update({
+          where: { id: existingClaim.id },
+          data: {
+            status: 'PENDING',
+            verificationMethod: 'DOCUMENT',
+            evidenceReference: dto.documentUrl || dto.registrationNumber || null,
+            reviewNotes: `Awaiting manual ownership review — ${reviewNote}`,
+          },
+        });
+      } else {
+        await this.prisma.companyClaimRequest.create({
+          data: {
+            companyId,
+            requestedByUserId: effectiveUserId,
+            verificationMethod: 'DOCUMENT',
+            evidenceReference: dto.documentUrl || dto.registrationNumber || null,
+            status: 'PENDING',
+            reviewNotes: `Awaiting manual ownership review — ${reviewNote}`,
+          },
+        });
+      }
+
+      await this.prisma.auditLog.create({
+        data: {
+          userId: effectiveUserId,
+          action: 'COMPANY_VERIFICATION_SUBMITTED',
+          resource: 'COMPANY',
+          resourceId: companyId,
+          metadata: JSON.stringify({
+            companyName: company.name,
+            domain: company.domain,
+            method: reviewNote,
+            submittedAt: new Date(),
+          }),
+        },
+      });
+
+      this.logger.log(
+        `Company "${company.name}" (${company.id}) submitted corporate documentation for manual review by user ${effectiveUserId}`,
+      );
+
+      return {
+        success: true,
+        pendingReview: true,
+        message: `Documentation for "${company.name}" was submitted for manual review. An administrator will review the claim before ownership is granted.`,
+        data: company,
+        auth: null,
+      };
     } else if (method === 'DNS_TXT') {
-      if (dto.manualToken && (dto.manualToken === 'setu-verify-local-dev-bypass' || dto.manualToken === company.dnsTxtToken)) {
-        verified = true;
-        verificationMethodLabel = 'DNS_TXT_MATCH';
-      } else {
-        try {
-          if (company.domain) {
-            const clean = company.domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-            const txtRecords = await dns.resolveTxt(clean);
-            const flattened = txtRecords.flat();
-            verified = flattened.some((record) => record.includes(company.dnsTxtToken || 'setu-verify'));
-          }
-        } catch {}
-        if (!verified) {
-          verified = true;
-          verificationMethodLabel = 'DNS_TXT_VALIDATED';
-        }
+      if (!company.domain) {
+        throw new BadRequestException('Company does not have an associated domain for DNS verification.');
       }
+      if (!company.dnsTxtToken) {
+        throw new BadRequestException(
+          'No DNS verification challenge exists for this company. Generate a DNS challenge first, then publish the TXT record.',
+        );
+      }
+
+      const cleanDomain = extractCleanDomain(company.domain);
+      let txtRecords: string[][] = [];
+      try {
+        txtRecords = await dns.resolveTxt(cleanDomain);
+      } catch (err: any) {
+        this.logger.warn(`DNS TXT resolution failed for ${cleanDomain}: ${err.message}`);
+        throw new BadRequestException(
+          `DNS TXT lookup failed for "${cleanDomain}". Ensure the record has been published and has propagated.`,
+        );
+      }
+
+      const flattened = txtRecords.flat();
+      if (!flattened.some((record) => record.includes(company.dnsTxtToken as string))) {
+        throw new BadRequestException(
+          `DNS TXT record not found on "${cleanDomain}". Publish a TXT record containing "${company.dnsTxtToken}" and try again.`,
+        );
+      }
+
+      verificationMethodLabel = 'DNS_TXT_MATCH';
     } else {
-      verified = true;
-      verificationMethodLabel = method;
-    }
-
-    if (!verified) {
-      throw new BadRequestException('Verification criteria not met.');
-    }
-
-    // Resolve or fallback User ID to ensure verification always succeeds
-    let effectiveUserId = userId;
-    if (!effectiveUserId) {
-      const existingUser = dto.workEmail
-        ? await this.prisma.user.findFirst({
-            where: { email: dto.workEmail.toLowerCase().trim() },
-            include: { roles: true },
-          })
-        : null;
-
-      if (existingUser) {
-        effectiveUserId = existingUser.id;
-      } else {
-        const adminUser =
-          (await this.prisma.user.findFirst({
-            where: { roles: { some: { role: 'COMPANY_ADMIN' } } },
-            include: { roles: true },
-            orderBy: { createdAt: 'desc' },
-          })) ||
-          (await this.prisma.user.findFirst({
-            include: { roles: true },
-            orderBy: { createdAt: 'desc' },
-          }));
-
-        if (adminUser) {
-          effectiveUserId = adminUser.id;
-        } else {
-          const userEmail = dto.workEmail ? dto.workEmail.toLowerCase().trim() : `admin@${compDomain || 'vedasynk.com'}`;
-          const newUser = await this.prisma.user.create({
-            data: {
-              email: userEmail,
-              emailNormalized: userEmail,
-              authProvider: 'LOCAL',
-              onboardingCompleted: true,
-              roles: {
-                create: [{ role: 'COMPANY_ADMIN' }],
-              },
-            },
-            include: { roles: true },
-          });
-          effectiveUserId = newUser.id;
-        }
-      }
+      throw new BadRequestException('Unsupported company verification method.');
     }
 
     // 1. Mark company as VERIFIED
@@ -1238,7 +1289,8 @@ export class CompaniesService {
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           portalScope: tokens.portalScope,
-          user: fullUser,
+          // Use the sanitized identity from generateAuthTokens — never return password hashes or 2FA secrets.
+          user: tokens.user,
         };
       } catch (err: any) {
         this.logger.warn(`Auth session generation skipped: ${err?.message}`);
@@ -1255,7 +1307,46 @@ export class CompaniesService {
     };
   }
 
-  async requestDomainOtp(userId: string | undefined, companyId: string, email: string) {
+  /**
+   * Fetches a company homepage for meta-tag ownership verification.
+   */
+  private async fetchCompanyHomepage(domain: string): Promise<string> {
+    const cleanDomain = extractCleanDomain(domain);
+    if (!cleanDomain) {
+      throw new BadRequestException('Company has no website domain for meta tag verification.');
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      let res = await fetch(`https://${cleanDomain}`, {
+        signal: controller.signal,
+        redirect: 'follow',
+      });
+      if (!res.ok) {
+        res = await fetch(`http://${cleanDomain}`, {
+          signal: controller.signal,
+          redirect: 'follow',
+        });
+      }
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return (await res.text()).slice(0, 2_000_000);
+    } catch (err: any) {
+      throw new BadRequestException(
+        `Could not fetch https://${cleanDomain} to verify the meta tag: ${err.message}`,
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async requestDomainOtp(userId: string, companyId: string, email: string) {
+    if (!userId) {
+      throw new ForbiddenException('Authentication is required to request a domain verification code.');
+    }
+
     const company = await this.prisma.company.findUnique({ where: { id: companyId } });
     if (!company) throw new NotFoundException('Company not found');
 
@@ -1281,23 +1372,32 @@ export class CompaniesService {
       );
     }
 
-    // 3. Generate cryptographic 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // 3. Generate a cryptographically strong 6-digit code and deliver it only to the mailbox owner
+    const otp = crypto.randomInt(100000, 1000000).toString();
     const cacheKey = `${companyId}:${cleanEmail}`;
+    const expiresInMinutes = 15;
     this.domainOtpCache.set(cacheKey, {
       otp,
       email: cleanEmail,
-      expiresAt: Date.now() + 15 * 60 * 1000, // 15 mins expiry
+      expiresAt: Date.now() + expiresInMinutes * 60 * 1000,
     });
 
-    this.logger.log(`[Domain Verification] Dispatched OTP ${otp} for ${cleanEmail} (Company: ${company.name})`);
+    const recipientName = cleanEmail.split('@')[0];
+    await this.mailSender.sendVerificationCodeEmail(cleanEmail, recipientName, otp, {
+      companyName: company.name,
+      expiryMinutes: expiresInMinutes,
+    });
+
+    this.logger.log(
+      `[Domain Verification] Dispatched a verification code for ${cleanEmail} (Company: ${company.name})`,
+    );
 
     return {
       success: true,
-      message: `Corporate verification code generated for ${cleanEmail}. Enter code to verify.`,
-      otp,
+      message: `A 6-digit verification code was sent to ${cleanEmail}. It expires in ${expiresInMinutes} minutes.`,
       emailDomain,
       companyDomain: compDomain,
+      expiresInMinutes,
     };
   }
 
@@ -1353,16 +1453,18 @@ export class CompaniesService {
     if (!record) throw new NotFoundException('Company domain record not found');
 
     let verified = false;
-    if (manualToken && (manualToken === 'setu-verify-local-dev-bypass' || manualToken === record.dnsTxtToken)) {
-      verified = true;
-    } else {
-      try {
-        const txtRecords = await dns.resolveTxt(record.domain);
-        const flattened = txtRecords.flat();
-        verified = flattened.some((r) => r.includes(record.dnsTxtToken || 'setu-verify'));
-      } catch (err: any) {
-        this.logger.warn(`DNS lookup failed for secondary domain ${record.domain}: ${err.message}`);
-      }
+    if (!record.dnsTxtToken) {
+      throw new BadRequestException(
+        'No DNS verification challenge exists for this domain. Generate a DNS challenge first.',
+      );
+    }
+
+    try {
+      const txtRecords = await dns.resolveTxt(record.domain);
+      const flattened = txtRecords.flat();
+      verified = flattened.some((r) => r.includes(record.dnsTxtToken as string));
+    } catch (err: any) {
+      this.logger.warn(`DNS lookup failed for secondary domain ${record.domain}: ${err.message}`);
     }
 
     if (!verified) {
@@ -2501,69 +2603,70 @@ export class CompaniesService {
       orderBy: { recordedAt: 'asc' },
     });
 
-    // Provide rich cryptographic ledger response with fallback if none exists yet
-    const events = rawEvents.length > 0
-      ? rawEvents.map((e) => {
-          const hashSource = `${e.id}:${e.dealReferenceId}:${e.eventType}:${e.actorUserId}:${e.recordedAt.toISOString()}`;
-          const cryptographicHash = crypto.createHash('sha256').update(hashSource).digest('hex');
-          return {
-            id: e.id,
-            eventType: e.eventType,
-            contributorRole: e.contributorRole,
-            timestamp: e.recordedAt,
-            evidenceSummary: e.evidencePayload ? JSON.parse(e.evidencePayload)?.summary || e.evidencePayload : 'Milestone timestamped & recorded',
-            cryptographicHash,
-            confidenceScore: e.confidenceScore,
-            dealValue: e.dealValue,
-          };
+    // Only real recorded events are returned. Never synthesize an audit trail.
+    const events = rawEvents.map((e) => {
+      const hashSource = `${e.id}:${e.dealReferenceId}:${e.eventType}:${e.actorUserId}:${e.recordedAt.toISOString()}`;
+      const cryptographicHash = crypto.createHash('sha256').update(hashSource).digest('hex');
+
+      let evidenceSummary = 'Milestone timestamped & recorded';
+      if (e.evidencePayload) {
+        try {
+          const parsed = JSON.parse(e.evidencePayload);
+          evidenceSummary = parsed?.summary || parsed?.note || e.evidencePayload;
+        } catch {
+          evidenceSummary = e.evidencePayload;
+        }
+      }
+
+      return {
+        id: e.id,
+        eventType: e.eventType,
+        contributorRole: e.contributorRole,
+        timestamp: e.recordedAt,
+        evidenceSummary,
+        cryptographicHash,
+        confidenceScore: e.confidenceScore,
+        dealValue: e.dealValue,
+      };
+    });
+
+    // Derive parties from actual event actors; no fabricated people or percentages.
+    const actorIds = Array.from(
+      new Set(rawEvents.map((e) => e.actorUserId).filter((id): id is string => Boolean(id))),
+    );
+    const actors = actorIds.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: actorIds } },
+          select: {
+            id: true,
+            email: true,
+            profile: { select: { displayName: true } },
+          },
         })
-      : [
-          {
-            id: 'ev-1',
-            eventType: 'DISCOVERY_ORIGIN',
-            contributorRole: 'SOURCING_LEAD',
-            timestamp: new Date(Date.now() - 48 * 3600 * 1000),
-            evidenceSummary: 'Initial opportunity discovered via AI Intent Graph & Corridor Match.',
-            cryptographicHash: crypto.createHash('sha256').update(`discovery:${dealReferenceId}`).digest('hex'),
-            confidenceScore: 1.0,
-          },
-          {
-            id: 'ev-2',
-            eventType: 'MANDATE_HANDOVER',
-            contributorRole: 'INTERMEDIARY',
-            timestamp: new Date(Date.now() - 24 * 3600 * 1000),
-            evidenceSummary: 'Corporate mandate verified & commercial scope handed over to procurement desk.',
-            cryptographicHash: crypto.createHash('sha256').update(`mandate:${dealReferenceId}`).digest('hex'),
-            confidenceScore: 0.95,
-          },
-          {
-            id: 'ev-3',
-            eventType: 'MUTUAL_NDA_EXECUTED',
-            contributorRole: 'LEGAL_OPERATIONS',
-            timestamp: new Date(Date.now() - 12 * 3600 * 1000),
-            evidenceSummary: 'Bilateral M-NDA cryptographically executed with SHA-256 digital stamp.',
-            cryptographicHash: crypto.createHash('sha256').update(`mnda:${dealReferenceId}`).digest('hex'),
-            confidenceScore: 1.0,
-          },
-          {
-            id: 'ev-4',
-            eventType: 'CALENDAR_MEETING_CONFIRMED',
-            contributorRole: 'EXECUTIVE_SPONSOR',
-            timestamp: new Date(Date.now() - 2 * 3600 * 1000),
-            evidenceSummary: 'Direct negotiation completed. Verified via RFC 5545 iCalendar ICS cryptographic UID.',
-            cryptographicHash: crypto.createHash('sha256').update(`meeting:${dealReferenceId}`).digest('hex'),
-            confidenceScore: 1.0,
-          },
-        ];
+      : [];
+    const actorNameById = new Map(
+      actors.map((a) => [a.id, a.profile?.displayName || a.email] as const),
+    );
+
+    const partyMap = new Map<
+      string,
+      { name: string; role: string; attributionPercentage: number | null }
+    >();
+    for (const event of rawEvents) {
+      const key = `${event.actorUserId}:${event.contributorRole}`;
+      if (!partyMap.has(key)) {
+        partyMap.set(key, {
+          name: actorNameById.get(event.actorUserId) || 'Platform participant',
+          role: event.contributorRole,
+          attributionPercentage: null,
+        });
+      }
+    }
 
     return {
       dealReferenceId,
-      auditStatus: 'VERIFIED_LEDGER',
-      partiesInvolved: [
-        { name: 'Marcus Sterling', role: 'Original Discoverer', attributionPercentage: 35 },
-        { name: 'Elena Rostova', role: 'Commercial Sponsor', attributionPercentage: 40 },
-        { name: 'Rajesh Mehta', role: 'Procurement Approver', attributionPercentage: 25 },
-      ],
+      auditStatus: events.length > 0 ? 'VERIFIED_LEDGER' : 'NO_EVIDENCE',
+      partiesInvolved: Array.from(partyMap.values()),
       events,
       totalEventsRecorded: events.length,
     };

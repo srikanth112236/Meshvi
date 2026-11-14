@@ -8,9 +8,9 @@ describe('AuthController', () => {
   const mockAuthService = {
     register: jest.fn().mockImplementation((dto) =>
       Promise.resolve({
-        message: 'Account registered successfully',
-        token: 'mock_jwt_token',
-        user: { id: 'u1', email: dto.email, roles: ['USER'], profile: { id: 'p1' } },
+        success: true,
+        message: 'Verification code dispatched',
+        email: dto.email,
       }),
     ),
     login: jest.fn().mockImplementation((dto) =>
@@ -49,7 +49,7 @@ describe('AuthController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('should register a new user and return token', async () => {
+  it('should initiate registration and dispatch a verification OTP', async () => {
     const res = await controller.register({
       name: 'Srikanth M',
       email: 'srikanth@vedasynk.local',
@@ -59,8 +59,8 @@ describe('AuthController', () => {
       designation: 'Director',
       companyName: 'Acme Corp',
     });
-    expect(res.token).toBe('mock_jwt_token');
-    expect(res.user.email).toBe('srikanth@vedasynk.local');
+    expect(res.success).toBe(true);
+    expect(res.email).toBe('srikanth@vedasynk.local');
   });
 
   it('should login and return token', async () => {

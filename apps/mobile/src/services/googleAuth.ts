@@ -7,8 +7,7 @@ import { apiRequest } from './api';
 WebBrowser.maybeCompleteAuthSession();
 
 export const GOOGLE_WEB_CLIENT_ID =
-  process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ||
-  '1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com';
+  process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export interface GoogleAuthResult {
   type: 'native' | 'browser' | 'browser_session' | 'show_one_tap';
@@ -31,7 +30,11 @@ try {
   const gSignin = require('@react-native-google-signin/google-signin');
   GoogleSigninModule = gSignin.GoogleSignin;
   statusCodesModule = gSignin.statusCodes;
-  if (GoogleSigninModule && typeof GoogleSigninModule.configure === 'function') {
+  if (
+    GoogleSigninModule &&
+    GOOGLE_WEB_CLIENT_ID &&
+    typeof GoogleSigninModule.configure === 'function'
+  ) {
     GoogleSigninModule.configure({
       webClientId: GOOGLE_WEB_CLIENT_ID,
       offlineAccess: true,
@@ -136,11 +139,7 @@ export async function launchBrowserGoogleOAuth(options?: {
   const redirectUri =
     process.env.EXPO_PUBLIC_GOOGLE_REDIRECT_URI || 'https://meshvi.org/auth/google/callback';
 
-  let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${encodeURIComponent(
-    GOOGLE_WEB_CLIENT_ID
-  )}&redirect_uri=${encodeURIComponent(
-    redirectUri
-  )}&scope=openid%20profile%20email&state=${state}&access_type=offline&prompt=select_account`;
+  let authUrl = '';
 
   try {
     const res = await apiRequest<{ url?: string; clientId?: string }>(
@@ -153,6 +152,17 @@ export async function launchBrowserGoogleOAuth(options?: {
       }
     }
   } catch {}
+
+  if (!authUrl) {
+    if (!GOOGLE_WEB_CLIENT_ID) {
+      throw new Error('Google Sign-In is not configured. Please contact the administrator.');
+    }
+    authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${encodeURIComponent(
+      GOOGLE_WEB_CLIENT_ID
+    )}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&scope=openid%20profile%20email&state=${state}&access_type=offline&prompt=select_account`;
+  }
 
   try {
     // Open in-app browser session listening for returnUrl (exp:// or meshvi://)

@@ -4,7 +4,6 @@
  */
 
 const PRODUCTION_CANONICAL_ORIGIN = 'https://meshvi.org';
-const DEFAULT_GOOGLE_CLIENT_ID = '1063250494735-h91upf3htdi4ms53aukttj9lgdenj5ia.apps.googleusercontent.com';
 
 /**
  * Returns the exact canonical redirect URI for Google OAuth.
@@ -39,7 +38,8 @@ export function getGoogleClientId(customOverride?: string): string {
     return envClientId.trim();
   }
 
-  return DEFAULT_GOOGLE_CLIENT_ID;
+  // No client ID bundled into the app: the backend exposes the configured OAuth URL.
+  return '';
 }
 
 /**

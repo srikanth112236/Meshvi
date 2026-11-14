@@ -51,6 +51,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const seenIdsRef = useRef<Set<string>>(new Set());
+  const receivedIdsRef = useRef<Set<string>>(new Set());
   const lastToastTimeRef = useRef<number>(0);
 
   // Load seen notifications from localStorage on mount
@@ -125,6 +126,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         // Background polling is strictly silent state synchronization.
         // It updates the drawer and badge without spawning unsolicited toast popups or audio chimes.
+        fetchedList.forEach((n) => receivedIdsRef.current.add(n.id));
+        receivedIdsRef.current = new Set(Array.from(receivedIdsRef.current).slice(-500));
         setNotifications(fetchedList);
         setUnreadCount(count);
       }
@@ -140,10 +143,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
+      const target = notifications.find((n) => n.id === id);
+      if (target && !target.read) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch {
       // Non-fatal
     }
@@ -189,9 +195,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             createdAt: newNotif.createdAt || new Date().toISOString(),
           };
 
-          // Update real-time notification hub state silently
+          // Update real-time notification hub state silently.
+          // Only increment the badge for notifications the poll has not already counted.
+          const alreadyCounted = receivedIdsRef.current.has(notifItem.id);
+          if (!alreadyCounted) {
+            receivedIdsRef.current.add(notifItem.id);
+            setUnreadCount((prev) => prev + 1);
+          }
           setNotifications((prev) => [notifItem, ...prev.filter((n) => n.id !== notifItem.id)]);
-          setUnreadCount((prev) => prev + 1);
 
           // Only trigger a real-time toast alert for direct interactive peer actions,
           // NEVER for background system recommendations, weekly digests, or system alerts!
@@ -233,8 +244,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       fetchNotifications();
     }, 30000);
 
+    // Reconcile immediately when the tab becomes visible/focused after being idle.
+    const handleVisibilityRefresh = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityRefresh);
+    window.addEventListener('focus', handleVisibilityRefresh);
+
     return () => {
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityRefresh);
+      window.removeEventListener('focus', handleVisibilityRefresh);
       if (eventSource) {
         eventSource.close();
       }
