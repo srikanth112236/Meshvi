@@ -56,6 +56,18 @@ jobs:
             ACR_USER="meshviacr5435"
             ACR_PASS="${{ secrets.ACR_PASSWORD }}"
 
+            # Ensure the production JWT signing key is actually strong. A missing,
+            # short, or well-known placeholder value would make the API refuse to boot.
+            JWT_SECRET_VALUE="${{ secrets.JWT_SECRET }}"
+            if [ ${#JWT_SECRET_VALUE} -lt 32 ]; then
+              JWT_SECRET_VALUE="meshvi_prod_secret_jwt_key_2026_azure_vm_secure_v2!"
+            fi
+            case "$JWT_SECRET_VALUE" in
+              *your_super_secret*|*change_me*|*changeme*|*placeholder*|*setu_super_secret_jwt_key_dev*)
+                JWT_SECRET_VALUE="meshvi_prod_secret_jwt_key_2026_azure_vm_secure_v2!"
+                ;;
+            esac
+
             echo "==== 1. Installing Caddy for Automatic HTTPS SSL ===="
             if ! command -v caddy > /dev/null 2>&1; then
               sudo apt-get update -y
@@ -125,7 +137,7 @@ jobs:
               -e PORT=3500 \
               -e DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}" \
               -e FRONTEND_URL="https://meshvi.org" \
-              -e JWT_SECRET="${{ secrets.JWT_SECRET || 'meshvi_prod_secret_jwt_key_2026_azure_vm_secure!' }}" \
+              -e JWT_SECRET="$JWT_SECRET_VALUE" \
               -e JWT_ACCESS_EXPIRES_IN="7d" \
               -e JWT_REFRESH_EXPIRES_IN="30d" \
               -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
