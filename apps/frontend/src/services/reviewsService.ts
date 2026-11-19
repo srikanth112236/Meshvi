@@ -154,8 +154,8 @@ async function apiRequest<T>(
   return json.data as T;
 }
 
-export function fetchPublicReviews() {
-  return apiRequest<PublicReviewsResponse>('/public');
+export function fetchPublicReviews(token: string) {
+  return apiRequest<PublicReviewsResponse>('/public', {}, token);
 }
 
 export function fetchMyReviews(token: string) {

@@ -92,10 +92,14 @@ export const ReviewsPage: React.FC = () => {
   const canModerate = canModerateReviews(user);
 
   const loadPublic = async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setLoadError('');
     try {
-      const response = await fetchPublicReviews();
+      const response = await fetchPublicReviews(token);
       setData(response);
     } catch (err: any) {
       setLoadError(err?.message || 'Unable to load member reviews right now.');
@@ -106,7 +110,7 @@ export const ReviewsPage: React.FC = () => {
 
   useEffect(() => {
     loadPublic();
-  }, []);
+  }, [token]);
 
   const loadMyReviews = async () => {
     if (!token) {
@@ -223,7 +227,7 @@ export const ReviewsPage: React.FC = () => {
         type: 'success',
         message:
           saved.status === 'PUBLISHED'
-            ? 'Your review is live on the public wall. Thank you!'
+            ? 'Your review is live on the member reviews wall. Thank you!'
             : 'Thank you! Your review is now in the moderation queue and will appear shortly.',
       });
       await loadMyReviews();
@@ -325,7 +329,7 @@ export const ReviewsPage: React.FC = () => {
               </button>
             ) : (
               <Link
-                to="/login?next=%2Freviews"
+                to="/login?next=%2Fapp%2Freviews"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-sm transition-colors"
               >
                 <Lock className="w-4 h-4" />
@@ -390,11 +394,11 @@ export const ReviewsPage: React.FC = () => {
                   <h2 className="text-lg font-bold text-navy">Sign in to share your review</h2>
                   <p className="mt-1 text-xs text-text-muted leading-relaxed">
                     Ratings come from real MESHVI members. Sign in to share your experience. Your
-                    feedback will be checked before it appears publicly.
+                    feedback will be checked before it appears on the reviews wall.
                   </p>
                 </div>
                 <Link
-                  to="/login?next=%2Freviews"
+                  to="/login?next=%2Fapp%2Freviews"
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors"
                 >
                   <span>Sign in</span>
@@ -608,7 +612,7 @@ export const ReviewsPage: React.FC = () => {
                   )}
                 </button>
                 <p className="text-[10px] text-center text-text-muted">
-                  Reviews are moderated before appearing publicly.
+                  Reviews are moderated before appearing on the reviews wall.
                 </p>
               </form>
               </>
@@ -617,13 +621,13 @@ export const ReviewsPage: React.FC = () => {
             <div className="rounded-2xl border border-border bg-surface-muted/50 p-4 flex items-start gap-2.5">
               <BadgeCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
               <p className="text-[11px] text-text-muted leading-relaxed">
-                Your review will be checked before it appears publicly. You can update or remove
-                any of your reviews at any time.
+                Your review will be checked before it appears on the reviews wall. You can update
+                or remove any of your reviews at any time.
               </p>
             </div>
           </aside>
 
-          {/* Public wall */}
+          {/* Member reviews wall */}
           <main className="min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div>

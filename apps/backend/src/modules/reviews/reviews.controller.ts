@@ -26,7 +26,8 @@ export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Get('public')
-  @ApiOperation({ summary: 'Published MESHVI ratings and member feedback (public wall)' })
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Published MESHVI ratings and member feedback (signed-in members only)' })
   async getPublicReviews() {
     return this.reviewsService.getPublicReviews();
   }

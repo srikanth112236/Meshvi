@@ -33,7 +33,6 @@ import { AdminLoginPage } from './pages/public/AdminLoginPage';
 import { LinkedInCallbackPage } from './pages/public/LinkedInCallbackPage';
 import { GoogleCallbackPage } from './pages/public/GoogleCallbackPage';
 import { AcceptInvitationPage } from './pages/public/AcceptInvitationPage';
-import { ReviewsPage } from './pages/public/ReviewsPage';
 
 // Authenticated Pages
 import { OnboardingPage } from './pages/app/OnboardingPage';
@@ -53,6 +52,7 @@ import { PartnershipsPage } from './pages/app/PartnershipsPage';
 import { PartnershipRequestsPage } from './pages/app/PartnershipRequestsPage';
 import { DealRoomsListPage } from './pages/app/DealRoomsListPage';
 import { DealRoomPage } from './pages/app/DealRoomPage';
+import { ReviewsPage } from './pages/app/ReviewsPage';
 import { ReviewsManagePage } from './pages/app/ReviewsManagePage';
 
 // Company Portal Pages
@@ -109,7 +109,6 @@ export default function App() {
             <Route path="/data-usage" element={<DataUsagePage />} />
             <Route path="/cookies" element={<CookiePolicyPage />} />
             <Route path="/delete-account" element={<DeleteAccountPage />} />
-            <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -124,6 +123,9 @@ export default function App() {
           {/* Dedicated Isolated Portal Logins */}
           <Route path="/company/login" element={<CompanyLoginPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
+
+          {/* Reviews are only available after login inside the member portal. */}
+          <Route path="/reviews" element={<Navigate to="/app/reviews" replace />} />
 
           {/* Application Review Moderation Console (allow-listed emails + Super Admins) */}
           <Route
@@ -164,6 +166,7 @@ export default function App() {
               <Route path="requests" element={<RequestsPage />} />
               <Route path="introductions" element={<IntroductionsPage />} />
               <Route path="messages" element={<MessagesPage />} />
+              <Route path="reviews" element={<ReviewsPage />} />
               <Route path="guide" element={<MemberGuidePage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />

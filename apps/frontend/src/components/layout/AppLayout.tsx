@@ -22,6 +22,7 @@ import {
   Settings,
   User,
   Plus,
+  Star,
 } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useSearchHistory } from '../../context/SearchHistoryContext';
@@ -144,6 +145,12 @@ export const AppLayout = () => {
       badgeCount: unreadCount,
       isActive: (pathname: string) => pathname.startsWith('/app/messages'),
     },
+    {
+      name: 'Reviews',
+      href: '/app/reviews',
+      icon: Star,
+      isActive: (pathname: string) => pathname.startsWith('/app/reviews'),
+    },
   ];
 
   const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
@@ -154,6 +161,7 @@ export const AppLayout = () => {
     if (p.startsWith('/app/home')) return 'Intelligence Dashboard';
     if (p.startsWith('/app/partnerships')) return 'Partnership Marketplace';
     if (p.startsWith('/app/messages')) return 'Messages';
+    if (p.startsWith('/app/reviews')) return 'Ratings & Feedback';
     if (p.startsWith('/app/connections')) return 'My Network';
     if (p.startsWith('/app/introductions')) return 'Warm Introductions';
     if (p.startsWith('/app/profile')) return 'Executive Profile';

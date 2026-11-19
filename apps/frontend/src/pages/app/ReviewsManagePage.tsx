@@ -175,11 +175,11 @@ export const ReviewsManagePage: React.FC = () => {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
-              to="/reviews"
+              to="/app/reviews"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border hover:bg-surface-muted text-navy text-[11px] font-bold transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Public wall</span>
+              <span className="hidden sm:inline">Reviews wall</span>
             </Link>
             <div className="hidden md:block text-right leading-tight">
               <div className="text-[11px] font-bold text-navy max-w-[220px] truncate">
@@ -220,7 +220,7 @@ export const ReviewsManagePage: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
               <Link
-                to="/reviews"
+                to="/app/reviews"
                 className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors"
               >
                 Back to reviews
@@ -247,7 +247,8 @@ export const ReviewsManagePage: React.FC = () => {
                   Member Review Moderation
                 </h1>
                 <p className="text-xs sm:text-sm text-text-muted max-w-2xl">
-                  Approve reviews for the public wall, hide unsuitable content, reply officially, or
+                  Approve reviews for the member reviews wall, hide unsuitable content, reply
+                  officially, or
                   remove spam. Every action is written to the audit log.
                 </p>
               </div>
@@ -408,7 +409,7 @@ export const ReviewsManagePage: React.FC = () => {
                             {review.isAnonymous && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-surface-muted text-[9px] font-bold uppercase text-text-muted">
                                 <EyeOff className="w-2.5 h-2.5" />
-                                Anonymous publicly
+                                Anonymous to members
                               </span>
                             )}
                           </div>
@@ -480,7 +481,7 @@ export const ReviewsManagePage: React.FC = () => {
                         <div className="mt-4 rounded-xl border border-border bg-surface-muted/40 p-4 space-y-2">
                           <div className="flex items-center justify-between">
                             <label className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                              Official response (public)
+                              Official response (visible to members)
                             </label>
                             <button
                               type="button"
