@@ -19,6 +19,7 @@ import { TriggersModule } from './modules/triggers/triggers.module';
 import { ReputationModule } from './modules/reputation/reputation.module';
 import { OpportunitiesModule } from './modules/opportunities/opportunities.module';
 import { AccountDeletionModule } from './modules/account-deletion/account-deletion.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 import { PrismaService } from './database/prisma.service';
 
 @Module({
@@ -49,6 +50,8 @@ import { PrismaService } from './database/prisma.service';
     OpportunitiesModule,
     // Google Play Store Deletion Policy Compliance
     AccountDeletionModule,
+    // Application Ratings & Member Feedback
+    ReviewsModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],

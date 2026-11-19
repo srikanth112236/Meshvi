@@ -13,6 +13,7 @@ export const Navbar = () => {
     { name: 'How it works', href: '/how-it-works' },
     { name: 'Search Showcase', href: '/search-showcase' },
     { name: 'Why Meshvi', href: '/why-meshvi' },
+    { name: 'Reviews', href: '/reviews' },
     { name: 'About', href: '/about' },
   ];
 

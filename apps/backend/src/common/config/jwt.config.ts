@@ -50,10 +50,16 @@ export function getJwtSecret(): string {
   return cachedSecret;
 }
 
+/**
+ * Access tokens stay valid for a full 7 days so a member can close the app or
+ * leave the site idle for a week and still return to an authenticated session.
+ * Refresh tokens live longer (30 days) so an expired access token can be
+ * exchanged transparently without forcing a new login.
+ */
 export function getAccessTokenTtl(): string {
-  return process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+  return process.env.JWT_ACCESS_EXPIRES_IN || '7d';
 }
 
 export function getRefreshTokenTtl(): string {
-  return process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+  return process.env.JWT_REFRESH_EXPIRES_IN || '30d';
 }

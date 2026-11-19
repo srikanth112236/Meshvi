@@ -33,6 +33,7 @@ import { AdminLoginPage } from './pages/public/AdminLoginPage';
 import { LinkedInCallbackPage } from './pages/public/LinkedInCallbackPage';
 import { GoogleCallbackPage } from './pages/public/GoogleCallbackPage';
 import { AcceptInvitationPage } from './pages/public/AcceptInvitationPage';
+import { ReviewsPage } from './pages/public/ReviewsPage';
 
 // Authenticated Pages
 import { OnboardingPage } from './pages/app/OnboardingPage';
@@ -52,6 +53,7 @@ import { PartnershipsPage } from './pages/app/PartnershipsPage';
 import { PartnershipRequestsPage } from './pages/app/PartnershipRequestsPage';
 import { DealRoomsListPage } from './pages/app/DealRoomsListPage';
 import { DealRoomPage } from './pages/app/DealRoomPage';
+import { ReviewsManagePage } from './pages/app/ReviewsManagePage';
 
 // Company Portal Pages
 import { CompanyLayout } from './components/layout/CompanyLayout';
@@ -107,6 +109,7 @@ export default function App() {
             <Route path="/data-usage" element={<DataUsagePage />} />
             <Route path="/cookies" element={<CookiePolicyPage />} />
             <Route path="/delete-account" element={<DeleteAccountPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -121,6 +124,19 @@ export default function App() {
           {/* Dedicated Isolated Portal Logins */}
           <Route path="/company/login" element={<CompanyLoginPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
+
+          {/* Application Review Moderation Console (allow-listed emails + Super Admins) */}
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={['USER', 'COMPANY_ADMIN', 'SUPER_ADMIN']}
+                loginUrl="/login?next=/reviews/manage"
+                portalName="Review Moderation"
+              />
+            }
+          >
+            <Route path="/reviews/manage" element={<ReviewsManagePage />} />
+          </Route>
 
           {/* 1. Consumer Hub (CONSUMER only - Strictly excludes COMPANY_ADMIN & SUPER_ADMIN) */}
           <Route

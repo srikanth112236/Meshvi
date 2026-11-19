@@ -75,6 +75,20 @@ enum ImportJobStatus {
   CANCELLED
 }
 
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  HIDDEN
+}
+
+enum ReviewCategory {
+  GENERAL
+  USABILITY
+  FEATURE_REQUEST
+  BUG_REPORT
+  SUPPORT
+}
+
 // 1. Core User Tables
 model User {
   id               String         @id @default(uuid())
@@ -121,8 +135,32 @@ model User {
   companyOnboardingDraft CompanyOnboardingDraft?
   userBlocksInitiated UserBlock[] @relation("UserBlocksInitiated")
   userBlocksReceived  UserBlock[] @relation("UserBlocksReceived")
+  appReview           AppReview?
 
   @@map("users")
+}
+
+// Member ratings & product feedback for the MESHVI application
+model AppReview {
+  id          String         @id @default(uuid())
+  userId      String         @unique @map("user_id")
+  rating      Int
+  category    ReviewCategory @default(GENERAL)
+  title       String?
+  message     String
+  isAnonymous Boolean        @default(false) @map("is_anonymous")
+  status      ReviewStatus   @default(PENDING)
+  adminReply  String?        @map("admin_reply")
+  repliedAt   DateTime?      @map("replied_at")
+  repliedBy   String?        @map("replied_by")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([rating])
+  @@map("app_reviews")
 }
 
 model CompanyOnboardingDraft {

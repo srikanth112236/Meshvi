@@ -73,6 +73,14 @@ jobs:
             echo "==== 3. Pulling latest backend image ===="
             sudo docker pull $ACR_SERVER/meshvi-backend:latest
 
+            echo "==== 3b. Applying database schema (idempotent, non-destructive) ===="
+            sudo docker run --rm \
+              -e DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}" \
+              -e NODE_ENV=production \
+              --entrypoint npx \
+              $ACR_SERVER/meshvi-backend:latest \
+              prisma db push --skip-generate --schema=/app/apps/backend/prisma/schema.prisma
+
             echo "==== 4. Ensuring persistent data directory exists ===="
             mkdir -p /home/azureuser/meshvi-data/uploads
 
@@ -100,6 +108,8 @@ jobs:
               -e DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}" \
               -e FRONTEND_URL="https://meshvi.org" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET || 'meshvi_prod_secret_jwt_key_2026_azure_vm_secure!' }}" \
+              -e JWT_ACCESS_EXPIRES_IN="7d" \
+              -e JWT_REFRESH_EXPIRES_IN="30d" \
               -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
               -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
               -e GOOGLE_REDIRECT_URI="https://meshvi.org/auth/google/callback" \

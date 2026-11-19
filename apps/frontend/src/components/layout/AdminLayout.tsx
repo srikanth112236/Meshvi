@@ -18,6 +18,7 @@ import {
   FileText,
   Bell,
   Search,
+  MessageSquareQuote,
 } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { UniversalCommandBar } from '../ui/UniversalCommandBar';
@@ -56,6 +57,7 @@ export const AdminLayout = () => {
     { name: 'AI Governance', href: '/admin/ai-console', icon: Cpu },
     { name: 'Data Ingestion & CSV', href: '/admin/imports', icon: FileSpreadsheet },
     { name: 'Content Moderation', href: '/admin/moderation', icon: ShieldAlert },
+    { name: 'Member Reviews', href: '/reviews/manage', icon: MessageSquareQuote },
     { name: 'Audit Logs', href: '/admin/audit-logs', icon: FileText },
     { name: 'Admin Handbook', href: '/admin/guide', icon: BookOpen },
   ];

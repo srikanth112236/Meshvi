@@ -469,7 +469,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               Security Notice: Session Expired
             </h3>
             <p className="mt-2 text-xs text-slate-400 leading-relaxed">
-              Your 24-hour authentication session has expired. You are being logged out securely.
+              Your secure authentication session has expired. You are being logged out securely.
             </p>
             {/* 2-Second Progress Bar */}
             <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">

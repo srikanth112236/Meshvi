@@ -40,7 +40,8 @@ export class AuthService {
 
   /**
    * Enterprise Multi-Tenant Scoped Token Generator
-   * Issues short-lived Access Token (15m) + Long-lived Refresh Token (7d) strictly partitioned by Portal
+   * Issues a 7-day Access Token + 30-day Refresh Token strictly partitioned by Portal.
+   * The 7-day access lifetime keeps members signed in across extended idle periods.
    */
   public generateAuthTokens(user: any, requestedPortal?: PortalScopeType) {
     const roles: string[] = (user.roles || []).map((r: any) =>

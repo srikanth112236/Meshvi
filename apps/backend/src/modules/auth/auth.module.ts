@@ -28,6 +28,6 @@ import { getJwtSecret } from '../../common/config/jwt.config';
     RateLimitGuard,
     PrismaService,
   ],
-  exports: [AuthService, MailSenderService, JwtModule, PassportModule, PortalScopeGuard],
+  exports: [AuthService, MailSenderService, JwtModule, PassportModule, PortalScopeGuard, PrismaService],
 })
 export class AuthModule {}

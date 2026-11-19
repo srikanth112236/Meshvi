@@ -17,6 +17,9 @@ import { AuthShowcasePanel } from '../../components/auth/AuthShowcasePanel';
 export const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const emailQuery = searchParams.get('email') || '';
+  const nextQuery = searchParams.get('next') || '';
+  const safeNext =
+    nextQuery.startsWith('/') && !nextQuery.startsWith('//') ? nextQuery : null;
   const [email, setEmail] = useState(emailQuery);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -123,6 +126,8 @@ export const LoginPage: React.FC = () => {
 
       if (!data.data.user?.profile?.currentTitle && !data.data.user?.onboardingCompleted) {
         navigate('/app/onboarding');
+      } else if (safeNext) {
+        navigate(safeNext);
       } else {
         navigate('/app/search');
       }
