@@ -135,7 +135,7 @@ model User {
   companyOnboardingDraft CompanyOnboardingDraft?
   userBlocksInitiated UserBlock[] @relation("UserBlocksInitiated")
   userBlocksReceived  UserBlock[] @relation("UserBlocksReceived")
-  appReview           AppReview?
+  appReviews          AppReview[]
 
   @@map("users")
 }
@@ -143,7 +143,7 @@ model User {
 // Member ratings & product feedback for the MESHVI application
 model AppReview {
   id          String         @id @default(uuid())
-  userId      String         @unique @map("user_id")
+  userId      String         @map("user_id")
   rating      Int
   category    ReviewCategory @default(GENERAL)
   title       String?
@@ -158,6 +158,7 @@ model AppReview {
 
   user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@index([status, createdAt])
   @@index([rating])
   @@map("app_reviews")

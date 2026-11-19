@@ -158,8 +158,8 @@ export function fetchPublicReviews() {
   return apiRequest<PublicReviewsResponse>('/public');
 }
 
-export function fetchMyReview(token: string) {
-  return apiRequest<MyReview | null>('/me', {}, token);
+export function fetchMyReviews(token: string) {
+  return apiRequest<MyReview[]>('/me', {}, token);
 }
 
 export function createReview(token: string, payload: ReviewPayload) {
@@ -170,16 +170,16 @@ export function createReview(token: string, payload: ReviewPayload) {
   );
 }
 
-export function updateMyReview(token: string, payload: Partial<ReviewPayload>) {
+export function updateMyReview(token: string, id: string, payload: Partial<ReviewPayload>) {
   return apiRequest<MyReview>(
-    '/me',
+    `/me/${id}`,
     { method: 'PATCH', body: JSON.stringify(payload) },
     token,
   );
 }
 
-export function deleteMyReview(token: string) {
-  return apiRequest<{ message: string }>('/me', { method: 'DELETE' }, token);
+export function deleteMyReview(token: string, id: string) {
+  return apiRequest<{ message: string }>(`/me/${id}`, { method: 'DELETE' }, token);
 }
 
 export function fetchModerationQueue(token: string, params?: { status?: ReviewStatus; q?: string }) {

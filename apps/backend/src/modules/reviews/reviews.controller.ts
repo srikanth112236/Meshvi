@@ -33,9 +33,9 @@ export class ReviewsController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: "Read the signed-in member's own review" })
-  async getMyReview(@CurrentUser('id') userId: string) {
-    return this.reviewsService.getMyReview(userId);
+  @ApiOperation({ summary: "List the signed-in member's own reviews" })
+  async getMyReviews(@CurrentUser('id') userId: string) {
+    return this.reviewsService.getMyReviews(userId);
   }
 
   @Post()
@@ -45,18 +45,22 @@ export class ReviewsController {
     return this.reviewsService.submitReview(userId, dto);
   }
 
-  @Patch('me')
+  @Patch('me/:id')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Update your rating and feedback (returns to moderation queue)' })
-  async updateMyReview(@CurrentUser('id') userId: string, @Body() dto: UpdateReviewDto) {
-    return this.reviewsService.updateMyReview(userId, dto);
+  @ApiOperation({ summary: 'Update one of your reviews (returns to moderation queue)' })
+  async updateMyReview(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateReviewDto,
+  ) {
+    return this.reviewsService.updateMyReview(userId, id, dto);
   }
 
-  @Delete('me')
+  @Delete('me/:id')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Remove your review' })
-  async deleteMyReview(@CurrentUser('id') userId: string) {
-    return this.reviewsService.deleteMyReview(userId);
+  @ApiOperation({ summary: 'Remove one of your reviews' })
+  async deleteMyReview(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.reviewsService.deleteMyReview(userId, id);
   }
 
   @Get('moderation')

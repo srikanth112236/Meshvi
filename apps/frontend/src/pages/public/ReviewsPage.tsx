@@ -23,7 +23,7 @@ import {
   canModerateReviews,
   createReview,
   deleteMyReview,
-  fetchMyReview,
+  fetchMyReviews,
   fetchPublicReviews,
   MyReview,
   PublicReview,
@@ -72,9 +72,9 @@ export const ReviewsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
-  const [myReview, setMyReview] = useState<MyReview | null>(null);
-  const [myReviewLoading, setMyReviewLoading] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [myReviews, setMyReviews] = useState<MyReview[]>([]);
+  const [myReviewsLoading, setMyReviewsLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitState, setSubmitState] = useState<{
@@ -108,29 +108,24 @@ export const ReviewsPage: React.FC = () => {
     loadPublic();
   }, []);
 
+  const loadMyReviews = async () => {
+    if (!token) {
+      setMyReviews([]);
+      return;
+    }
+    setMyReviewsLoading(true);
+    try {
+      const reviews = await fetchMyReviews(token);
+      setMyReviews(reviews);
+    } catch {
+      setMyReviews([]);
+    } finally {
+      setMyReviewsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let cancelled = false;
-
-    const loadMine = async () => {
-      if (!token) {
-        setMyReview(null);
-        return;
-      }
-      setMyReviewLoading(true);
-      try {
-        const review = await fetchMyReview(token);
-        if (!cancelled) setMyReview(review);
-      } catch {
-        if (!cancelled) setMyReview(null);
-      } finally {
-        if (!cancelled) setMyReviewLoading(false);
-      }
-    };
-
-    loadMine();
-    return () => {
-      cancelled = true;
-    };
+    loadMyReviews();
   }, [token]);
 
   const stats = data?.stats;
@@ -159,26 +154,37 @@ export const ReviewsPage: React.FC = () => {
     });
   }, [reviews, categoryFilter, ratingFilter, search, sortBy]);
 
-  const startEditing = () => {
-    if (!myReview) return;
-    setForm({
-      rating: myReview.rating,
-      category: myReview.category,
-      title: myReview.title || '',
-      message: myReview.message,
-      isAnonymous: myReview.isAnonymous,
-    });
-    setEditing(true);
-    setSubmitState({ loading: false });
-    setNotice(null);
+  const scrollToForm = () => {
     window.setTimeout(() => {
       document.getElementById('review-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
   };
 
+  const startEditing = (review: MyReview) => {
+    setForm({
+      rating: review.rating,
+      category: review.category,
+      title: review.title || '',
+      message: review.message,
+      isAnonymous: review.isAnonymous,
+    });
+    setEditingId(review.id);
+    setSubmitState({ loading: false });
+    setNotice(null);
+    scrollToForm();
+  };
+
+  const startNewReview = () => {
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+    setSubmitState({ loading: false });
+    setNotice(null);
+    scrollToForm();
+  };
+
   const resetForm = () => {
     setForm(EMPTY_FORM);
-    setEditing(false);
+    setEditingId(null);
     setSubmitState({ loading: false });
   };
 
@@ -207,12 +213,11 @@ export const ReviewsPage: React.FC = () => {
     };
 
     try {
-      const saved = myReview
-        ? await updateMyReview(token, payload)
+      const saved = editingId
+        ? await updateMyReview(token, editingId, payload)
         : await createReview(token, payload);
-      setMyReview(saved);
       setForm(EMPTY_FORM);
-      setEditing(false);
+      setEditingId(null);
       setSubmitState({ loading: false });
       setNotice({
         type: 'success',
@@ -221,6 +226,7 @@ export const ReviewsPage: React.FC = () => {
             ? 'Your review is live on the public wall. Thank you!'
             : 'Thank you! Your review is now in the moderation queue and will appear shortly.',
       });
+      await loadMyReviews();
       await loadPublic();
     } catch (err: any) {
       setSubmitState({
@@ -230,15 +236,15 @@ export const ReviewsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!token || !myReview) return;
-    if (!window.confirm('Remove your review from MESHVI? This cannot be undone.')) return;
+  const handleDelete = async (review: MyReview) => {
+    if (!token) return;
+    if (!window.confirm('Remove this review from MESHVI? This cannot be undone.')) return;
 
     try {
-      await deleteMyReview(token);
-      setMyReview(null);
-      resetForm();
+      await deleteMyReview(token, review.id);
+      if (editingId === review.id) resetForm();
       setNotice({ type: 'success', message: 'Your review has been removed.' });
+      await loadMyReviews();
       await loadPublic();
     } catch (err: any) {
       setSubmitState({ loading: false, error: err?.message || 'Could not remove your review.' });
@@ -309,24 +315,14 @@ export const ReviewsPage: React.FC = () => {
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {token ? (
-              myReview ? (
-                <button
-                  type="button"
-                  onClick={startEditing}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-sm transition-colors"
-                >
-                  <PenLine className="w-4 h-4" />
-                  <span>Update your review</span>
-                </button>
-              ) : (
-                <a
-                  href="#review-form"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-sm transition-colors"
-                >
-                  <PenLine className="w-4 h-4" />
-                  <span>Rate MESHVI</span>
-                </a>
-              )
+              <button
+                type="button"
+                onClick={startNewReview}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-sm transition-colors"
+              >
+                <PenLine className="w-4 h-4" />
+                <span>Write a review</span>
+              </button>
             ) : (
               <Link
                 to="/login?next=%2Freviews"
@@ -393,8 +389,8 @@ export const ReviewsPage: React.FC = () => {
                 <div>
                   <h2 className="text-lg font-bold text-navy">Sign in to share your review</h2>
                   <p className="mt-1 text-xs text-text-muted leading-relaxed">
-                    Ratings come from real MESHVI members. Sign in to publish one review, then
-                    update it any time.
+                    Ratings come from real MESHVI members. Sign in to share your experience. Your
+                    feedback will be checked before it appears publicly.
                   </p>
                 </div>
                 <Link
@@ -411,93 +407,99 @@ export const ReviewsPage: React.FC = () => {
                   </Link>
                 </p>
               </div>
-            ) : myReviewLoading ? (
+            ) : myReviewsLoading && myReviews.length === 0 ? (
               <div className="rounded-2xl border border-border bg-surface p-8 flex items-center justify-center">
                 <Loader2 className="w-5 h-5 text-primary animate-spin" />
               </div>
-            ) : myReview && !editing ? (
-              <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-4">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-sm font-bold text-navy">Your review</h2>
-                  <span
-                    className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wide ${
-                      statusStyles[myReview.status]
-                    }`}
-                  >
-                    {REVIEW_STATUS_LABELS[myReview.status]}
-                  </span>
-                </div>
+            ) : (
+              <>
+                {myReviews.length > 0 && (
+                  <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-3">
+                    <h2 className="text-sm font-bold text-navy">Your reviews</h2>
+                    <div className="space-y-3">
+                      {myReviews.map((review) => (
+                        <div
+                          key={review.id}
+                          className="rounded-xl border border-border bg-surface-muted/40 p-3.5 space-y-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <StarRating value={review.rating} size="sm" />
+                            <span
+                              className={`px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide ${
+                                statusStyles[review.status]
+                              }`}
+                            >
+                              {REVIEW_STATUS_LABELS[review.status]}
+                            </span>
+                          </div>
 
-                <div className="space-y-2">
-                  <StarRating value={myReview.rating} size="md" />
-                  <div className="text-[11px] font-semibold text-text-muted">
-                    {REVIEW_CATEGORY_LABELS[myReview.category]} &bull; {formatDate(myReview.createdAt)}
-                  </div>
-                  {myReview.title && (
-                    <div className="text-sm font-bold text-navy">{myReview.title}</div>
-                  )}
-                  <p className="text-xs text-text-muted leading-relaxed whitespace-pre-line">
-                    {myReview.message}
-                  </p>
-                </div>
+                          <div className="text-[10px] font-semibold text-text-muted">
+                            {REVIEW_CATEGORY_LABELS[review.category]} &bull;{' '}
+                            {formatDate(review.createdAt)}
+                          </div>
 
-                {myReview.adminReply && (
-                  <div className="rounded-xl border border-primary/20 bg-primary-soft/60 p-3">
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-primary">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      MESHVI Team
+                          {review.title && (
+                            <div className="text-xs font-bold text-navy">{review.title}</div>
+                          )}
+                          <p className="text-[11px] leading-relaxed text-text-muted whitespace-pre-line">
+                            {review.message}
+                          </p>
+
+                          {review.adminReply && (
+                            <div className="rounded-lg border border-primary/20 bg-primary-soft/50 p-2.5">
+                              <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-primary">
+                                <ShieldCheck className="w-3 h-3" />
+                                MESHVI Team
+                              </div>
+                              <p className="mt-0.5 text-[10px] leading-relaxed text-navy">
+                                {review.adminReply}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => startEditing(review)}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-surface text-navy text-[10px] font-bold transition-colors"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(review)}
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-danger/20 text-danger hover:bg-danger/5 text-[10px] font-bold transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <p className="mt-1 text-xs text-navy leading-relaxed">{myReview.adminReply}</p>
                   </div>
                 )}
 
-                <p className="text-[11px] text-text-muted">
-                  {myReview.status === 'PENDING'
-                    ? 'Your review is awaiting moderation. It will appear publicly once approved.'
-                    : myReview.status === 'HIDDEN'
-                    ? 'This review is currently hidden from the public wall by a moderator.'
-                    : 'Your review is live on the public wall.'}
-                </p>
-
-                <div className="flex items-center gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={startEditing}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-border hover:bg-surface-muted text-navy text-xs font-bold transition-colors"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-danger/20 text-danger hover:bg-danger/5 text-xs font-bold transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form
-                id="review-form"
-                onSubmit={handleSubmit}
-                className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-4 scroll-mt-24"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-sm font-bold text-navy">
-                    {editing ? 'Update your review' : 'Rate the MESHVI application'}
-                  </h2>
-                  {editing && (
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="text-[11px] font-semibold text-text-muted hover:text-navy"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
+                <form
+                  id="review-form"
+                  onSubmit={handleSubmit}
+                  className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-4 scroll-mt-24"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-sm font-bold text-navy">
+                      {editingId ? 'Update your review' : 'Rate the MESHVI application'}
+                    </h2>
+                    {editingId && (
+                      <button
+                        type="button"
+                        onClick={resetForm}
+                        className="text-[11px] font-semibold text-text-muted hover:text-navy"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-text-muted mb-2">
@@ -601,7 +603,7 @@ export const ReviewsPage: React.FC = () => {
                   ) : (
                     <>
                       <Send className="w-3.5 h-3.5" />
-                      <span>{editing ? 'Submit for re-approval' : 'Submit review'}</span>
+                      <span>{editingId ? 'Submit for re-approval' : 'Submit review'}</span>
                     </>
                   )}
                 </button>
@@ -609,13 +611,14 @@ export const ReviewsPage: React.FC = () => {
                   Reviews are moderated before appearing publicly.
                 </p>
               </form>
+              </>
             )}
 
             <div className="rounded-2xl border border-border bg-surface-muted/50 p-4 flex items-start gap-2.5">
               <BadgeCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
               <p className="text-[11px] text-text-muted leading-relaxed">
-                One review per member. Editing your review sends it back for a quick moderation
-                check.
+                Your review will be checked before it appears publicly. You can update or remove
+                any of your reviews at any time.
               </p>
             </div>
           </aside>

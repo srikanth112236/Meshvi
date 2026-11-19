@@ -1,5 +1,5 @@
 import {
-  ConflictException,
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -25,6 +25,9 @@ const REVIEW_USER_SELECT = {
 @Injectable()
 export class ReviewsService {
   private readonly logger = new Logger(ReviewsService.name);
+
+  /** Server-side ceiling only. Never exposed as a UI hint. */
+  private readonly maxReviewsPerMember = 5;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -85,17 +88,20 @@ export class ReviewsService {
     };
   }
 
-  /** The authenticated member's own review (any status). */
-  async getMyReview(userId: string) {
-    const review = await this.prisma.appReview.findUnique({ where: { userId } });
-    return review ? this.toOwnReview(review) : null;
+  /** Every review owned by the authenticated member (any status). */
+  async getMyReviews(userId: string) {
+    const reviews = await this.prisma.appReview.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return reviews.map((review) => this.toOwnReview(review));
   }
 
   async submitReview(userId: string, dto: CreateReviewDto) {
-    const existing = await this.prisma.appReview.findUnique({ where: { userId } });
-    if (existing) {
-      throw new ConflictException(
-        'You have already rated MESHVI. You can update your existing review instead.',
+    const existingCount = await this.prisma.appReview.count({ where: { userId } });
+    if (existingCount >= this.maxReviewsPerMember) {
+      throw new BadRequestException(
+        'You have reached the maximum number of reviews for this account. Please delete an existing review before submitting another.',
       );
     }
 
@@ -115,14 +121,16 @@ export class ReviewsService {
     return this.toOwnReview(review);
   }
 
-  async updateMyReview(userId: string, dto: UpdateReviewDto) {
-    const existing = await this.prisma.appReview.findUnique({ where: { userId } });
+  async updateMyReview(userId: string, reviewId: string, dto: UpdateReviewDto) {
+    const existing = await this.prisma.appReview.findFirst({
+      where: { id: reviewId, userId },
+    });
     if (!existing) {
-      throw new NotFoundException('You have not submitted a review yet.');
+      throw new NotFoundException('Review not found.');
     }
 
     const review = await this.prisma.appReview.update({
-      where: { userId },
+      where: { id: reviewId },
       data: {
         ...(dto.rating !== undefined ? { rating: dto.rating } : {}),
         ...(dto.category !== undefined ? { category: dto.category } : {}),
@@ -137,17 +145,19 @@ export class ReviewsService {
       },
     });
 
-    this.logger.log(`Application review updated by user ${userId}; returned to moderation queue`);
+    this.logger.log(`Application review ${reviewId} updated by user ${userId}; returned to moderation queue`);
     return this.toOwnReview(review);
   }
 
-  async deleteMyReview(userId: string) {
-    const existing = await this.prisma.appReview.findUnique({ where: { userId } });
+  async deleteMyReview(userId: string, reviewId: string) {
+    const existing = await this.prisma.appReview.findFirst({
+      where: { id: reviewId, userId },
+    });
     if (!existing) {
-      throw new NotFoundException('You have not submitted a review yet.');
+      throw new NotFoundException('Review not found.');
     }
 
-    await this.prisma.appReview.delete({ where: { userId } });
+    await this.prisma.appReview.delete({ where: { id: reviewId } });
     return { message: 'Your review has been removed.' };
   }
 
