@@ -142,6 +142,25 @@ jobs:
               -e SMTP_PASS="${{ secrets.SMTP_PASS || 'svjwanaigzxsrjkb' }}" \
               $ACR_SERVER/meshvi-backend:latest
 
+            echo "==== 8a. Waiting for backend health ===="
+            HEALTHY=0
+            for i in $(seq 1 45); do
+              if sudo docker exec meshvi-backend wget -qO- http://127.0.0.1:3500/api/v1/health > /dev/null 2>&1; then
+                HEALTHY=1
+                echo "Backend is healthy after $((i * 2))s"
+                break
+              fi
+              sleep 2
+            done
+            if [ "$HEALTHY" -ne 1 ]; then
+              echo "Backend did not become healthy. Diagnostic output:"
+              sudo docker ps -a --filter "name=meshvi-backend"
+              echo "===== CONTAINER LOGS ====="
+              sudo docker logs --tail 250 meshvi-backend || true
+              echo "===== END CONTAINER LOGS ====="
+              exit 1
+            fi
+
             echo "==== 8b. Pruning superseded images to prevent disk exhaustion ===="
             sudo docker image prune -af || true
             sudo docker builder prune -af || true
